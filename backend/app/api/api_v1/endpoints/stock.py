@@ -5,11 +5,10 @@ router = APIRouter()
 
 @router.get("/top-movers")
 async def get_top_movers(authorization: str = Header(...)):
-    # 동균님 작업 구간: 
-    # 1. kiwoom_service를 이용해 키움 서버에 데이터 요청
-    # 2. 결과 데이터를 Flutter가 보기 좋게 가공
-    return {"message": "상승률 상위 종목 결과"}
-
+    #sort_tp = '1'은 상승률 '3'은 하락률   
+    top_5_data = await kiwoom_service.get_top_movers(sort_tp='1')
+    return top_5_data
+    
 @router.get("/condition-search")
 async def search_condition(cond_id: str, authorization: str = Header(...)):
     # 지민님 작업 구간: 조건 검색 로직

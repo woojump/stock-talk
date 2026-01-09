@@ -31,6 +31,54 @@ class KiwoomService:
         self.access_token = response.json().get("access_token")
         return self.access_token
 
+    # 전일대비등락률상위요청
+    async def get_top_movers(self, sort_tp: str = '1'):
+            """
+            전일대비등락률 상위 요청 (기존 fn_ka10027 로직 이식)
+            sort_tp: '1'(상승률), '3'(하락률)
+            """
+            # 1. 토큰이 없으면 자동으로 갱신 로직 호출
+            if not self.access_token:
+                await self.refresh_token()
+
+            endpoint = '/api/dostk/rkinfo'
+            
+            # 2. 헤더 및 요청 데이터 설정 (기존 fn_ka10027 내용)
+            headers = {
+                'Content-Type': 'application/json;charset=UTF-8',
+                'authorization': f'Bearer {self.access_token}',
+                'api-id': 'ka10027',
+            }
+
+            params = {
+                'mrkt_tp': '000',
+                'sort_tp': sort_tp,  # 매개변수로 상승/하락 결정
+                'trde_qty_cnd': '0000',
+                'stk_cnd': '0',
+                'crd_cnd': '0',
+                'updown_incls': '1',
+                'pric_cnd': '0',
+                'trde_prica_cnd': '0',
+                'stex_tp': '3',
+            }
+
+            # 3. 비동기 POST 요청 (requests 대신 클래스의 self.client 사용)
+            response = await self.client.post(endpoint, headers=headers, json=params)
+            response.raise_for_status() # 에러 발생 시 예외 처리
+
+            res_json = response.json()
+            items = res_json.get('pred_pre_flu_rt_upper', [])
+
+            # 4. 결과 가공 (print 대신 리스트에 담아 return)
+            top_5 = []
+            for stock in items[:5]:
+                top_5.append({
+                    "name": stock.get('stk_nm', 'N/A'),
+                    "rate": stock.get('flu_rt', '0'),
+                    "price": stock.get('cur_prc', '0')
+                })
+            
+            return top_5
     async def get_market_data(self, api_id: str, stk_cd: str, cont_yn: str = 'N', next_key: str = '') -> Dict[str, Any]:
         """시세 조회, 조건 검색 등 데이터를 가져올 때 사용 (GET)"""
         if not self.access_token:
