@@ -7,7 +7,11 @@ router = APIRouter()
 async def get_top_movers(authorization: str = Header(...)):
     #sort_tp = '1'은 상승률 '3'은 하락률   
     top_5_data = await kiwoom_service.get_top_movers(sort_tp='1')
-    return top_5_data
+    low_5_data = await kiwoom_service.get_top_movers(sort_tp='3')
+    return {
+        "up": top_5_data,
+        "down": low_5_data
+    }
     
 @router.get("/condition-search")
 async def search_condition(cond_id: str, authorization: str = Header(...)):
