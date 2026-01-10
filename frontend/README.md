@@ -1,1 +1,3 @@
-# 프론트엔드 디렉토리
+# stock_talk
+
+A new Flutter project.
