@@ -3,11 +3,12 @@ from __future__ import annotations
 import asyncio
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import httpx
 from fastapi import APIRouter, Header, HTTPException, Query
 from app.services.kiwoom import kiwoom_service
+from app.services.data_portal import data_portal_service
 
 router = APIRouter(prefix="/api/v1/market", tags=["market"])
 
@@ -27,16 +28,39 @@ async def get_top_movers():
 # 1.2 종목 검색 - 지민
 @router.get("/search")
 async def search_condition(
-    query: str = Query(..., description="검색어 (종목명 또는 티커 일부)")
+    query: str = Query(..., description="종목명 또는 단축코드 일부(포함 검색)"),
 ):
-    """
-    종목 키워드 검색 (Stock Search)
-    - Endpoint: GET https://apis.data.go.kr/1160100/service/GetKrxListedInfoService/getItemInfo
-    - Query: query=삼성
-    이 엔드포인트는 Kiwoom REST API에 질의하여 검색어가 포함된 종목 리스트를 가져오고,
-    최대 `MAX_SEARCH_RESULTS`(현재 10)개로 결과를 제한하여 반환합니다.
-    반환 스키마는 `StockSearchResponse`와 유사합니다.
-    """
+    q = (query or "").strip()
+    if not q:
+        return []
+
+    results: List[Dict[str, str]] = []
+    seen: Set[Tuple[str, str]] = set()  # (srtnCd, itmsNm) 중복 제거
+
+    async with httpx.AsyncClient() as client:
+        # 1) 종목명 포함 검색
+        items_by_name = await data_portal_service.fetch_krx(client, like_itms_nm=q, rows=MAX_SEARCH_RESULTS)
+
+        # 2) 단축코드 포함 검색
+        items_by_code = await data_portal_service.fetch_krx(client, like_srtn_cd=q, rows=MAX_SEARCH_RESULTS)
+
+    # 합치기(이름 결과 우선) + 필요한 필드만
+    for it in (items_by_name + items_by_code):
+        srtn = (it.get("srtnCd") or "").strip()
+        name = (it.get("itmsNm") or "").strip()
+        if not srtn or not name:
+            continue
+
+        key = (srtn, name)
+        if key in seen:
+            continue
+        seen.add(key)
+
+        results.append({"srtnCd": srtn, "itmsNm": name})
+        if len(results) >= data_portal_service.max_search_results:
+            break
+
+    return results
 
 
 # 1.3 종목 상세 및 차트 - 주혁
