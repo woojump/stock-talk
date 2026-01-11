@@ -19,7 +19,7 @@ class KiwoomService:
         payload = {
             "grant_type": "client_credentials",
             "appkey": settings.KIWOOM_APP_KEY,
-            "appsecret": settings.KIWOOM_APP_SECRET
+            "secretkey": settings.KIWOOM_APP_SECRET
         }
         # 키움 가이드에 따라 Content-Type 명시
         headers = {"Content-Type": "application/json;charset=UTF-8"}
@@ -28,7 +28,7 @@ class KiwoomService:
         response = await self.client.post(endpoint, json=payload, headers=headers)
         response.raise_for_status()
 
-        self.access_token = response.json().get("access_token")
+        self.access_token = response.json().get("token")
         return self.access_token
 
     async def get_market_data(self, api_id: str, stk_cd: str, cont_yn: str = 'N', next_key: str = '') -> Dict[str, Any]:
