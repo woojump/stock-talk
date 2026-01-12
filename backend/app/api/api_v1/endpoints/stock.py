@@ -27,7 +27,7 @@ async def get_top_movers():
 
 # 1.2 종목 검색 - 지민
 @router.get("/search")
-async def search_condition(
+async def search(
     query: str = Query(..., description="종목명 또는 단축코드 일부(포함 검색)"),
 ):
     q = (query or "").strip()

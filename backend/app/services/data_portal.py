@@ -4,11 +4,13 @@ from typing import Any, Dict, List, Set, Tuple
 import httpx
 from fastapi import APIRouter, HTTPException, Query
 
+from app.core.config import settings
+
 
 class DataPortal:
     def __init__(self):
         self.max_search_results = int(os.getenv("MAX_SEARCH_RESULTS", "10"))
-        self.data_portal_key = (os.getenv("DATA_PORTAL_KEY") or "").strip()
+        self.data_portal_key = settings.DATA_PORTAL_KEY
 
         self.krx_iteminfo_url = (
             "https://apis.data.go.kr/1160100/service/GetKrxListedInfoService/getItemInfo"
