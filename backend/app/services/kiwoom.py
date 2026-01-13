@@ -19,7 +19,7 @@ class KiwoomService:
         payload = {
             "grant_type": "client_credentials",
             "appkey": settings.KIWOOM_APP_KEY,
-            "appsecret": settings.KIWOOM_APP_SECRET
+            "secretkey": settings.KIWOOM_APP_SECRET
         }
         # 키움 가이드에 따라 Content-Type 명시
         headers = {"Content-Type": "application/json;charset=UTF-8"}
@@ -28,9 +28,170 @@ class KiwoomService:
         response = await self.client.post(endpoint, json=payload, headers=headers)
         response.raise_for_status()
 
-        self.access_token = response.json().get("access_token")
+        self.access_token = response.json().get("token")
         return self.access_token
 
+    # 전일대비등락률상위요청
+    async def get_top_movers(self, sort_tp: str = '1'):
+            """
+            전일대비등락률 상위 요청 (기존 fn_ka10027 로직 이식)
+            sort_tp: '1'(상승률), '3'(하락률)
+            """
+            # 1. 토큰이 없으면 자동으로 갱신 로직 호출
+            # if not self.access_token:
+            if not self.access_token:
+                    await self.refresh_token()
+
+            # print(f"DEBUG: 사용 중인 토큰 -> {self.access_token}")
+
+            endpoint = '/api/dostk/rkinfo'
+            
+            # 2. 헤더 및 요청 데이터 설정 (기존 fn_ka10027 내용)
+            headers = {
+                'Content-Type': 'application/json;charset=UTF-8',
+                'authorization': f'Bearer {self.access_token}',
+                'api-id': 'ka10027',
+            }
+
+            params = {
+                'mrkt_tp': '000',
+                'sort_tp': sort_tp,  # 매개변수로 상승/하락 결정
+                'trde_qty_cnd': '0000',
+                'stk_cnd': '0',
+                'crd_cnd': '0',
+                'updown_incls': '1',
+                'pric_cnd': '0',
+                'trde_prica_cnd': '0',
+                'stex_tp': '3',
+            }
+
+            # 3. 비동기 POST 요청 (requests 대신 클래스의 self.client 사용)
+            response = await self.client.post(endpoint, headers=headers, json=params)
+            response.raise_for_status() # 에러 발생 시 예외 처리
+
+            res_json = response.json()
+            items = res_json.get('pred_pre_flu_rt_upper', [])
+
+            # 4. 결과 가공 (print 대신 리스트에 담아 return)
+            top_5 = []
+            for stock in items[:5]:
+                
+                # 현재가에서 '-' 또는 '+' 기호를 제거합니다.
+                raw_price = stock.get('cur_prc', '0')
+                clean_price = raw_price.replace('-', '').replace('+', '')
+                
+                top_5.append({
+                    "name": stock.get('stk_nm', 'N/A'),
+                    "rate": stock.get('flu_rt', '0'),
+                    "price": clean_price
+                })
+            
+            return top_5
+    
+    async def get_popular_stocks(self, qry_tp: str = '4', cont_yn: str = 'N', next_key: str = ''):
+        """
+        [많이 보는 TOP 5] 실시간 종목 조회 순위 요청 (ka00198)
+        qry_tp: '1'(1분), '2'(10분), '3'(1시간), '4'(당일 누적), '5'(30초)
+        """
+        # 1. 토큰 체크 (비어있을 때만 갱신)
+        if not self.access_token:
+            await self.refresh_token()
+
+        # 2. 요청할 API URL 및 헤더 설정
+        endpoint = '/api/dostk/stkinfo'
+        
+        headers = {
+            'Content-Type': 'application/json;charset=UTF-8',
+            'authorization': f'Bearer {self.access_token}',
+            'cont-yn': cont_yn,
+            'next-key': next_key,
+            'api-id': 'ka00198',
+        }
+
+        # 3. 요청 데이터 (params)
+        data = {
+            'qry_tp': qry_tp,
+        }
+
+        # 4. 비동기 POST 요청 실행
+        response = await self.client.post(endpoint, headers=headers, json=data)
+        
+        # 원본 느낌 살린 디버깅 출력
+        # print(f'Code: {response.status_code}')
+        # print('Header:', {key: response.headers.get(key) for key in ['next-key', 'cont-yn', 'api-id']})
+
+        res_json = response.json()
+        
+        # 5. 응답 데이터 가공 (많이 보는 TOP 5 추출)
+        # 한투 실시간 순위 리스트 키값은 보통 'rt_all_stk_lst'입니다.
+        items = res_json.get('item_inq_rank', [])
+        
+        top_5 = []
+        for stock in items[:5]:
+            # 현재가에서 부호(+, -)를 제거
+            raw_price = stock.get('past_curr_prc', '0')
+            clean_price = raw_price.replace('-', '').replace('+', '')
+            top_5.append({
+                    "rank": stock.get('bigd_rank', 'N/A'),
+                    "name": stock.get('stk_nm', 'N/A'),
+                    "price":clean_price, # 현재가
+                    "rate": stock.get('base_comp_chgr', '0'), # 등락률
+                    "code": stock.get('stk_cd', '')           # 종목코드(티커)
+                })
+            
+        return top_5
+    
+    async def get_investor_rank(self, trde_tp: str = '1', orgn_tp: str = '9999'):
+        """
+        [많이 사는/파는 TOP 5] 장중 투자자별 매매 상위 (ka10065)
+        trde_tp: '1'(순매수), '2'(순매도)
+        orgn_tp: '9000'(외국인), '9999'(기관계), '6000'(연기금) 등
+        """
+        # 1. 토큰 체크 (심플하게 비어있을 때만)
+        if not self.access_token:
+            await self.refresh_token()
+
+        endpoint = '/api/dostk/rkinfo'
+        
+        headers = {
+            'Content-Type': 'application/json;charset=UTF-8',
+            'authorization': f'Bearer {self.access_token}',
+            'api-id': 'ka10065',
+        }
+
+        # 원본 params 구조 그대로 유지
+        params = {
+            'trde_tp': trde_tp,   # 1:순매수, 2:순매도
+            'mrkt_tp': '000',    # 전체 시장
+            'orgn_tp': orgn_tp,   # 투자자 구분
+        }
+
+        try:
+            response = await self.client.post(endpoint, headers=headers, json=params)
+            # print(f'Code: {response.status_code}') # 원본 느낌 디버깅
+            
+            res_json = response.json()
+            
+            # 한투/키움 API에서 투자자별 순위 리스트는 보통 'itms_trde_rk' 또는 'output'에 담깁니다.
+            # 출력 예시가 있다면 그 키값으로 수정하면 됩니다.
+            items = res_json.get('opmr_invsr_trde_upper', []) 
+            
+            top_5 = []
+            for stock in items[:5]:
+                top_5.append({
+                    "name": stock.get('stk_nm', 'N/A'),
+                    "net_amount": stock.get('netslmt', '0'), # 순매수량
+                    "buy_qty": stock.get('buy_qty', '0'),    # 매수량
+                    "sel_qty": stock.get('sel_qty', '0'),    # 매도량
+                    "code": stock.get('stk_cd', '')          # 종목코드
+                })
+                
+            return top_5
+
+        except Exception as e:
+            print(f"Error in ka10065: {e}")
+            return []
+    
     async def get_market_data(self, api_id: str, stk_cd: str, cont_yn: str = 'N', next_key: str = '') -> Dict[str, Any]:
         """시세 조회, 조건 검색 등 데이터를 가져올 때 사용 (GET)"""
         if not self.access_token:
@@ -59,33 +220,33 @@ class KiwoomService:
         response.raise_for_status()
         return response.json()
 
-    async def post_trade(self, ticker: str, qty: int, is_buy: bool, is_market_price: bool = True) -> Dict[str, Any]:
-        """매수, 매도, 계좌 인증 등 데이터를 보낼 때 사용 (POST)"""
+    # async def post_trade(self, ticker: str, qty: int, is_buy: bool, is_market_price: bool = True) -> Dict[str, Any]:
+    #     """매수, 매도, 계좌 인증 등 데이터를 보낼 때 사용 (POST)"""
         
-        # 1. 토큰이 없으면 새로 받아오기
-        if not self.access_token:
-            await self.refresh_token()
+    #     # 1. 토큰이 없으면 새로 받아오기
+    #     if not self.access_token:
+    #         await self.refresh_token()
 
-        endpoint = "/api/dostk/ordr" 
-        headers = {
-            "authorization": f"Bearer {self.access_token}",
-            "Content-Type": "application/json; charset=UTF-8"
-        }
+    #     endpoint = "/api/dostk/ordr" 
+    #     headers = {
+    #         "authorization": f"Bearer {self.access_token}",
+    #         "Content-Type": "application/json; charset=UTF-8"
+    #     }
         
-        # 2. 주문 데이터 구성 (공용 계좌번호 자동으로 포함!)
-        payload = {
-            "cano": settings.KIWOOM_ACCOUNT_NO,      # 계좌번호 (8자리)
-            "acpt_m_pwd": settings.KIWOOM_ACCOUNT_PWD, # 계좌비밀번호 (4자리, .env에 추가 필요)
-            "pdno": ticker,                          # 종목번호
-            "ord_qty": str(qty),                     # 주문수량 (문자열 요구할 수 있음)
-            "ord_unpr": "0",                         # 시장가면 0
-            "tr_dv": "01" if is_buy else "02",        # 01:매수, 02:매도
-            "ord_dv": "03" if is_market_price else "00" # 03:시장가, 00:지정가
-        }
+    #     # 2. 주문 데이터 구성 (공용 계좌번호 자동으로 포함!)
+    #     payload = {
+    #         "cano": settings.KIWOOM_ACCOUNT_NO,      # 계좌번호 (8자리)
+    #         "acpt_m_pwd": settings.KIWOOM_ACCOUNT_PWD, # 계좌비밀번호 (4자리, .env에 추가 필요)
+    #         "pdno": ticker,                          # 종목번호
+    #         "ord_qty": str(qty),                     # 주문수량 (문자열 요구할 수 있음)
+    #         "ord_unpr": "0",                         # 시장가면 0
+    #         "tr_dv": "01" if is_buy else "02",        # 01:매수, 02:매도
+    #         "ord_dv": "03" if is_market_price else "00" # 03:시장가, 00:지정가
+    #     }
 
-        # 3. 키움 서버로 주문 전송
-        response = await self.client.post(endpoint, headers=headers, json=payload)
-        return response.json()
+    #     # 3. 키움 서버로 주문 전송
+    #     response = await self.client.post(endpoint, headers=headers, json=payload)
+    #     return response.json()
 
     async def close(self):
         """서버 종료 시 연결을 안전하게 닫습니다."""
