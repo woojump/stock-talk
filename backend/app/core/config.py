@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     KIWOOM_APP_KEY: str
     KIWOOM_APP_SECRET: str
     # KIWOOM_ACCOUNT_NO: str
+    DATA_PORTAL_KEY: str
 
     
     class Config:
