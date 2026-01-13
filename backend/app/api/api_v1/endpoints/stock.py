@@ -11,6 +11,7 @@ from app.services.kiwoom import kiwoom_service
 from app.services.data_portal import data_portal_service
 
 router = APIRouter(prefix="/api/v1/market", tags=["market"])
+import asyncio
 
 MAX_SEARCH_RESULTS = 10
 SEARCH_CACHE_TTL = 5  # seconds: short cache to reduce repeated keystroke load
@@ -20,11 +21,35 @@ _search_cache: dict[str, tuple[float, list[dict]]] = {}
 
 @router.get("/top-movers")
 async def get_top_movers():
-    # 동균님 작업 구간: 
-    # 1. kiwoom_service를 이용해 키움 서버에 데이터 요청
-    # 2. 결과 데이터를 Flutter가 보기 좋게 가공
-    return {"message": "상승률 상위 종목 결과"}
 
+    # 1. 상승 종목 TOP 5 (가격 급등)
+    top_5_data = await kiwoom_service.get_top_movers(sort_tp='1')
+    await asyncio.sleep(1)
+
+    # 2. 하락 종목 TOP 5 (가격 급락)
+    low_5_data = await kiwoom_service.get_top_movers(sort_tp='3')
+    await asyncio.sleep(1)
+
+    # 3. 인기 종목 TOP 5 (사람들이 많이 보는)
+    popular_5_data = await kiwoom_service.get_popular_stocks(qry_tp='4') # 당일 누적 추천
+    await asyncio.sleep(1)
+
+    # 4. 많이 사는 종목 TOP 5 (기관 순매수 상위) - 추가!
+    buy_5_data = await kiwoom_service.get_investor_rank(trde_tp='1', orgn_tp='9999')
+    await asyncio.sleep(1)
+
+    # 5. 많이 파는 종목 TOP 5 (기관 순매도 상위) - 추가!
+    sell_5_data = await kiwoom_service.get_investor_rank(trde_tp='2', orgn_tp='9999')
+
+    return {
+        "up": top_5_data,      
+        "down": low_5_data,    
+        "popular": popular_5_data,
+        "buy": buy_5_data,   # 큰손들이 담는 중
+        "sell": sell_5_data  # 큰손들이 던지는 중
+    }
+    
+    
 # 1.2 종목 검색 - 지민
 @router.get("/search")
 async def search(
