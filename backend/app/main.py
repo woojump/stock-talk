@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from app.api.api_v1.api import api_router
+import uvicorn
 
 app = FastAPI(
     title="LLM-MCP 주식 투자 플랫폼",
