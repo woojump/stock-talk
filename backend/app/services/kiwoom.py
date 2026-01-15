@@ -23,11 +23,25 @@ class KiwoomService:
         }
         # 키움 가이드에 따라 Content-Type 명시
         headers = {"Content-Type": "application/json;charset=UTF-8"}
-
-        # 실제 키움 토큰 발급
+    
         response = await self.client.post(endpoint, json=payload, headers=headers)
-        response.raise_for_status()
-
+        res_json = response.json()
+        
+        # 1. 토큰 추출
+        self.access_token = res_json.get("token")
+        
+'''current change 1'''
+        # 토큰이 성공적으로 발급된 경우 (return_code 0)
+        if res_json.get("return_code") == 0 and self.access_token:
+            print(f"✅ [DEBUG] 토큰 발급 성공! (만료: {res_json.get('expires_dt')})")
+            print(f"✅ [DEBUG] 토큰: {self.access_token[:20]}...") 
+            return self.access_token
+        else:
+            # 실패한 경우 에러 메시지 출력
+            print(f"❌ [DEBUG] 토큰 발급 실패! 키움 응답: {res_json}")
+            return ""
+          
+'''incoming change 1'''
         self.access_token = response.json().get("token")
         return self.access_token
 
@@ -219,14 +233,39 @@ class KiwoomService:
 
         response.raise_for_status()
         return response.json()
-
+      
+      
+'''current change 2'''
+    async def post_trade(self, ticker: str, qty: int, price: int = 0) -> Dict[str, Any]:
+        """매수, 매도, 계좌 인증 등 데이터를 보낼 때 사용 (POST)"""
+        
+'''incoming change 2'''
     # async def post_trade(self, ticker: str, qty: int, is_buy: bool, is_market_price: bool = True) -> Dict[str, Any]:
     #     """매수, 매도, 계좌 인증 등 데이터를 보낼 때 사용 (POST)"""
         
     #     # 1. 토큰이 없으면 새로 받아오기
     #     if not self.access_token:
     #         await self.refresh_token()
-
+    
+'''current change 3'''
+        endpoint = "/api/dostk/ordr" 
+        headers = {
+            'Content-Type': 'application/json;charset=UTF-8',
+            "authorization": f"Bearer {self.access_token}",
+            'api-id': 'kt10000', # 매수 주문 TR ID
+        }
+        
+        # 2. 키움 규격에 맞는 데이터 구성 (계좌번호/비밀번호 삭제!)
+        payload = {
+            'dmst_stex_tp': 'KRX',    # 국내거래소구분
+            'stk_cd': ticker,         # 종목코드
+            'ord_qty': str(qty),      # 주문수량
+            'ord_uv': str(price) if price > 0 else "", # 주문단가 (시장가면 공백)
+            'trde_tp': '3' if price == 0 else '0',    # 3:시장가, 0:보통(지정가)
+            'cond_uv': ''             # 조건단가
+    }
+        
+'''incoming change 3'''
     #     endpoint = "/api/dostk/ordr" 
     #     headers = {
     #         "authorization": f"Bearer {self.access_token}",
