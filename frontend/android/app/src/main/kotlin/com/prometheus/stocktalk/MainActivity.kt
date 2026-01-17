@@ -1,4 +1,4 @@
-package com.example.stock_talk
+package com.prometheus.stocktalk
 
 import io.flutter.embedding.android.FlutterActivity
 
