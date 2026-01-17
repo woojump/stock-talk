@@ -10,7 +10,7 @@ from fastapi import APIRouter, Header, HTTPException, Query
 from app.services.kiwoom import kiwoom_service
 from app.services.data_portal import data_portal_service
 
-router = APIRouter(prefix="/api/v1/market", tags=["market"])
+router = APIRouter(tags=["market"])
 import asyncio
 
 MAX_SEARCH_RESULTS = 10
