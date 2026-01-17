@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi==0.109.0",
+    "finance-datareader>=0.9.101",
     "httpx==0.26.0",
     "pydantic-settings==2.1.0",
     "python-dotenv==1.0.0",
