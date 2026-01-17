@@ -8,8 +8,10 @@ class Settings(BaseSettings):
 
     KIWOOM_APP_KEY: str
     KIWOOM_APP_SECRET: str
-    # KIWOOM_ACCOUNT_NO: str
-    DATA_PORTAL_KEY: str
+    
+    DATA_PORTAL_KEY: str    # 기본값을 주면 .env에 없어도 에러가 안 납니다.    
+    OPENAI_API_KEY: str     
+    KIWOOM_ACCOUNT_NO: str
 
     class Config:
         env_file = ".env"
