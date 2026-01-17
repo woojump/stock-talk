@@ -10,8 +10,10 @@ class OrderRequest(BaseModel):
     price: int
     type: str # market, limit 등
 
-# 1.4 수동 주문 - 팀 전체 공통
-@router.post("/order")
-async def place_order(order_data: dict, authorization: str = Header(...)):
-    # 팀원 B 작업 구간: 실제 주문 실행 로직
-    return {"status": "success"}
+
+@router.get("/balance")
+async def get_my_balance():
+    """마이페이지용 실시간 계좌 및 보유 종목 조회 API"""
+    # 내부적으로 KiwoomService가 토큰과 계좌번호를 관리하므로 별도 입력 불필요
+    result = await kiwoom_service.get_account_balance()
+    return result
