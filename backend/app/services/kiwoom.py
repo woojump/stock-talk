@@ -6,7 +6,6 @@ import os
 from typing import Dict, Any, Optional
 from app.core.config import settings
 
-
 class KiwoomService:
     def __init__(self):    
         self.base_url = "https://mockapi.kiwoom.com"
@@ -243,34 +242,95 @@ class KiwoomService:
         return response.json()
       
       
-    async def post_trade(self, ticker: str, qty: int, price: int = 0) -> Dict[str, Any]:
-        """매수, 매도, 계좌 인증 등 데이터를 보낼 때 사용 (POST)"""
+    async def post_trade(self, ticker: str, qty: int, price: int = 0, is_buy: bool = True) -> Dict[str, Any]:
+        """키움 API를 통한 매수/매도 주문 전송"""
         
         # 1. 토큰이 없으면 새로 받아오기
         if not self.access_token:
             await self.refresh_token()
 
-        endpoint = "/api/dostk/ordr" 
+        endpoint = "/api/dostk/ordr"
+
+        api_id = "kt10000" if is_buy else "kt10001"  # 매수: kt10000, 매도: kt10001
+
         headers = {
             'Content-Type': 'application/json;charset=UTF-8',
             "authorization": f"Bearer {self.access_token}",
-            'api-id': 'kt10000', # 매수 주문 TR ID
+            'api-id': api_id, # 매수/매도 주문 TR ID
+            "cont-yn": 'N',
+            "next-key": ""
         }
         
-        # 2. 키움 규격에 맞는 데이터 구성
+        # 2. Body 설정: 모든 숫자형 데이터를 String으로 변환 (명세서 요구사항)
+        # 키움 규격에 맞는 데이터 구성 trade_tp - '0':(보통)지정가, '3':시장가
         payload = {
-            'dmst_stex_tp': 'KRX',    # 국내거래소구분
-            'stk_cd': ticker,         # 종목코드
-            'ord_qty': str(qty),      # 주문수량
+            'dmst_stex_tp': 'KRX',    # 국내거래소구분 (Y)
+            'stk_cd': ticker,         # 종목코드 (Y)
+            'ord_qty': str(qty),      # 주문수량 (Y, String)
             'ord_uv': str(price) if price > 0 else "", # 주문단가 (시장가면 공백)
             'trde_tp': '3' if price == 0 else '0',    # 3:시장가, 0:보통(지정가)
-            'cond_uv': ''             # 조건단가
-    }
+            'cond_uv': ""             # 조건단가
+        }
         
          # 3. 키움 서버로 주문 전송
         response = await self.client.post(endpoint, headers=headers, json=payload)
+        response.raise_for_status()
+        
+        res_json = response.json()
+
+        # 응답 Boby에서 주문번호("ord_no") 확인 가능
+        if res_json.get("ord_no"):
+            print(f"[DEBUG]주문 성공! 주문번호: {res_json.get('ord_no')}")
+
+        return res_json 
+
+    async def amend_order(self, orig_ord_no: str, ticker: str, qty: int, price: int) -> Dict[str, Any]:
+        """[정정] 주식 정정주문 (kt10002)"""
+        if not self.access_token: await self.refresh_token()
+
+        headers = {
+            "Content-Type": "application/json; charset=UTF-8",
+            "authorization": f"Bearer {self.access_token}",
+            "api-id": "kt10002"
+        }
+
+        # 정정 주문 전용 Body 구성
+        payload = {
+            "dmst_stex_tp": "KRX",
+            "orig_ord_no": orig_ord_no,  # 원주문번호 (Y)
+            "stk_cd": ticker,            # 종목코드 (Y)
+            "mdfy_qty": str(qty),        # 정정수량 (Y)
+            "mdfy_uv": str(price),       # 정정단가 (Y)
+            "mdfy_cond_uv": ""           # 정정조건단가 (N)
+        }
+
+        response = await self.client.post("/api/dostk/ordr", headers=headers, json=payload)
+        response.raise_for_status()
         return response.json()
 
+    
+    async def cancel_order(self, orig_ord_no: str, ticker: str, qty: int = 0) -> Dict[str, Any]:
+        """[취소] 주식 취소주문 (kt10003)"""
+        if not self.access_token: await self.refresh_token()
+
+        headers = {
+            "Content-Type": "application/json; charset=UTF-8",
+            "authorization": f"Bearer {self.access_token}",
+            "api-id": "kt10003"
+        }
+
+        # 취소 주문 전용 Body 구성
+        payload = {
+            "dmst_stex_tp": "KRX",
+            "orig_ord_no": orig_ord_no,  # 원주문번호 (Y)
+            "stk_cd": ticker,            # 종목코드 (Y)
+            "cncl_qty": str(qty)         # 취소수량 (Y, '0' 입력 시 잔량 전부 취소)
+        }
+
+        response = await self.client.post("/api/dostk/ordr", headers=headers, json=payload)
+        response.raise_for_status()
+        
+        return response.json()
 
     def _parse_num(self, val: str, is_float: bool = False):
         """키움 특유의 앞자리 0과 부호를 제거하고 숫자형으로 변환"""
