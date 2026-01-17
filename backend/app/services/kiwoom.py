@@ -30,20 +30,15 @@ class KiwoomService:
         # 1. 토큰 추출
         self.access_token = res_json.get("token")
         
-'''current change 1'''
         # 토큰이 성공적으로 발급된 경우 (return_code 0)
         if res_json.get("return_code") == 0 and self.access_token:
-            print(f"✅ [DEBUG] 토큰 발급 성공! (만료: {res_json.get('expires_dt')})")
-            print(f"✅ [DEBUG] 토큰: {self.access_token[:20]}...") 
+            print(f"[DEBUG] 토큰 발급 성공! (만료: {res_json.get('expires_dt')})")
+            print(f"[DEBUG] 토큰: {self.access_token[:20]}...") 
             return self.access_token
         else:
             # 실패한 경우 에러 메시지 출력
             print(f"❌ [DEBUG] 토큰 발급 실패! 키움 응답: {res_json}")
             return ""
-          
-'''incoming change 1'''
-        self.access_token = response.json().get("token")
-        return self.access_token
 
     # 전일대비등락률상위요청
     async def get_top_movers(self, sort_tp: str = '1'):
@@ -235,19 +230,13 @@ class KiwoomService:
         return response.json()
       
       
-'''current change 2'''
     async def post_trade(self, ticker: str, qty: int, price: int = 0) -> Dict[str, Any]:
         """매수, 매도, 계좌 인증 등 데이터를 보낼 때 사용 (POST)"""
         
-'''incoming change 2'''
-    # async def post_trade(self, ticker: str, qty: int, is_buy: bool, is_market_price: bool = True) -> Dict[str, Any]:
-    #     """매수, 매도, 계좌 인증 등 데이터를 보낼 때 사용 (POST)"""
-        
-    #     # 1. 토큰이 없으면 새로 받아오기
-    #     if not self.access_token:
-    #         await self.refresh_token()
-    
-'''current change 3'''
+        # 1. 토큰이 없으면 새로 받아오기
+        if not self.access_token:
+            await self.refresh_token()
+
         endpoint = "/api/dostk/ordr" 
         headers = {
             'Content-Type': 'application/json;charset=UTF-8',
@@ -255,7 +244,7 @@ class KiwoomService:
             'api-id': 'kt10000', # 매수 주문 TR ID
         }
         
-        # 2. 키움 규격에 맞는 데이터 구성 (계좌번호/비밀번호 삭제!)
+        # 2. 키움 규격에 맞는 데이터 구성
         payload = {
             'dmst_stex_tp': 'KRX',    # 국내거래소구분
             'stk_cd': ticker,         # 종목코드
@@ -265,27 +254,9 @@ class KiwoomService:
             'cond_uv': ''             # 조건단가
     }
         
-'''incoming change 3'''
-    #     endpoint = "/api/dostk/ordr" 
-    #     headers = {
-    #         "authorization": f"Bearer {self.access_token}",
-    #         "Content-Type": "application/json; charset=UTF-8"
-    #     }
-        
-    #     # 2. 주문 데이터 구성 (공용 계좌번호 자동으로 포함!)
-    #     payload = {
-    #         "cano": settings.KIWOOM_ACCOUNT_NO,      # 계좌번호 (8자리)
-    #         "acpt_m_pwd": settings.KIWOOM_ACCOUNT_PWD, # 계좌비밀번호 (4자리, .env에 추가 필요)
-    #         "pdno": ticker,                          # 종목번호
-    #         "ord_qty": str(qty),                     # 주문수량 (문자열 요구할 수 있음)
-    #         "ord_unpr": "0",                         # 시장가면 0
-    #         "tr_dv": "01" if is_buy else "02",        # 01:매수, 02:매도
-    #         "ord_dv": "03" if is_market_price else "00" # 03:시장가, 00:지정가
-    #     }
-
-    #     # 3. 키움 서버로 주문 전송
-    #     response = await self.client.post(endpoint, headers=headers, json=payload)
-    #     return response.json()
+         # 3. 키움 서버로 주문 전송
+        response = await self.client.post(endpoint, headers=headers, json=payload)
+        return response.json()
 
     async def close(self):
         """서버 종료 시 연결을 안전하게 닫습니다."""
