@@ -1,3 +1,5 @@
 # stock_talk
 
-A new Flutter project.
+## TODO
+
+- [ ] iOS 배포는 추후 고려 예정

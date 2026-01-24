@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "69804651421",
+    "project_id": "stocktalk-ca991",
+    "storage_bucket": "stocktalk-ca991.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:69804651421:android:c1435ace29e89ddf60f574",
+        "android_client_info": {
+          "package_name": "com.prometheus.stocktalk"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCnriYpWSgp0z7-jg-erhv76MrtpnI7GFQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
