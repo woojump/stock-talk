@@ -8,8 +8,7 @@ class Settings(BaseSettings):
 
     KIWOOM_APP_KEY: str
     KIWOOM_APP_SECRET: str
-    
-    DATA_PORTAL_KEY: str    # 기본값을 주면 .env에 없어도 에러가 안 납니다.     
+       
     KIWOOM_ACCOUNT_NO: str
 
     # 네이버 API 키 추가
@@ -27,6 +26,5 @@ class Settings(BaseSettings):
         env_file=".env",
         extra="ignore"  # 정의되지 않은 DB 변수들이 들어와도 에러를 내지 않음
     )
-
 
 settings = Settings()
