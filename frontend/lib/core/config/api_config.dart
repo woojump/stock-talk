@@ -14,4 +14,6 @@ class ApiConfig {
   );
 
   static const String baseUrl = isProd ? prodBaseUrl : devBaseUrl;
+
+  static const String balancePath = '/trade/balance';
 }
