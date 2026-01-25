@@ -9,7 +9,7 @@ from fastapi import APIRouter, Query
 from app.services.kiwoom import kiwoom_service
 from app.services.finance_data_reader import finance_data_service
 
-router = APIRouter(tags=["market"])
+router = APIRouter()
   
 # 1.1 상위 종목
 @router.get("/top-movers")
