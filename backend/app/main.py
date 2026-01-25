@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from app.api.api_v1.api import api_router
+from app.api.api_v1.endpoints import news
 import uvicorn
+
+
 
 app = FastAPI(
     title="LLM-MCP 주식 투자 플랫폼",
@@ -9,6 +12,8 @@ app = FastAPI(
 )
 
 app.include_router(api_router, prefix="/api/v1")
+app.include_router(news.router, prefix="/api/v1/news", tags=["news"])
+
 
 @app.get("/")
 def root():

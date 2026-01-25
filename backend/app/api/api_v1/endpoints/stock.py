@@ -62,12 +62,15 @@ async def get_stock_detail(ticker: str):
     # 2. 차트 데이터 가져오기 (ka10005)
     chart_raw = await kiwoom_service.get_market_data(api_id="ka10005", stk_cd=ticker)
     
+    '''
     # 2. 터미널에 원본 데이터 출력 (여기가 핵심!)
     print("\n" + "="*50)
     print(f"🔍 [DEBUG] 종목코드: {ticker}")
     print(f"📈 [호가 원본(ka10004)]: {quote_data}")
     print(f"📊 [차트 원본(ka10005)]: {chart_raw}")
     print("="*50 + "\n")
+    '''
+    
 
     # 3. 기존 가공 로직
     # (여기서 에러가 나더라도 위에서 print는 찍힙니다.)
