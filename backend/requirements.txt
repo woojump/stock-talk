@@ -3,4 +3,8 @@ uvicorn==0.27.0
 httpx==0.26.0
 python-dotenv==1.0.0
 pydantic-settings==2.1.0
-rich==13.7.0  # 아까 추천드린 색깔 디버깅용
+rich==13.7.0  # 색깔 디버깅용
+sqlalchemy==2.0.46
+aiomysql==0.3.2
+pymysql==1.1.2
+greenlet==3.2.4
