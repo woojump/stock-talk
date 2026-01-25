@@ -1,24 +1,15 @@
 from __future__ import annotations
 
 import asyncio
-import time
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Set, Tuple
 
-import httpx
-from fastapi import APIRouter, Header, HTTPException, Query
+import pandas as pd
+from fastapi import APIRouter, Query
+
 from app.services.kiwoom import kiwoom_service
-from app.services.data_portal import data_portal_service
+from app.services.finance_data_reader import finance_data_service
 
 router = APIRouter(tags=["market"])
-import asyncio
-
-MAX_SEARCH_RESULTS = 10
-SEARCH_CACHE_TTL = 5  # seconds: short cache to reduce repeated keystroke load
-
-# simple in-memory cache: query -> (timestamp, results_list)
-_search_cache: dict[str, tuple[float, list[dict]]] = {}
-
   
 # 1.1 상위 종목
 @router.get("/top-movers")
@@ -53,42 +44,9 @@ async def get_top_movers():
     
     
 # 1.2 종목 검색
-@router.get("/search")
-async def search(
-    query: str = Query(..., description="종목명 또는 단축코드 일부(포함 검색)"),
-):
-    q = (query or "").strip()
-    if not q:
-        return []
-
-    results: List[Dict[str, str]] = []
-    seen: Set[Tuple[str, str]] = set()  # (srtnCd, itmsNm) 중복 제거
-
-    async with httpx.AsyncClient() as client:
-        # 1) 종목명 포함 검색
-        items_by_name = await data_portal_service.fetch_krx(client, like_itms_nm=q, rows=MAX_SEARCH_RESULTS)
-
-        # 2) 단축코드 포함 검색
-        items_by_code = await data_portal_service.fetch_krx(client, like_srtn_cd=q, rows=MAX_SEARCH_RESULTS)
-
-    # 합치기(이름 결과 우선) + 필요한 필드만
-    for it in (items_by_name + items_by_code):
-        srtn = (it.get("srtnCd") or "").strip()
-        name = (it.get("itmsNm") or "").strip()
-        if not srtn or not name:
-            continue
-
-        key = (srtn, name)
-        if key in seen:
-            continue
-        seen.add(key)
-
-        results.append({"srtnCd": srtn, "itmsNm": name})
-        if len(results) >= data_portal_service.max_search_results:
-            break
-
-    return results
-
+@router.get("/re_search")
+async def search(query: str = Query(...)):
+    return finance_data_service.search(query)
 
 # 1.3 종목 상세 및 차트
 @router.get("/stock/{ticker}/detail")
