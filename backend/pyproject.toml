@@ -21,5 +21,6 @@ dependencies = [
     "newspaper3k>=0.2.8",
     "lxml-html-clean>=0.4.3",
     "thefuzz>=0.22.1",
+    "aiomysql>=0.3.2",
     "pymysql>=1.1.2",
 ]
