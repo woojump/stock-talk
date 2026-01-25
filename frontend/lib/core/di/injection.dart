@@ -5,6 +5,7 @@ import 'package:stock_talk/core/config/api_config.dart';
 import 'package:stock_talk/features/portfolio/data/datasources/portfolio_remote_data_source.dart';
 import 'package:stock_talk/features/portfolio/data/repositories/portfolio_repository_impl.dart';
 import 'package:stock_talk/features/portfolio/domain/repositories/portfolio_repository.dart';
+import 'package:stock_talk/features/portfolio/presentation/providers/portfolio_provider.dart';
 
 final getIt = GetIt.instance;
 
@@ -29,5 +30,8 @@ Future<void> configureDependencies() async {
   );
   getIt.registerLazySingleton<PortfolioRepository>(
     () => PortfolioRepositoryImpl(getIt<PortfolioRemoteDataSource>()),
+  );
+  getIt.registerFactory<PortfolioProvider>(
+    () => PortfolioProvider(getIt<PortfolioRepository>()),
   );
 }
