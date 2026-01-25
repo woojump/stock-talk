@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:stock_talk/app/router/app_router.dart';
 import 'package:stock_talk/core/config/api_config.dart';
+import 'package:stock_talk/features/portfolio/data/datasources/portfolio_remote_data_source.dart';
 
 final getIt = GetIt.instance;
 
@@ -18,5 +19,10 @@ Future<void> configureDependencies() async {
         receiveTimeout: const Duration(seconds: 10),
       ),
     ),
+  );
+
+  // Portfolio
+  getIt.registerLazySingleton<PortfolioRemoteDataSource>(
+    () => PortfolioRemoteDataSource(getIt<Dio>()),
   );
 }
