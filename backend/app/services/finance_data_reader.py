@@ -46,7 +46,7 @@ class FinanceDataService:
         df = self._listing_cache["df"]
 
         if df is None or (now - ts) > self.LISTING_TTL_SEC:
-            df = self._load_listing_krx()S
+            df = self._load_listing_krx()
             self._listing_cache["df"] = df
             self._listing_cache["ts"] = now
 

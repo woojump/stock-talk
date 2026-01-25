@@ -13,7 +13,10 @@ from app.mcp.tools import (
     get_popular_stocks, 
     get_investor_rank, 
     get_market_data, 
-    post_trade
+    post_trade,
+    amend_order,
+    cancel_order,
+    get_account_balance
 )
 
 async def main():
@@ -31,7 +34,10 @@ async def main():
         get_popular_stocks, 
         get_investor_rank, 
         get_market_data, 
-        post_trade
+        post_trade,
+        amend_order,
+        cancel_order,
+        get_account_balance
     ]
 
     # 3. 최신 LangGraph 에이전트 생성
@@ -40,7 +46,7 @@ async def main():
     print("🚀 모든 주식 도구가 장착된 에이전트가 준비되었습니다.")
 
     # 4. 테스트 질문 (에이전트의 사고력을 테스트할 수 있는 복합 질문)
-    query = "지금 내가 산 목록들 확인좀"
+    query = "005930 종목 1주 사봐"
     print(f"질문: {query}\n")
 
     # 5. 실행 및 스트리밍 출력
