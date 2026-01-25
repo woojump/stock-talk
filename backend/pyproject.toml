@@ -8,6 +8,7 @@ dependencies = [
     "fastapi==0.109.0",
     "httpx>=0.27.0",
     "pydantic-settings>=2.6.1",  # 따옴표 안에 등호를 넣고 형식을 맞춤
+    "finance-datareader>=0.9.101",
     "python-dotenv==1.0.0",
     "rich>=13.9.4",              # fastmcp 요구사항에 맞춰 버전 상향
     "uvicorn==0.27.0",
