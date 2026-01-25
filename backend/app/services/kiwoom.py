@@ -3,6 +3,7 @@
 import httpx
 import json
 import os
+from datetime import datetime, timedelta # 시간 계산을 위해 추가
 from typing import Dict, Any, Optional
 from app.core.config import settings
 
@@ -12,6 +13,7 @@ class KiwoomService:
         # 클라이언트를 한 번 생성해서 서비스 내내 재사용합니다. (성능 최적화)
         self.client = httpx.AsyncClient(base_url=self.base_url, timeout=15.0) # 클라이언트 재사용
         self.access_token = None # 서버가 관리하는 공용 토큰
+        self.token_expires_at = None # 만료 시간을 저장할 변수 추가 
         self.default_account_no = os.getenv("KIWOOM_ACCOUNT_NO") # 환경변수에서 기본 계좌번호 로드
 
     async def refresh_token(self) -> str:
@@ -31,15 +33,25 @@ class KiwoomService:
         # 1. 토큰 추출
         self.access_token = res_json.get("token")
         
-        # 토큰이 성공적으로 발급된 경우 (return_code 0)
         if res_json.get("return_code") == 0 and self.access_token:
-            print(f"[DEBUG] 토큰 발급 성공! (만료: {res_json.get('expires_dt')})")
-            print(f"[DEBUG] 토큰: {self.access_token[:20]}...") 
+            # 3. 만료 시간 설정 (보통 24시간이지만 안전하게 23시간 50분으로 설정)
+            self.token_expires_at = datetime.now() + timedelta(hours=23, minutes=50)
+            #print(f"[DEBUG] 토큰 발급 성공! (만료 예정: {self.token_expires_at})")
             return self.access_token
         else:
-            # 실패한 경우 에러 메시지 출력
-            print(f"[DEBUG] 토큰 발급 실패! 키움 응답: {res_json}")
+            #print(f"[DEBUG] 토큰 발급 실패! 키움 응답: {res_json}")
             return ""
+    
+
+    async def ensure_token(self):
+        """토큰이 없거나 만료되었다면 자동으로 갱신합니다."""
+        # 현재 시간이 만료 5분 전이거나 토큰이 없으면 갱신
+        is_expired = self.token_expires_at is None or datetime.now() >= self.token_expires_at
+        
+        if not self.access_token or is_expired:
+            await self.refresh_token()
+
+
 
     # 전일대비등락률상위요청
     async def get_top_movers(self, sort_tp: str = '1'):
@@ -47,12 +59,8 @@ class KiwoomService:
             전일대비등락률 상위 요청 (기존 fn_ka10027 로직 이식)
             sort_tp: '1'(상승률), '3'(하락률)
             """
-            # 1. 토큰이 없으면 자동으로 갱신 로직 호출
-            # if not self.access_token:
-            if not self.access_token:
-                    await self.refresh_token()
-
-            # print(f"DEBUG: 사용 중인 토큰 -> {self.access_token}")
+            
+            await self.ensure_token() # 변경됨
 
             endpoint = '/api/dostk/rkinfo'
             
@@ -103,9 +111,8 @@ class KiwoomService:
         [많이 보는 TOP 5] 실시간 종목 조회 순위 요청 (ka00198)
         qry_tp: '1'(1분), '2'(10분), '3'(1시간), '4'(당일 누적), '5'(30초)
         """
-        # 1. 토큰 체크 (비어있을 때만 갱신)
-        if not self.access_token:
-            await self.refresh_token()
+
+        await self.ensure_token() # 변경됨
 
         # 2. 요청할 API URL 및 헤더 설정
         endpoint = '/api/dostk/stkinfo'
@@ -157,9 +164,8 @@ class KiwoomService:
         trde_tp: '1'(순매수), '2'(순매도)
         orgn_tp: '9000'(외국인), '9999'(기관계), '6000'(연기금) 등
         """
-        # 1. 토큰 체크 (심플하게 비어있을 때만)
-        if not self.access_token:
-            await self.refresh_token()
+
+        await self.ensure_token() # 변경됨
 
         endpoint = '/api/dostk/rkinfo'
         
@@ -204,9 +210,8 @@ class KiwoomService:
     
     async def get_market_data(self, api_id: str, stk_cd: str = "", cont_yn: str = 'N', next_key: str = '', params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """시세 조회, 조건 검색 등 데이터를 가져올 때 사용 (GET)"""
-        if not self.access_token:
-            await self.refresh_token()
-
+        
+        await self.ensure_token() # 변경됨
 
         # 1. API ID에 따른 엔드포인트 자동 선택
         if api_id.startswith("kt"):
@@ -243,11 +248,9 @@ class KiwoomService:
       
       
     async def post_trade(self, ticker: str, qty: int, price: int = 0, is_buy: bool = True) -> Dict[str, Any]:
-        """키움 API를 통한 매수/매도 주문 전송"""
+        """키움 API를 통한 매   수/매도 주문 전송"""
         
-        # 1. 토큰이 없으면 새로 받아오기
-        if not self.access_token:
-            await self.refresh_token()
+        await self.ensure_token() # 변경됨
 
         endpoint = "/api/dostk/ordr"
 
@@ -278,15 +281,18 @@ class KiwoomService:
         
         res_json = response.json()
 
+        '''
         # 응답 Boby에서 주문번호("ord_no") 확인 가능
         if res_json.get("ord_no"):
             print(f"[DEBUG]주문 성공! 주문번호: {res_json.get('ord_no')}")
+        '''
 
         return res_json 
 
     async def amend_order(self, orig_ord_no: str, ticker: str, qty: int, price: int) -> Dict[str, Any]:
         """[정정] 주식 정정주문 (kt10002)"""
-        if not self.access_token: await self.refresh_token()
+
+        await self.ensure_token() # 변경됨
 
         headers = {
             "Content-Type": "application/json; charset=UTF-8",
@@ -311,8 +317,9 @@ class KiwoomService:
     
     async def cancel_order(self, orig_ord_no: str, ticker: str, qty: int = 0) -> Dict[str, Any]:
         """[취소] 주식 취소주문 (kt10003)"""
-        if not self.access_token: await self.refresh_token()
-
+        
+        await self.ensure_token() # 변경됨
+        
         headers = {
             "Content-Type": "application/json; charset=UTF-8",
             "authorization": f"Bearer {self.access_token}",
