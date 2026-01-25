@@ -303,7 +303,7 @@ class KiwoomService:
         return response.json()
       
       
-    async def post_trade(self, ticker: str, qty: int, price: int = 0, is_buy: bool = True) -> Dict[str, Any]:
+    async def post_trade(self, ticker: str, qty: int, is_buy: bool, price: int = 0, is_market_price: bool = True) -> Dict[str, Any]:
         """키움 API를 통한 매   수/매도 주문 전송"""
         
         await self.ensure_token() # 변경됨
