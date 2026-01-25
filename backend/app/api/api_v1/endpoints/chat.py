@@ -6,7 +6,9 @@ from app.services.chat_service import (
     get_or_create_room,
     save_user_message,
     save_chart_card,
+    build_stock_chart_payload,
 )
+from app.services.kiwoom import kiwoom_service
 
 router = APIRouter()
 
@@ -30,13 +32,13 @@ async def chat_ask(req: ChatAskRequest):
             req.message,
         )
 
-        # 3) (지금은 LLM 대신) 차트 카드 더미 생성
-        chart_payload = {
-            "card_type": "STOCK_DETAIL_CHART",
-            "ticker": req.ticker,
-            "candles": [],  # ← 나중에 /stock/{ticker}/detail 결과 넣기
-        }
+        # 3) 주식 상세/차트 로직 사용
+        stock_detail = await kiwoom_service.get_stock_detail(req.ticker)
 
+        # 4) 차트 카드 payload 생성
+        chart_payload = build_stock_chart_payload(stock_detail)
+
+        # 5) assistant 카드 메시지 저장
         assistant_msg = await save_chart_card(
             session,
             room.room_id,
