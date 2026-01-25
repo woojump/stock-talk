@@ -2,17 +2,18 @@
 
 import httpx
 import json
+import os
 from typing import Dict, Any, Optional
 from app.core.config import settings
 
-
 class KiwoomService:
     def __init__(self):    
-        self.base_url = "https://mockapi.kiwoom.com" # 실제 주소로 변경 필요
+        self.base_url = "https://mockapi.kiwoom.com"
         # 클라이언트를 한 번 생성해서 서비스 내내 재사용합니다. (성능 최적화)
         self.client = httpx.AsyncClient(base_url=self.base_url, timeout=15.0) # 클라이언트 재사용
         self.access_token = None # 서버가 관리하는 공용 토큰
-   
+        self.default_account_no = os.getenv("KIWOOM_ACCOUNT_NO") # 환경변수에서 기본 계좌번호 로드
+
     async def refresh_token(self) -> str:
         """공용 키로 새 토큰을 받아옵니다."""
         endpoint = "/oauth2/token"
@@ -37,7 +38,7 @@ class KiwoomService:
             return self.access_token
         else:
             # 실패한 경우 에러 메시지 출력
-            print(f"❌ [DEBUG] 토큰 발급 실패! 키움 응답: {res_json}")
+            print(f"[DEBUG] 토큰 발급 실패! 키움 응답: {res_json}")
             return ""
 
     # 전일대비등락률상위요청
@@ -201,12 +202,22 @@ class KiwoomService:
             print(f"Error in ka10065: {e}")
             return []
     
-    async def get_market_data(self, api_id: str, stk_cd: str, cont_yn: str = 'N', next_key: str = '') -> Dict[str, Any]:
+    async def get_market_data(self, api_id: str, stk_cd: str = "", cont_yn: str = 'N', next_key: str = '', params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """시세 조회, 조건 검색 등 데이터를 가져올 때 사용 (GET)"""
         if not self.access_token:
             await self.refresh_token()
 
-        endpoint = "/api/dostk/mrkcond" # 시세 조회 공통 엔드 포인트
+
+        # 1. API ID에 따른 엔드포인트 자동 선택
+        if api_id.startswith("kt"):
+            endpoint = "/api/dostk/acnt"   # 계좌 관련 (kt00004, kt00018 등)
+        elif api_id.startswith("ka"):
+            # 기존 ka10004, ka10005 등은 원래 쓰던 mrkcond 엔드포인트 유지
+            endpoint = "/api/dostk/mrkcond" 
+        else:
+            # 주문 등 기타 기능 처리
+            endpoint = "/api/dostk/order"
+            
         headers = {
             "Content-Type": "application/json; charset=UTF-8",
             "authorization": f"Bearer {self.access_token}",
@@ -215,8 +226,9 @@ class KiwoomService:
             "next-key": next_key
         }
 
-        # Body 데이터 (종목코드 등)
-        data = {"stk_cd": stk_cd}
+        # 2. Body 데이터 결정 로직
+        # params가 명시적 으로 들어오면 그것을 사용하고, 아니면 기존처럼 stk_cd를 사용합니다.
+        data = params if params else {"stk_cd": stk_cd}
 
         response = await self.client.post(endpoint, headers=headers, json=data)
         
@@ -230,33 +242,136 @@ class KiwoomService:
         return response.json()
       
       
-    async def post_trade(self, ticker: str, qty: int, price: int = 0) -> Dict[str, Any]:
-        """매수, 매도, 계좌 인증 등 데이터를 보낼 때 사용 (POST)"""
+    async def post_trade(self, ticker: str, qty: int, price: int = 0, is_buy: bool = True) -> Dict[str, Any]:
+        """키움 API를 통한 매수/매도 주문 전송"""
         
         # 1. 토큰이 없으면 새로 받아오기
         if not self.access_token:
             await self.refresh_token()
 
-        endpoint = "/api/dostk/ordr" 
+        endpoint = "/api/dostk/ordr"
+
+        api_id = "kt10000" if is_buy else "kt10001"  # 매수: kt10000, 매도: kt10001
+
         headers = {
             'Content-Type': 'application/json;charset=UTF-8',
             "authorization": f"Bearer {self.access_token}",
-            'api-id': 'kt10000', # 매수 주문 TR ID
+            'api-id': api_id, # 매수/매도 주문 TR ID
+            "cont-yn": 'N',
+            "next-key": ""
         }
         
-        # 2. 키움 규격에 맞는 데이터 구성
+        # 2. Body 설정: 모든 숫자형 데이터를 String으로 변환 (명세서 요구사항)
+        # 키움 규격에 맞는 데이터 구성 trade_tp - '0':(보통)지정가, '3':시장가
         payload = {
-            'dmst_stex_tp': 'KRX',    # 국내거래소구분
-            'stk_cd': ticker,         # 종목코드
-            'ord_qty': str(qty),      # 주문수량
+            'dmst_stex_tp': 'KRX',    # 국내거래소구분 (Y)
+            'stk_cd': ticker,         # 종목코드 (Y)
+            'ord_qty': str(qty),      # 주문수량 (Y, String)
             'ord_uv': str(price) if price > 0 else "", # 주문단가 (시장가면 공백)
             'trde_tp': '3' if price == 0 else '0',    # 3:시장가, 0:보통(지정가)
-            'cond_uv': ''             # 조건단가
-    }
+            'cond_uv': ""             # 조건단가
+        }
         
          # 3. 키움 서버로 주문 전송
         response = await self.client.post(endpoint, headers=headers, json=payload)
+        response.raise_for_status()
+        
+        res_json = response.json()
+
+        # 응답 Boby에서 주문번호("ord_no") 확인 가능
+        if res_json.get("ord_no"):
+            print(f"[DEBUG]주문 성공! 주문번호: {res_json.get('ord_no')}")
+
+        return res_json 
+
+    async def amend_order(self, orig_ord_no: str, ticker: str, qty: int, price: int) -> Dict[str, Any]:
+        """[정정] 주식 정정주문 (kt10002)"""
+        if not self.access_token: await self.refresh_token()
+
+        headers = {
+            "Content-Type": "application/json; charset=UTF-8",
+            "authorization": f"Bearer {self.access_token}",
+            "api-id": "kt10002"
+        }
+
+        # 정정 주문 전용 Body 구성
+        payload = {
+            "dmst_stex_tp": "KRX",
+            "orig_ord_no": orig_ord_no,  # 원주문번호 (Y)
+            "stk_cd": ticker,            # 종목코드 (Y)
+            "mdfy_qty": str(qty),        # 정정수량 (Y)
+            "mdfy_uv": str(price),       # 정정단가 (Y)
+            "mdfy_cond_uv": ""           # 정정조건단가 (N)
+        }
+
+        response = await self.client.post("/api/dostk/ordr", headers=headers, json=payload)
+        response.raise_for_status()
         return response.json()
+
+    
+    async def cancel_order(self, orig_ord_no: str, ticker: str, qty: int = 0) -> Dict[str, Any]:
+        """[취소] 주식 취소주문 (kt10003)"""
+        if not self.access_token: await self.refresh_token()
+
+        headers = {
+            "Content-Type": "application/json; charset=UTF-8",
+            "authorization": f"Bearer {self.access_token}",
+            "api-id": "kt10003"
+        }
+
+        # 취소 주문 전용 Body 구성
+        payload = {
+            "dmst_stex_tp": "KRX",
+            "orig_ord_no": orig_ord_no,  # 원주문번호 (Y)
+            "stk_cd": ticker,            # 종목코드 (Y)
+            "cncl_qty": str(qty)         # 취소수량 (Y, '0' 입력 시 잔량 전부 취소)
+        }
+
+        response = await self.client.post("/api/dostk/ordr", headers=headers, json=payload)
+        response.raise_for_status()
+        
+        return response.json()
+
+    def _parse_num(self, val: str, is_float: bool = False):
+        """키움 특유의 앞자리 0과 부호를 제거하고 숫자형으로 변환"""
+        if not val or str(val).strip() == "":
+            return 0.0 if is_float else 0
+        cleaned = str(val).strip().replace(",", "")
+        try:
+            return float(cleaned) if is_float else int(cleaned)
+        except ValueError:
+            return 0
+
+    async def get_account_balance(self) -> Dict[str, Any]:
+        """[마이페이지] 전체 자산 요약 및 개별 종목 수익률 조회"""
+        # 1. 계좌 요약(kt00004) 및 상세(kt00018) 요청 파라미터 구성
+        common_params = {
+            "cano": self.default_account_no, 
+            "dmst_stex_tp": "KRX"
+        }
+
+        summary_res = await self.get_market_data(api_id="kt00004", params={**common_params, "qry_tp": "0"})
+        detail_res = await self.get_market_data(api_id="kt00018", params={**common_params, "qry_tp": "1"})
+
+        # 2. 통합 결과 반환
+        return {
+            "summary": {
+                "total_asset": self._parse_num(summary_res.get("aset_evlt_amt")),
+                "available_cash": self._parse_num(summary_res.get("d2_entra")),
+                "total_profit_loss": self._parse_num(summary_res.get("lspft_amt")),
+                "total_return_rate": self._parse_num(summary_res.get("lspft_rt"), is_float=True)
+            },
+            "holdings": [
+                {
+                    "ticker": item.get("stk_cd", "").replace("A", ""),
+                    "name": item.get("stk_nm"),
+                    "quantity": self._parse_num(item.get("trde_able_qty")),
+                    "purchase_price": self._parse_num(item.get("pur_pric")),
+                    "current_price": self._parse_num(item.get("cur_prc")),
+                    "profit_loss_rate": self._parse_num(item.get("prft_rt"), is_float=True)
+                } for item in detail_res.get("acnt_evlt_remn_indv_tot", [])
+            ]
+        }
 
     async def close(self):
         """서버 종료 시 연결을 안전하게 닫습니다."""
