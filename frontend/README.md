@@ -1,3 +1,6 @@
 # stock_talk
 
-A new Flutter project.
+## TODO
+
+- [ ] iOS 배포는 추후 고려 예정
+- [ ] 안드로이드 앱 아이콘 크기 커보이는 문제 해결
