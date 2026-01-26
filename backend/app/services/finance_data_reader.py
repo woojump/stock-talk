@@ -46,11 +46,17 @@ class FinanceDataService:
                 dept,
                 marcap,
                 market_id
-            FROM stock_master
+            FROM stock_info
             WHERE name LIKE :name_like
                OR ticker LIKE :ticker_like
+               OR chosung LIKE :chosung_prefix
             ORDER BY
-                CASE WHEN name LIKE :prefix_like THEN 0 ELSE 1 END,
+                CASE
+                    WHEN name LIKE :prefix_like THEN 0
+                    WHEN chosung LIKE :chosung_prefix THEN 1
+                    WHEN ticker LIKE :prefix_like THEN 2
+                    ELSE 3
+                END,
                 marcap DESC
             LIMIT :limit
         """)
@@ -59,15 +65,15 @@ class FinanceDataService:
             "name_like": f"%{q}%",
             "ticker_like": f"%{q}%",
             "prefix_like": f"{q}%",
+            "chosung_prefix": f"{q}%",
             "limit": self.MAX_SEARCH_RESULTS,
         }
 
         with self._engine.connect() as conn:
             rows = conn.execute(sql, params).mappings().all()
 
-        # ✅ 기존 인터페이스 유지
         return [{"srtnCd": r["ticker"], "itmsNm": r["name"]} for r in rows]
 
 
-# ✅ 인스턴스 생성 (라우터에서 그대로 사용)
+# 인스턴스 생성 (라우터에서 그대로 사용)
 finance_data_service = FinanceDataService()
