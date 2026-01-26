@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.api_v1.endpoints import stock, trade, chat, chatting # 새 파일들 임포트
+from app.api.api_v1.endpoints import stock, trade, chatting # 새 파일들 임포트
 
 api_router = APIRouter()
 

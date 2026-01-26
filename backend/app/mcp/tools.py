@@ -1,4 +1,7 @@
 # backend/app/mcp/tools.py
+from __future__ import annotations
+
+from typing import Any, Dict, List
 from langchain_core.tools import tool  # 랭체인용 도구 도장
 from app.services.kiwoom import kiwoom_service
 
@@ -55,59 +58,115 @@ async def get_investor_rank(action_type: str = "매수", investor_type: str = "�
     lines = [f"{i+1}. {s['name']} - {s['amount']}억" for i, s in enumerate(data[:5])]
     
     return f"{title}\n" + "\n".join(lines)
+
+
 # 4. 종목 시세 상세 데이터
+def _format_candidates_text(candidates: List[Dict[str, Any]], max_items: int = 10) -> str:
+    # candidates: [{"srtnCd":"005930","itmsNm":"삼성전자"}, ...]
+    # tool에서 보여줄 텍스트로 변환 (너무 길어지지 않게)
+    lines = []
+    for i, item in enumerate(candidates[:max_items], start=1):
+        name = item.get("itmsNm", "")
+        code = item.get("srtnCd", "")
+        if name and code:
+            lines.append(f"{i}. {name} ({code})")
+        elif name:
+            lines.append(f"{i}. {name}")
+        elif code:
+            lines.append(f"{i}. ({code})")
+
+    return "\n".join(lines)
+
+
 @tool
-async def get_market_data(ticker: str) -> str:
+async def get_market_data(q: str) -> str:
     """
     특정 종목의 현재가, 전일대비, 거래량 등 상세 마켓 데이터를 조회합니다.
-    ticker: 종목코드 6자리 (예: '005930')
+    query: 종목명 또는 종목코드
     """
     try:
-        print(f"🔍 [시세조회] 입력된 티커: {ticker}")
-        ticker_formatted = ticker.zfill(6)
+        print(f"🔍 [시세조회] 입력된 종목: {q}")
+        query = (q or "").strip()
+
+        # ✅ 티커 resolve + ambiguous 처리까지 서비스 함수에 맡김
+        data = await kiwoom_service.get_stock_detail(query)
+
+        status = data.get("status")
+
+        # 1) 못 찾음
+        if status == "fail":
+            # service message 그대로 사용
+            return data.get("message", "종목을 찾지 못했습니다.")
+
+        # 2) 여러 개(모호함) → 일부 결과 + 리스트
+        if status == "need_clarification":
+            msg = data.get("message", "여러 종목이 검색되었습니다.")
+            candidates = data.get("candidates", []) or []
+            cand_text = _format_candidates_text(candidates)
+
+            if cand_text:
+                return f"{msg}\n{cand_text}\n\n정확한 종목명 또는 6자리 티커로 다시 입력해 주세요."
+            return f"{msg}\n\n정확한 종목명 또는 6자리 티커로 다시 입력해 주세요."
         
-        result = await kiwoom_service.get_market_data(
-            api_id="ka10001", 
-            stk_cd=ticker_formatted
-        )
+        # 3) 성공 → 기존 예쁜 텍스트 포맷 최대한 유지
+        if status == "success":
+            ticker_formatted = (data.get("ticker") or "").strip()
+        
+            if not ticker_formatted:
+                return "🚨 종목 티커를 확정하지 못했습니다. 정확한 종목명 또는 6자리 티커로 다시 입력해 주세요."
 
-        print(f"📦 [API 응답]: {result}")
+            result = await kiwoom_service.get_market_data(
+                api_id="ka10001", 
+                stk_cd=ticker_formatted
+            )
 
-        # 1. 응답 데이터에서 실제 필드값 추출 (보내주신 로그 기준)
-        # 데이터가 'output'에 담겨오지 않고 바로 result에 있으므로 result.get 사용
-        name = result.get("stk_nm", ticker_formatted)
-        price = result.get("cur_prc", "0")      # 현재가
-        diff = result.get("pred_pre", "0")      # 전일대비 (변동액)
-        rate = result.get("flu_rt", "0")        # 등락률
-        volume = result.get("trde_qty", "0")    # 거래량
+            print(f"📦 [API 응답]: {result}")
 
-        # 2. 부호(+, -) 제거 및 숫자 포맷팅
-        # 데이터가 '-160500' 처럼 오기 때문에 부호를 떼고 계산해야 함
-        clean_price = str(price).replace('-', '').replace('+', '')
-        clean_diff = str(diff).replace('-', '').replace('+', '')
+            # 1. 응답 데이터에서 실제 필드값 추출 (보내주신 로그 기준)
+            # 데이터가 'output'에 담겨오지 않고 바로 result에 있으므로 result.get 사용
+            name = result.get("stk_nm", ticker_formatted)
+            price = result.get("cur_prc", "0")      # 현재가
+            diff = result.get("pred_pre", "0")      # 전일대비 (변동액)
+            rate = result.get("flu_rt", "0")        # 등락률
+            volume = result.get("trde_qty", "0")    # 거래량
 
-        try:
-            formatted_price = f"{int(clean_price):,}원"
-            formatted_volume = f"{int(volume):,}주" # 거래량 단위는 '주'가 적절
-        except (ValueError, TypeError):
-            formatted_price = f"{price}원"
-            formatted_volume = f"{volume}주"
+            # 2. 부호(+, -) 제거 및 숫자 포맷팅
+            # 데이터가 '-160500' 처럼 오기 때문에 부호를 떼고 계산해야 함
+            clean_price = str(price).replace('-', '').replace('+', '')
+            clean_diff = str(diff).replace('-', '').replace('+', '')
+            clean_volume = str(volume).replace(',', '')
 
-        # 3. 등락 상태에 따른 아이콘 (선택사항이지만 넣으면 예쁨)
-        icon = "▲" if "+" in str(price) or float(rate) > 0 else "▼"
-        if float(rate) == 0: icon = "〓"
+            try:
+                formatted_price = f"{int(clean_price):,}원"
+                formatted_volume = f"{int(clean_volume):,}주" # 거래량 단위는 '주'가 적절
+            except (ValueError, TypeError):
+                formatted_price = f"{price}원"
+                formatted_volume = f"{volume}주"
 
-        return (
-            f"📊 **{name} ({ticker_formatted}) 현재 시세**\n"
-            f"- 현재가: {formatted_price}\n"
-            f"- 전일대비: {icon} {clean_diff}원 ({rate}%)\n"
-            f"- 거래량: {formatted_volume}"
-        )
+            # 3. 등락 상태에 따른 아이콘 
+            try:
+                rate_f = float(str(rate).replace("+", "").replace("%", ""))
+            except Exception:
+                rate_f = 0.0
+
+            icon = "▲" if rate_f > 0 else "▼"
+            if rate_f == 0:
+                icon = "〓"
+
+            return (
+                f"📊 **{name} ({ticker_formatted}) 현재 시세**\n"
+                f"- 현재가: {formatted_price}\n"
+                f"- 전일대비: {icon} {clean_diff}원 ({rate}%)\n"
+                f"- 거래량: {formatted_volume}"
+            )
+        # 예상치 못한 status
+        return "🚨 시세 조회 중 알 수 없는 응답 상태가 발생했습니다."
 
     except Exception as e:
         print(f"🚨 [도구 에러]: {str(e)}")
         return f"🚨 시세 조회 중 파싱 에러가 발생했습니다: {str(e)}"
-    
+
+'''    
 @tool
 async def search_stock_ticker(query: str) -> str:
     """
@@ -129,6 +188,7 @@ async def search_stock_ticker(query: str) -> str:
     
     except Exception as e:
         return f"종목 검색 중 오류 발생: {str(e)}"
+'''
 
 # 5. 주식 주문 (매수/매도)
 @tool
@@ -267,7 +327,7 @@ def register_tools(mcp):
     mcp.tool()(get_popular_stocks)
     mcp.tool()(get_investor_rank)
     mcp.tool()(get_market_data)
-    mcp.tool()(search_stock_ticker)
+#    mcp.tool()(search_stock_ticker)
     mcp.tool()(post_trade)        # <--- 매수/매도 주문 필수!
     mcp.tool()(amend_order)       # 주문 정정
     mcp.tool()(cancel_order)      # 주문 취소

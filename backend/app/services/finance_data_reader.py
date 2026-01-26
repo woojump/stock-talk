@@ -46,7 +46,7 @@ class FinanceDataService:
                 dept,
                 marcap,
                 market_id
-            FROM stock_master
+            FROM stock_info
             WHERE name LIKE :name_like
                OR ticker LIKE :ticker_like
             ORDER BY
