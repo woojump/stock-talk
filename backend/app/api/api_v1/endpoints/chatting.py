@@ -1,6 +1,8 @@
 import os
 import pymysql
 import json
+from typing import Any, Dict, Optional, List
+
 from fastapi import APIRouter, HTTPException
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage
@@ -9,9 +11,10 @@ from dotenv import load_dotenv
 from langgraph.checkpoint.memory import MemorySaver
 
 from app.core.config import settings
+from app.services.kiwoom import kiwoom_service
 from app.mcp.tools import (
     get_top_movers, get_popular_stocks, get_investor_rank, 
-    get_market_data, post_trade, amend_order, 
+    get_market_data, search_stock_ticker, post_trade, amend_order, 
     cancel_order, get_account_balance
 )
 
@@ -39,7 +42,7 @@ llm = ChatOpenAI(
 )
 tools = [
     get_top_movers, get_popular_stocks, get_investor_rank, 
-    get_market_data, post_trade, amend_order, 
+    get_market_data, search_stock_ticker, post_trade, amend_order, 
     cancel_order, get_account_balance
 ]
 
@@ -79,7 +82,21 @@ SYSTEM_PROMPT_DICT = {
     "format-success": "주문 성공 시: 체결가 안내 후 '이제 포트폴리오에서 실시간 수익률을 확인하실 수 있습니다'라고 안내하세요."
 }
 
-SYSTEM_PROMPT = json.dumps(SYSTEM_PROMPT_DICT, ensure_ascii=False, indent=2)
+OUTPUT_FORMAT = """
+[차트 카드 생성 규칙] 
+- 사용자가 "시세", "현재가", "주가", "차트", "그래프", "캔들", "추세", "주가 흐름" 중 하나라도 요구하면 need_chart=true로 판단한다. 
+- 종목명으로 요청이 들어오면 search_stock_ticker 도구로 ticker(6자리)를 먼저 확인한다. 
+- candles(차트 데이터)는 절대 도구로 가져오거나 대답에 포함하지 말고, 서버가 처리한다. 
+- 최종 응답은 반드시 아래 JSON 형식으로만 출력한다(문장/마크다운 금지). { "answer_text": "사용자에게 보여줄 요약 텍스트", "ticker": "005930", "need_chart": true } 
+- 차트가 필요 없으면 need_chart=false로 출력한다. 
+- ticker를 확실히 모르면 ticker는 null로 두고, answer_text에서 추가 질문을 한다.
+"""
+
+SYSTEM_PROMPT = (
+    json.dumps(SYSTEM_PROMPT_DICT, ensure_ascii=False, indent=2)
+    + "\n\n"
+    + OUTPUT_FORMAT
+)
 
 memory = MemorySaver()
 
@@ -89,6 +106,38 @@ agent_executor = create_react_agent(
     checkpointer=memory,
     prompt=SYSTEM_PROMPT 
 )
+
+
+def _safe_json_load(s: str) -> Optional[Dict[str, Any]]:
+    try:
+        obj = json.loads(s)
+        return obj if isinstance(obj, dict) else None
+    except Exception:
+        return None
+
+
+def _build_chart_card_payload(stock_detail: Dict[str, Any]) -> Dict[str, Any]:
+    ticker = stock_detail.get("ticker")
+    stock_info = stock_detail.get("stock_info", {})
+    candles = stock_detail.get("candles", [])
+
+    # candles가 최신->과거면 차트용으로 과거->최신 정렬(선택)
+    # time이 YYYYMMDD라 가정
+    try:
+        candles_sorted = sorted(candles, key=lambda x: x.get("time") or "")
+    except Exception:
+        candles_sorted = candles
+
+    return {
+        "card_type": "price_chart",
+        "title": f"{ticker} 차트",
+        "ticker": ticker,
+        "range": "1M",
+        "interval": "1D",
+        "summary": stock_info,
+        "candles": candles_sorted,
+    }
+
 
 # 4. 채팅 API 엔드포인트
 @router.post("/ask")
@@ -118,15 +167,49 @@ async def chat_with_agent(query: str, room_id: int = None):
             result = await agent_executor.ainvoke(inputs, config=config)
             final_answer = result["messages"][-1].content
 
-            # --- [STEP 3] 메시지 저장 (사용자/AI) ---
+            parsed = _safe_json_load(final_answer)
+
+            # --- [STEP 3-1] 메시지 저장 (사용자) ---
             cursor.execute(
                 "INSERT INTO chat_message (room_id, role, content) VALUES (%s, 'user', %s)",
                 (room_id, query)
             )
+
+            messages: List[Dict[str, Any]] = []
+
+            if not parsed:
+                answer_text = final_answer
+                need_chart = False
+                ticker = None
+            else:
+                answer_text = str(parsed.get("answer_text") or "")
+                need_chart = bool(parsed.get("need_chart"))
+                ticker = parsed.get("ticker")
+
+            # --- [STEP 3-2] 메시지 저장 (AI) ---
             cursor.execute(
-                "INSERT INTO chat_message (room_id, role, content) VALUES (%s, 'assistant', %s)",
-                (room_id, final_answer)
+                """
+                INSERT INTO chat_message (room_id, role, msg_type, content)
+                VALUES (%s, 'assistant', 'TEXT', %s)
+                """,
+                (room_id, answer_text),
             )
+            messages.append({"role": "assistant", "msg_type": "TEXT", "content": answer_text})
+
+            # 차트가 필요하면 서버가 직접 get_stock_detail 호출 후 CARD 저장
+            if need_chart and ticker:
+                stock_detail = await kiwoom_service.get_stock_detail(str(ticker))
+                card_payload = _build_chart_card_payload(stock_detail)
+
+                cursor.execute(
+                    """
+                    INSERT INTO chat_message (room_id, role, msg_type, payload_json)
+                    VALUES (%s, 'assistant', 'CARD', %s)
+                    """,
+                    (room_id, json.dumps(card_payload, ensure_ascii=False)),
+                )
+                messages.append({"role": "assistant", "msg_type": "CARD", "payload_json": card_payload})
+
 
             # --- [STEP 4] 방 정보 최종 업데이트 (진짜 답변 내용 반영) ---
             room_title = query[:20] + "..." if len(query) > 20 else query
@@ -142,7 +225,8 @@ async def chat_with_agent(query: str, room_id: int = None):
         return {
             "status": "success", 
             "room_id": room_id, 
-            "answer": final_answer
+            "answer": answer_text, 
+            "messages": messages
         }
 
     except Exception as e:
