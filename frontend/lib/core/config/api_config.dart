@@ -10,7 +10,7 @@ class ApiConfig {
 
   static const String prodBaseUrl = String.fromEnvironment(
     'API_PROD_BASE_URL',
-    defaultValue: 'https://api.example.com/api/v1', // AWS EC2 주소로 변경 예정
+    defaultValue: 'http://13.124.149.125:8000/api/v1',
   );
 
   static const String baseUrl = isProd ? prodBaseUrl : devBaseUrl;
