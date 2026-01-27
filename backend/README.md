@@ -1,16 +1,18 @@
 # 백엔드 디렉토리
 
-# uv 환경 설정
+## uv 환경 설정
 
-## uv 설치
+### uv 설치
 
 `pip install uv`
 
-## uv 가상환경에 의존성 설치
+### uv 가상환경에 의존성 설치
 
-`uv add -r requirements.txt`
+`uv add dependency_name`
 
-## uv에서 실행
+설치된 의존성 목록은 `pyproject.toml`에서 확인 가능
+
+### uv에서 실행
 
 기존 `python`을 `uv run`으로 대체하기
 
