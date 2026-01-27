@@ -1,0 +1,223 @@
+name: Deploy Backend to EC2
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:  # Allow manual trigger
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/stock-talk-backend
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest
+            type=raw,value={{date 'YYYYMMDD-HHmmss'}}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+
+      - name: Image build summary
+        run: |
+          echo "### Docker Image Built Successfully :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Digest:** \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+
+  deploy-to-ec2:
+    name: Deploy to EC2
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Create deployment script
+        run: |
+          cat > deploy.sh << 'DEPLOY_SCRIPT'
+          #!/bin/bash
+          set -e
+
+          # Configuration
+          IMAGE_NAME="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          CONTAINER_NAME="stock-talk-backend"
+          ENV_FILE="/home/${{ secrets.EC2_USER }}/stock-talk/.env"
+          BACKUP_CONTAINER="${CONTAINER_NAME}-backup"
+
+          echo "==================================="
+          echo "Starting deployment process..."
+          echo "Image: $IMAGE_NAME"
+          echo "==================================="
+
+          # Login to GitHub Container Registry
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+          # Pull new image
+          echo "Pulling new Docker image..."
+          docker pull $IMAGE_NAME
+
+          # Check if container is running
+          if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+            echo "Backing up current container..."
+            docker rename $CONTAINER_NAME $BACKUP_CONTAINER 2>/dev/null || true
+            docker stop $BACKUP_CONTAINER 2>/dev/null || true
+          fi
+
+          # Run database migrations (optional - init_db.py is idempotent)
+          echo "Running database migrations..."
+          docker run --rm \
+            --env-file $ENV_FILE \
+            $IMAGE_NAME \
+            python -m app.init_db || echo "Migration warning (may be expected if tables exist)"
+
+          # Start new container
+          echo "Starting new container..."
+          docker run -d \
+            --name $CONTAINER_NAME \
+            --restart unless-stopped \
+            -p 8000:8000 \
+            --env-file $ENV_FILE \
+            $IMAGE_NAME
+
+          # Wait for container to be healthy
+          echo "Waiting for health check..."
+          sleep 10
+
+          MAX_RETRIES=12
+          RETRY_COUNT=0
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if curl -f http://localhost:8000/ > /dev/null 2>&1; then
+              echo "Health check passed!"
+
+              # Remove backup container on success
+              if docker ps -a --format '{{.Names}}' | grep -q "^${BACKUP_CONTAINER}$"; then
+                echo "Removing backup container..."
+                docker rm -f $BACKUP_CONTAINER
+              fi
+
+              # Cleanup old images
+              echo "Cleaning up old images..."
+              docker image prune -f
+
+              echo "==================================="
+              echo "Deployment successful!"
+              echo "==================================="
+              exit 0
+            fi
+
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            echo "Retry $RETRY_COUNT/$MAX_RETRIES..."
+            sleep 5
+          done
+
+          # Rollback on failure
+          echo "Health check failed! Rolling back..."
+          docker stop $CONTAINER_NAME
+          docker rm $CONTAINER_NAME
+
+          if docker ps -a --format '{{.Names}}' | grep -q "^${BACKUP_CONTAINER}$"; then
+            docker rename $BACKUP_CONTAINER $CONTAINER_NAME
+            docker start $CONTAINER_NAME
+            echo "Rolled back to previous version"
+          fi
+
+          exit 1
+          DEPLOY_SCRIPT
+
+          chmod +x deploy.sh
+
+      - name: Deploy to EC2
+        run: |
+          scp -i ~/.ssh/id_rsa deploy.sh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/tmp/deploy.sh
+          ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} 'bash /tmp/deploy.sh'
+
+      - name: Verify deployment
+        run: |
+          echo "Verifying deployment..."
+          RESPONSE=$(curl -s http://${{ secrets.EC2_HOST }}:8000/)
+          echo "Response: $RESPONSE"
+
+          if echo "$RESPONSE" | grep -q "running"; then
+            echo "### Deployment Successful :white_check_mark:" >> $GITHUB_STEP_SUMMARY
+            echo "**Status:** Backend is running" >> $GITHUB_STEP_SUMMARY
+            echo "**Endpoint:** http://${{ secrets.EC2_HOST }}:8000" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### Deployment Failed :x:" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f ~/.ssh/id_rsa
+          rm -f deploy.sh
+
+  notify:
+    name: Notify Deployment Status
+    needs: [build-and-push, deploy-to-ec2]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Deployment notification
+        run: |
+          if [ "${{ needs.deploy-to-ec2.result }}" == "success" ]; then
+            echo "Deployment completed successfully!"
+          else
+            echo "Deployment failed! Check logs."
+            exit 1
+          fi
