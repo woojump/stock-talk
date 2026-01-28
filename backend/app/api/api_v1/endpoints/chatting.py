@@ -40,7 +40,23 @@ tools = [
     get_market_data, post_trade, amend_order, 
     cancel_order, get_account_balance
 ]
-agent_executor = create_react_agent(llm, tools)
+
+# 시스템 프롬프트
+SYSTEM_PROMPT = """
+당신은 'Stock-Talk'의 전문 주식 매매 비서입니다. 
+사용자의 매수/매도 요청을 처리할 때 다음 단계를 반드시 엄수하세요.
+
+2. [상세 확인]: 주문 실행 전 '수량'과 '주문 방식(시장가 혹은 지정가)'을 반드시 사용자에게 물어보세요.
+3. [티키타카]: 정보가 하나라도 누락되었다면 절대 'post_trade'를 호출하지 말고 대화로 물어보세요.
+   - 예: "삼성전자 10주 매수 주문을 도와드릴까요? 시장가로 진행할지, 아니면 원하는 가격이 있으신지 말씀해 주세요."
+4. [최종 컨펌]: 모든 조건이 갖춰지면 사용자에게 내용을 요약해 보여주고 최종 승인을 받은 뒤에 주문을 실행하세요.
+"""
+
+agent_executor = create_react_agent(
+    llm, 
+    tools, 
+    messages_modifier=SYSTEM_PROMPT 
+)
 
 # 4. 채팅 API 엔드포인트
 @router.post("/ask")
