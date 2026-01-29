@@ -32,6 +32,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icons/actions/
+    - assets/icons/nav/
   fonts:
     - family: Pretendard
       fonts:
