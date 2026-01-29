@@ -17,6 +17,7 @@ dependencies:
   dio: ^5.9.0
   intl: ^0.20.2
   firebase_core: ^4.3.0
+  flutter_svg: ^2.2.3
 
 dev_dependencies:
   flutter_test:
