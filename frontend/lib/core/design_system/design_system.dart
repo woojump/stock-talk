@@ -15,6 +15,9 @@ export 'widgets/buttons/secondary_button.dart';
 // Widgets - Icons
 export 'widgets/icons/app_icon.dart';
 
+// Widgets - Cards
+export 'widgets/cards/summary_card.dart';
+
 // Widgets - Feedback
 export 'widgets/feedback/inline_error_banner.dart';
 
