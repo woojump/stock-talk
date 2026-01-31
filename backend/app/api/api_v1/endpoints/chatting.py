@@ -5,6 +5,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage
 from langgraph.prebuilt import create_react_agent
 from dotenv import load_dotenv
+from langgraph.checkpoint.memory import MemorySaver
 
 from app.core.config import settings
 from app.mcp.tools import (
@@ -52,71 +53,73 @@ SYSTEM_PROMPT = """
 4. [최종 컨펌]: 모든 조건이 갖춰지면 사용자에게 내용을 요약해 보여주고 최종 승인을 받은 뒤에 주문을 실행하세요.
 """
 
+memory = MemorySaver()
+
 agent_executor = create_react_agent(
     llm, 
     tools, 
-    messages_modifier=SYSTEM_PROMPT 
+    checkpointer=memory,
+    prompt=SYSTEM_PROMPT 
 )
 
 # 4. 채팅 API 엔드포인트
 @router.post("/ask")
 async def chat_with_agent(query: str, room_id: int = None):
-    """
-    - room_id가 없으면 새 방을 만들고 시작합니다.
-    - room_id가 있으면 해당 방에 대화를 이어갑니다.
-    """
     conn = get_db_connection()
     try:
-        # --- [STEP 1] 에이전트 실행 (답변 먼저 생성) ---
-        inputs = {"messages": [HumanMessage(content=query)]}
-        result = await agent_executor.ainvoke(inputs)
-        final_answer = result["messages"][-1].content
-
         with conn.cursor() as cursor:
-            # --- [STEP 2] 방이 없으면 새로 생성 ---
-            if not room_id:
-                # 첫 질문의 앞부분을 방 제목으로 사용
-                room_title = query[:20] + "..." if len(query) > 20 else query
-                # owner_user_id는 현재 테스트용으로 1로 고정
+            # --- [STEP 1] room_id가 없으면 DB에 먼저 생성하여 thread_id 확보 ---
+            if room_id is None:
                 sql_create_room = """
                 INSERT INTO chat_room (owner_user_id, title, last_preview, last_sent_at) 
                 VALUES (%s, %s, %s, NOW(6))
                 """
-                cursor.execute(sql_create_room, (1, room_title, final_answer[:100]))
-                room_id = cursor.lastrowid # 새로 생성된 방 번호 가져오기
+                # 에이전트 실행 전이므로 임시 제목으로 생성
+                cursor.execute(sql_create_room, (1, query[:20], "답변 생성 중..."))
+                room_id = cursor.lastrowid
+                conn.commit()  # DB에 즉시 반영하여 ID 확정
                 print(f"🆕 새 채팅방 생성 완료 (ID: {room_id})")
 
+            # --- [STEP 2] 에이전트 실행 (이 부분이 에러 해결의 핵심) ---
+            # 💡 반드시 thread_id를 문자열로 변환하여 전달해야 합니다.
+            config = {"configurable": {"thread_id": str(room_id)}}
+            inputs = {"messages": [HumanMessage(content=query)]}
+            
+            print(f"🤖 에이전트 호출 시작 (thread_id: {room_id})")
+            # 🚀 두 번째 인자로 config를 반드시 넘깁니다.
+            result = await agent_executor.ainvoke(inputs, config=config)
+            final_answer = result["messages"][-1].content
+
             # --- [STEP 3] 메시지 저장 (사용자/AI) ---
-            # 사용자 메시지
             cursor.execute(
                 "INSERT INTO chat_message (room_id, role, content) VALUES (%s, 'user', %s)",
                 (room_id, query)
             )
-            # AI 메시지
             cursor.execute(
                 "INSERT INTO chat_message (room_id, role, content) VALUES (%s, 'assistant', %s)",
                 (room_id, final_answer)
             )
 
-            # --- [STEP 4] 방 상태 업데이트 ---
+            # --- [STEP 4] 방 정보 최종 업데이트 (진짜 답변 내용 반영) ---
+            room_title = query[:20] + "..." if len(query) > 20 else query
             preview = final_answer[:250] + "..." if len(final_answer) > 250 else final_answer
             sql_update_room = """
             UPDATE chat_room 
-            SET last_preview = %s, last_sent_at = NOW(6), updated_at = NOW(6)
+            SET title = %s, last_preview = %s, last_sent_at = NOW(6), updated_at = NOW(6)
             WHERE room_id = %s
             """
-            cursor.execute(sql_update_room, (preview, room_id))
+            cursor.execute(sql_update_room, (room_title, preview, room_id))
+            conn.commit()
 
-        conn.commit()
         return {
             "status": "success", 
-            "room_id": room_id, # 새로 만든 방 번호를 알려줌
+            "room_id": room_id, 
             "answer": final_answer
         }
 
     except Exception as e:
-        conn.rollback()
-        print(f"❌ 오류: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"❌ 에러 상세 발생: {str(e)}")
+        return {"status": "error", "message": str(e)}
     finally:
-        conn.close()
+        if conn:
+            conn.close()
