@@ -10,6 +10,7 @@ export 'theme/app_text_theme.dart';
 
 // Widgets - Buttons
 export 'widgets/buttons/primary_button.dart';
+export 'widgets/buttons/secondary_button.dart';
 
 // Widgets - Icons
 export 'widgets/icons/app_icon.dart';
