@@ -15,7 +15,7 @@ async def get_top_movers(market_type: str = "상승") -> str:
     if not data:
         return f"현재 {market_type} 종목 데이터를 가져올 수 없습니다."
     
-    title = f"📈 실시간 {market_type} TOP 5"
+    title = f"실시간 {market_type} TOP 5"
     lines = [f"{i+1}. {s['name']}: {s['rate']}% ({s['price']}원)" for i, s in enumerate(data[:5])]
     
     return f"{title}\n" + "\n".join(lines)
@@ -27,7 +27,7 @@ async def get_popular_stocks() -> str:
     if not data: return "인기 종목 정보가 없습니다."
     
     lines = [f"- {s['name']} ({s['code']})" for s in data[:5]]
-    return "🔥 실시간 인기 종목\n" + "\n".join(lines)
+    return "실시간 인기 종목\n" + "\n".join(lines)
 
 # 3. 투자자별 순위 (외국인/기관 매수세)
 @tool
@@ -51,7 +51,7 @@ async def get_investor_rank(action_type: str = "매수", investor_type: str = "�
         return f"현재 {investor_type}의 {action_type} 순위 데이터를 가져올 수 없습니다."
     
     # 3. 결과 포맷팅
-    title = f"🏦 {investor_type} 실시간 {action_type} 순위 (TOP 5)"
+    title = f"{investor_type} 실시간 {action_type} 순위 (TOP 5)"
     lines = [f"{i+1}. {s['name']} - {s['amount']}억" for i, s in enumerate(data[:5])]
     
     return f"{title}\n" + "\n".join(lines)
@@ -75,7 +75,7 @@ async def get_market_data(ticker: str) -> str:
         output = result.get("output", {})
         
         if not output:
-            return f"❌ {ticker} 종목의 데이터를 불러오지 못했습니다. (응답 없음)"
+            return f"{ticker} 종목의 데이터를 불러오지 못했습니다. (응답 없음)"
 
         name = output.get("stck_nm", ticker)          # 종목명
         price = output.get("stck_prpr", "0")         # 현재가
@@ -84,14 +84,14 @@ async def get_market_data(ticker: str) -> str:
         volume = output.get("acml_tr_pbmn", "0")     # 누적 거래대금
 
         return (
-            f"📊 **{name} ({ticker}) 현재 시세**\n"
+            f"**{name} ({ticker}) 현재 시세**\n"
             f"- 현재가: {int(price):,}원\n"
             f"- 전일대비: {diff}원 ({rate}%)\n"
             f"- 거래대금: {int(volume):,}원"
         )
 
     except Exception as e:
-        return f"🚨 시세 조회 중 에러 발생: {str(e)}"
+        return f"시세 조회 중 에러 발생: {str(e)}"
 
 # 5. 주식 주문 (매수/매도)
 @tool
@@ -122,14 +122,14 @@ async def post_trade(ticker: str, quantity: int, price: int = 0, side: str = "bu
         
         if order_no:
             action = "매수" if is_buy else "매도"
-            return f"✅ {action} 주문 성공! 종목코드: {ticker}, 수량: {quantity}주, 주문번호: {order_no}"
+            return f"{action} 주문 성공! 종목코드: {ticker}, 수량: {quantity}주, 주문번호: {order_no}"
         else:
             # 실패 시 API 응답에 포함된 메시지(msg1)를 출력합니다.
             error_msg = result.get("msg1", "사유 알 수 없음")
-            return f"❌ 주문 실패: {error_msg}"
+            return f"주문 실패: {error_msg}"
 
     except Exception as e:
-        return f"🚨 시스템 에러 발생: {str(e)}"
+        return f"시스템 에러 발생: {str(e)}"
     
 # 6. 주문 수정
 @tool
@@ -152,11 +152,11 @@ async def amend_order(orig_ord_no: str, ticker: str, quantity: int, price: int) 
         
         # 결과 처리 (API 응답 구조에 따라 성공 여부 판단)
         if result.get('rt_cd') == '0' or 'ord_no' in result:
-            return f"✅ 정정 주문 전송 완료! 원주문: {orig_ord_no}, 정정코드: {ticker}, 수량: {quantity}주, 가격: {price}원"
+            return f"정정 주문 전송 완료! 원주문: {orig_ord_no}, 정정코드: {ticker}, 수량: {quantity}주, 가격: {price}원"
         else:
-            return f"❌ 정정 실패: {result.get('msg1', '알 수 없는 오류')}"
+            return f"정정 실패: {result.get('msg1', '알 수 없는 오류')}"
     except Exception as e:
-        return f"🚨 정정 중 시스템 에러: {str(e)}"
+        return f"정정 중 시스템 에러: {str(e)}"
 
 # 7. 주문 취소
 @tool
@@ -178,11 +178,11 @@ async def cancel_order(orig_ord_no: str, ticker: str, quantity: int = 0) -> str:
         # API 응답 결과 처리
         if result.get('rt_cd') == '0' or 'ord_no' in result:
             cancel_type = f"{quantity}주" if quantity > 0 else "잔량 전부"
-            return f"✅ 취소 주문 전송 완료! 원주문: {orig_ord_no}, 종목: {ticker}, 취소수량: {cancel_type}"
+            return f"취소 주문 전송 완료! 원주문: {orig_ord_no}, 종목: {ticker}, 취소수량: {cancel_type}"
         else:
-            return f"❌ 취소 실패: {result.get('msg1', '알 수 없는 오류')}"
+            return f"취소 실패: {result.get('msg1', '알 수 없는 오류')}"
     except Exception as e:
-        return f"🚨 취소 중 시스템 에러: {str(e)}"
+        return f"취소 중 시스템 에러: {str(e)}"
 
 # 8. 계좌 조회
 @tool
@@ -200,12 +200,12 @@ async def get_account_balance() -> str:
 
         # 1. 요약 정보 정리
         output = [
-            "📊 [계좌 자산 요약]",
+            "[계좌 자산 요약]",
             f"- 총 자산: {summary.get('total_asset', 0):,}원",
             f"- 주문 가능 현금: {summary.get('available_cash', 0):,}원",
             f"- 총 평가 손익: {summary.get('total_profit_loss', 0):,}원",
             f"- 총 수익률: {summary.get('total_return_rate', 0)}%\n",
-            "📈 [보유 종목 상세]"
+            "[보유 종목 상세]"
         ]
 
         # 2. 보유 종목 정보 정리
@@ -221,9 +221,23 @@ async def get_account_balance() -> str:
         return "\n".join(output)
 
     except Exception as e:
-        return f"🚨 잔고 조회 중 에러 발생: {str(e)}"
+        return f"잔고 조회 중 에러 발생: {str(e)}"
 
 # 2. 서버 실행 시 MCP 도구로 등록해주는 함수
 def register_tools(mcp):
-    # 위에서 정의한 함수를 MCP 도구로 등록합니다.
+    """
+    FastMCP 서버 인스턴스에 도구들을 등록합니다.
+    (LangChain @tool 데코레이터로 만든 함수도 FastMCP에 등록 가능)
+    """
+
+    # 조회성
     mcp.tool()(get_top_movers)
+    mcp.tool()(get_popular_stocks)
+    mcp.tool()(get_investor_rank)
+    mcp.tool()(get_market_data)
+    mcp.tool()(get_account_balance)
+
+    # 주문성
+    mcp.tool()(post_trade)
+    mcp.tool()(amend_order)
+    mcp.tool()(cancel_order)

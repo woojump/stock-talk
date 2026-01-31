@@ -265,14 +265,21 @@ class KiwoomService:
             print(f"Error in ka10065: {e}")
             return []
     
-    async def get_market_data(self, api_id: str, stk_cd: str = "", cont_yn: str = 'N', next_key: str = '', params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def get_market_data(
+            self, 
+            api_id: str, 
+            stk_cd: str = "", 
+            cont_yn: str = 'N', 
+            next_key: str = '', 
+            params: Optional[Dict[str, Any]] = None
+        ) -> Dict[str, Any]:
         """시세 조회, 조건 검색 등 데이터를 가져올 때 사용 (GET)"""
         
-        await self.ensure_token() # 변경됨
+        await self.ensure_token()
 
         # 1. API ID에 따른 엔드포인트 자동 선택
         if api_id.startswith("kt"):
-            endpoint = "/api/dostk/acnt"   # 계좌 관련 (kt00004, kt00018 등)
+            endpoint = "/api/dostk/acnt"   # 계좌 번호
         elif api_id.startswith("ka"):
             # 기존 ka10004, ka10005 등은 원래 쓰던 mrkcond 엔드포인트 유지
             endpoint = "/api/dostk/mrkcond" 
@@ -304,7 +311,7 @@ class KiwoomService:
       
       
     async def post_trade(self, ticker: str, qty: int, is_buy: bool, price: int = 0, is_market_price: bool = True) -> Dict[str, Any]:
-        """키움 API를 통한 매   수/매도 주문 전송"""
+        """키움 API를 통한 매수/매도 주문 전송"""
         
         await self.ensure_token() # 변경됨
 
