@@ -34,21 +34,31 @@ class _PortfolioView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: AppBar(
-        backgroundColor: AppColors.white,
-        elevation: 0,
-        title: Text(
-          '포트폴리오',
-          style: TextStyle(
-            fontSize: AppTypography.headlineMedium,
-            fontWeight: AppTypography.semiBold,
-            color: AppColors.black,
-            height:
-                AppTypography.lineHeightHeadline / AppTypography.headlineMedium,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(64),
+        child: AppBar(
+          backgroundColor: AppColors.white,
+          elevation: 0,
+          toolbarHeight: 64,
+          titleSpacing: 20,
+          title: Padding(
+            padding: const EdgeInsets.only(top: 20),
+            child: Text(
+              '포트폴리오',
+              style: TextStyle(
+                fontSize: AppTypography.headlineMedium,
+                fontWeight: AppTypography.semiBold,
+                color: AppColors.black,
+                height:
+                    AppTypography.lineHeightHeadline /
+                    AppTypography.headlineMedium,
+              ),
+            ),
           ),
         ),
       ),
       body: SafeArea(
+        top: false,
         child: Consumer<PortfolioProvider>(
           builder: (context, provider, _) {
             final balance = provider.balance;
@@ -76,6 +86,7 @@ class _PortfolioView extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
+                  const SizedBox(height: 20),
                   // 내 자산 섹션
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
