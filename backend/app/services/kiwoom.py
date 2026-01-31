@@ -332,19 +332,16 @@ class KiwoomService:
         response.raise_for_status()
         return response.json()
 
-    async def post_trade(
-        self,
-        ticker: str,
-        qty: int,
-        is_buy: bool,
-        price: int = 0,
-        is_market_price: bool = True,
-    ) -> Dict[str, Any]:
-        """키움 API를 통한 매   수/매도 주문 전송"""
+    async def post_trade(self, ticker: str, qty: int, price: int = 0, is_buy: bool = True) -> Dict[str, Any]:
+        """키움 API를 통한 매수/매도 주문 전송"""
+        
+        await self.ensure_token() # 변경됨
 
-        await self.ensure_token()  # 변경됨
+        # 1. 시장가 여부 판단 (가격이 0으로 들어오면 시장가로 간주)
+        is_market_price = (price == 0)
 
-        endpoint = "/api/dostk/ordr"
+        endpoint = "/api/dostk/ordr" 
+
         headers = {
             "authorization": f"Bearer {self.access_token}",
             "Content-Type": "application/json; charset=UTF-8",
@@ -352,13 +349,12 @@ class KiwoomService:
 
         # 2. 주문 데이터 구성 (공용 계좌번호 자동으로 포함!)
         payload = {
-            "cano": settings.KIWOOM_ACCOUNT_NO,  # 계좌번호 (8자리)
-            "acpt_m_pwd": settings.KIWOOM_ACCOUNT_PWD,  # 계좌비밀번호 (4자리, .env에 추가 필요)
-            "pdno": ticker,  # 종목번호
-            "ord_qty": str(qty),  # 주문수량 (문자열 요구할 수 있음)
-            "ord_unpr": "0",  # 시장가면 0
-            "tr_dv": "01" if is_buy else "02",  # 01:매수, 02:매도
-            "ord_dv": "03" if is_market_price else "00",  # 03:시장가, 00:지정가
+            "cano": settings.KIWOOM_ACCOUNT_NO,         # 계좌번호 (8자리)
+            "pdno": ticker,                             # 종목번호
+            "ord_qty": str(qty),                        # 주문수량 (문자열 요구할 수 있음)
+            "ord_unpr": str(price),                            # 시장가면 0
+            "tr_dv": "01" if is_buy else "02",          # 01:매수, 02:매도
+            "ord_dv": "03" if is_market_price else "00" # 03:시장가, 00:지정가
         }
 
         # 3. 키움 서버로 주문 전송
