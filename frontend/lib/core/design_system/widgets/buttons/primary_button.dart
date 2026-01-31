@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stock_talk/core/design_system/design_system.dart';
 
 /// 주요 액션을 위한 Primary Button
 class PrimaryButton extends StatelessWidget {
@@ -17,20 +18,47 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final button = ElevatedButton(
-      onPressed: isLoading ? null : onPressed,
-      child: isLoading
-          ? SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  Theme.of(context).colorScheme.onPrimary,
-                ),
-              ),
-            )
-          : child,
+    final isDisabled = onPressed == null || isLoading;
+
+    final button = Opacity(
+      opacity: isDisabled ? 0.4 : 1.0,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: isDisabled ? null : onPressed,
+          borderRadius: BorderRadius.circular(10),
+          child: Ink(
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.blue400,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Center(
+              child: isLoading
+                  ? SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppColors.white,
+                        ),
+                      ),
+                    )
+                  : DefaultTextStyle(
+                      style: TextStyle(
+                        fontSize: AppTypography.titleLarge,
+                        fontWeight: AppTypography.medium,
+                        color: AppColors.white,
+                        height: AppTypography.lineHeightBody /
+                            AppTypography.titleLarge,
+                      ),
+                      child: child,
+                    ),
+            ),
+          ),
+        ),
+      ),
     );
 
     if (isFullWidth) {
