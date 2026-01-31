@@ -67,6 +67,21 @@ async def save_assistant_text(
     await session.commit()
     return msg
 
+def build_stock_chart_payload(stock_detail: dict) -> dict:
+    """
+    get_stock_detail() 결과를
+    채팅용 차트 카드 payload로 변환
+    """
+    return {
+        "card_type": "STOCK_DETAIL_CHART",
+        "ticker": stock_detail["ticker"],
+        "stock_info": stock_detail.get("stock_info", {}),
+        "candles": stock_detail.get("candles", []),
+        "meta": {
+            "source": "kiwoom",
+            "snapshot": True
+        }
+    }
 
 async def save_chart_card(
     session: AsyncSession,
