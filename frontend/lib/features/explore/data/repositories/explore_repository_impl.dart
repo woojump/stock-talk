@@ -19,4 +19,16 @@ class ExploreRepositoryImpl implements ExploreRepository {
     final dto = await _remoteDataSource.getPopularNews();
     return dto.toEntity();
   }
+
+  @override
+  Future<NewsDetail> getNewsDetail(String url) async {
+    final dto = await _remoteDataSource.getNewsDetail(url);
+    return dto.toEntity();
+  }
+
+  @override
+  Future<NewsSummary> getNewsSummary(String url) async {
+    final dto = await _remoteDataSource.getNewsSummary(url);
+    return dto.toEntity();
+  }
 }
