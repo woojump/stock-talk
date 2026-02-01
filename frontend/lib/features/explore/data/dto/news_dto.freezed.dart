@@ -293,7 +293,7 @@ as List<NewsItemDto>,
 /// @nodoc
 mixin _$NewsItemDto {
 
- String get title;@JsonKey(name: 'pubDate') String get pubDate;@JsonKey(name: 'stock_name') String get stockName; String? get description; String? get link;
+ String get title;@JsonKey(name: 'pubDate') String get pubDate;@JsonKey(name: 'stock_name') String? get stockName; String? get description; String? get link;
 /// Create a copy of NewsItemDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -326,7 +326,7 @@ abstract mixin class $NewsItemDtoCopyWith<$Res>  {
   factory $NewsItemDtoCopyWith(NewsItemDto value, $Res Function(NewsItemDto) _then) = _$NewsItemDtoCopyWithImpl;
 @useResult
 $Res call({
- String title,@JsonKey(name: 'pubDate') String pubDate,@JsonKey(name: 'stock_name') String stockName, String? description, String? link
+ String title,@JsonKey(name: 'pubDate') String pubDate,@JsonKey(name: 'stock_name') String? stockName, String? description, String? link
 });
 
 
@@ -343,12 +343,12 @@ class _$NewsItemDtoCopyWithImpl<$Res>
 
 /// Create a copy of NewsItemDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? title = null,Object? pubDate = null,Object? stockName = null,Object? description = freezed,Object? link = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? title = null,Object? pubDate = null,Object? stockName = freezed,Object? description = freezed,Object? link = freezed,}) {
   return _then(_self.copyWith(
 title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,pubDate: null == pubDate ? _self.pubDate : pubDate // ignore: cast_nullable_to_non_nullable
-as String,stockName: null == stockName ? _self.stockName : stockName // ignore: cast_nullable_to_non_nullable
-as String,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String,stockName: freezed == stockName ? _self.stockName : stockName // ignore: cast_nullable_to_non_nullable
+as String?,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String?,link: freezed == link ? _self.link : link // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
@@ -435,7 +435,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String title, @JsonKey(name: 'pubDate')  String pubDate, @JsonKey(name: 'stock_name')  String stockName,  String? description,  String? link)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String title, @JsonKey(name: 'pubDate')  String pubDate, @JsonKey(name: 'stock_name')  String? stockName,  String? description,  String? link)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _NewsItemDto() when $default != null:
 return $default(_that.title,_that.pubDate,_that.stockName,_that.description,_that.link);case _:
@@ -456,7 +456,7 @@ return $default(_that.title,_that.pubDate,_that.stockName,_that.description,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String title, @JsonKey(name: 'pubDate')  String pubDate, @JsonKey(name: 'stock_name')  String stockName,  String? description,  String? link)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String title, @JsonKey(name: 'pubDate')  String pubDate, @JsonKey(name: 'stock_name')  String? stockName,  String? description,  String? link)  $default,) {final _that = this;
 switch (_that) {
 case _NewsItemDto():
 return $default(_that.title,_that.pubDate,_that.stockName,_that.description,_that.link);case _:
@@ -476,7 +476,7 @@ return $default(_that.title,_that.pubDate,_that.stockName,_that.description,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String title, @JsonKey(name: 'pubDate')  String pubDate, @JsonKey(name: 'stock_name')  String stockName,  String? description,  String? link)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String title, @JsonKey(name: 'pubDate')  String pubDate, @JsonKey(name: 'stock_name')  String? stockName,  String? description,  String? link)?  $default,) {final _that = this;
 switch (_that) {
 case _NewsItemDto() when $default != null:
 return $default(_that.title,_that.pubDate,_that.stockName,_that.description,_that.link);case _:
@@ -491,12 +491,12 @@ return $default(_that.title,_that.pubDate,_that.stockName,_that.description,_tha
 @JsonSerializable()
 
 class _NewsItemDto extends NewsItemDto {
-  const _NewsItemDto({required this.title, @JsonKey(name: 'pubDate') required this.pubDate, @JsonKey(name: 'stock_name') required this.stockName, this.description, this.link}): super._();
+  const _NewsItemDto({required this.title, @JsonKey(name: 'pubDate') required this.pubDate, @JsonKey(name: 'stock_name') this.stockName, this.description, this.link}): super._();
   factory _NewsItemDto.fromJson(Map<String, dynamic> json) => _$NewsItemDtoFromJson(json);
 
 @override final  String title;
 @override@JsonKey(name: 'pubDate') final  String pubDate;
-@override@JsonKey(name: 'stock_name') final  String stockName;
+@override@JsonKey(name: 'stock_name') final  String? stockName;
 @override final  String? description;
 @override final  String? link;
 
@@ -533,7 +533,7 @@ abstract mixin class _$NewsItemDtoCopyWith<$Res> implements $NewsItemDtoCopyWith
   factory _$NewsItemDtoCopyWith(_NewsItemDto value, $Res Function(_NewsItemDto) _then) = __$NewsItemDtoCopyWithImpl;
 @override @useResult
 $Res call({
- String title,@JsonKey(name: 'pubDate') String pubDate,@JsonKey(name: 'stock_name') String stockName, String? description, String? link
+ String title,@JsonKey(name: 'pubDate') String pubDate,@JsonKey(name: 'stock_name') String? stockName, String? description, String? link
 });
 
 
@@ -550,12 +550,12 @@ class __$NewsItemDtoCopyWithImpl<$Res>
 
 /// Create a copy of NewsItemDto
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? title = null,Object? pubDate = null,Object? stockName = null,Object? description = freezed,Object? link = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? title = null,Object? pubDate = null,Object? stockName = freezed,Object? description = freezed,Object? link = freezed,}) {
   return _then(_NewsItemDto(
 title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,pubDate: null == pubDate ? _self.pubDate : pubDate // ignore: cast_nullable_to_non_nullable
-as String,stockName: null == stockName ? _self.stockName : stockName // ignore: cast_nullable_to_non_nullable
-as String,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String,stockName: freezed == stockName ? _self.stockName : stockName // ignore: cast_nullable_to_non_nullable
+as String?,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String?,link: freezed == link ? _self.link : link // ignore: cast_nullable_to_non_nullable
 as String?,
   ));

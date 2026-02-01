@@ -27,7 +27,7 @@ Map<String, dynamic> _$PopularNewsResponseDtoToJson(
 _NewsItemDto _$NewsItemDtoFromJson(Map<String, dynamic> json) => _NewsItemDto(
   title: json['title'] as String,
   pubDate: json['pubDate'] as String,
-  stockName: json['stock_name'] as String,
+  stockName: json['stock_name'] as String?,
   description: json['description'] as String?,
   link: json['link'] as String?,
 );

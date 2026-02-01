@@ -31,7 +31,7 @@ abstract class NewsItemDto with _$NewsItemDto {
   const factory NewsItemDto({
     required String title,
     @JsonKey(name: 'pubDate') required String pubDate,
-    @JsonKey(name: 'stock_name') required String stockName,
+    @JsonKey(name: 'stock_name') String? stockName,
     String? description,
     String? link,
   }) = _NewsItemDto;
@@ -43,7 +43,7 @@ abstract class NewsItemDto with _$NewsItemDto {
     return NewsItem(
       title: title,
       pubDate: pubDate,
-      stockName: stockName,
+      stockName: stockName ?? '', // stock_name이 없으면 빈 문자열
       description: description,
       link: link,
     );
