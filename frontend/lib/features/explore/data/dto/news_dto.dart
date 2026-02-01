@@ -49,3 +49,44 @@ abstract class NewsItemDto with _$NewsItemDto {
     );
   }
 }
+
+@freezed
+abstract class NewsDetailDto with _$NewsDetailDto {
+  const NewsDetailDto._();
+
+  const factory NewsDetailDto({
+    required String status,
+    required String title,
+    required String content,
+    @JsonKey(name: 'top_image') String? topImage,
+    @JsonKey(name: 'published_date') required String publishedDate,
+  }) = _NewsDetailDto;
+
+  factory NewsDetailDto.fromJson(Map<String, dynamic> json) =>
+      _$NewsDetailDtoFromJson(json);
+
+  NewsDetail toEntity() {
+    return NewsDetail(
+      title: title,
+      content: content,
+      topImage: topImage,
+      publishedDate: publishedDate,
+    );
+  }
+}
+
+@freezed
+abstract class NewsSummaryDto with _$NewsSummaryDto {
+  const NewsSummaryDto._();
+
+  const factory NewsSummaryDto({
+    @JsonKey(name: 'ai_summary') required String aiSummary,
+  }) = _NewsSummaryDto;
+
+  factory NewsSummaryDto.fromJson(Map<String, dynamic> json) =>
+      _$NewsSummaryDtoFromJson(json);
+
+  NewsSummary toEntity() {
+    return NewsSummary(aiSummary: aiSummary);
+  }
+}
