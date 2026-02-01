@@ -51,9 +51,13 @@ async def get_popular_news():
     """
     # 1. '인기 종목 TOP 5' 데이터 호출 (당일 누적)
     popular_stocks = await kiwoom_service.get_popular_stocks(qry_tp='4')
-    
+
     if not popular_stocks:
-        return await news_service.fetch_unique_news(query="주식 시황", display=5)
+        fallback_news = await news_service.fetch_unique_news(query="주식 시황", display=5)
+        return {
+            "target_stocks": [],
+            "news": fallback_news
+        }
 
     # 2. 각 종목별로 뉴스 2개씩 가져오는 비동기 작업 리스트 생성
     # 상위 5개 종목을 대상으로 합니다.
