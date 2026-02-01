@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:stock_talk/features/explore/domain/entities/explore_entities.dart';
+import 'package:stock_talk/features/explore/domain/entities/news_entities.dart';
+import 'package:stock_talk/features/explore/domain/entities/top_movers_entities.dart';
 import 'package:stock_talk/features/explore/domain/repositories/explore_repository.dart';
 
 enum ChartTab { up, down, popular, buy, sell }

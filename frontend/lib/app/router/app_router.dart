@@ -2,7 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_talk/core/design_system/design_system.dart';
 import 'package:stock_talk/features/chat/presentation/pages/chat_page.dart';
-import 'package:stock_talk/features/explore/domain/entities/explore_entities.dart';
+import 'package:stock_talk/features/explore/domain/entities/news_entities.dart';
 import 'package:stock_talk/features/explore/presentation/pages/explore_page.dart';
 import 'package:stock_talk/features/explore/presentation/pages/news_detail_page.dart';
 import 'package:stock_talk/features/explore/presentation/pages/search_page.dart';

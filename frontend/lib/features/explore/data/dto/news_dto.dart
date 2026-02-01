@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:stock_talk/features/explore/domain/entities/explore_entities.dart';
+import 'package:stock_talk/features/explore/domain/entities/news_entities.dart';
 
 part 'news_dto.freezed.dart';
 part 'news_dto.g.dart';
