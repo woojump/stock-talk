@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:stock_talk/core/design_system/design_system.dart';
+import 'package:stock_talk/core/utils/stock_utils.dart' as stock_utils;
 import 'package:stock_talk/features/portfolio/domain/entities/portfolio_entities.dart';
 
 int evaluationAmount(PortfolioHolding holding) {
@@ -47,20 +47,12 @@ String formatProfitText(
   NumberFormat format, {
   bool includeUnit = false,
 }) {
-  final profitSign = profitLoss > 0
-      ? '+'
-      : profitLoss < 0
-      ? '-'
-      : '';
-  final rateSign = returnRate > 0
-      ? '+'
-      : returnRate < 0
-      ? '-'
-      : '';
-  final profitValue = format.format(profitLoss.abs());
-  final rateValue = returnRate.abs().toStringAsFixed(1);
-  final unit = includeUnit ? '원' : '';
-  return '$profitSign$profitValue$unit ($rateSign$rateValue%)';
+  return stock_utils.formatProfitText(
+    profitLoss,
+    returnRate,
+    format,
+    includeUnit: includeUnit,
+  );
 }
 
 double calculateStockReturnRate(PortfolioBalance balance) {
@@ -73,13 +65,7 @@ double calculateStockReturnRate(PortfolioBalance balance) {
 }
 
 Color getProfitColor(int profitAmount) {
-  if (profitAmount > 0) {
-    return AppColors.red;
-  } else if (profitAmount < 0) {
-    return AppColors.blue400;
-  } else {
-    return AppColors.gray600;
-  }
+  return stock_utils.getProfitColor(profitAmount);
 }
 
 int calculatePendingOrderAmount(PortfolioBalance balance) {
