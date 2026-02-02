@@ -5,9 +5,12 @@ from __future__ import annotations
 import httpx
 import json
 import os
+import re
+
 from datetime import datetime, timedelta  # 시간 계산을 위해 추가
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List, Tuple
 from app.core.config import settings
+from app.services.finance_data_reader import FinanceDataService
 
 
 class KiwoomService:
@@ -22,13 +25,75 @@ class KiwoomService:
         self.default_account_no = os.getenv(
             "KIWOOM_ACCOUNT_NO"
         )  # 환경변수에서 기본 계좌번호 로드
+        self.finance_data = FinanceDataService()
 
-    async def get_stock_detail(self, ticker: str) -> Dict:
+    def _is_exact_6digit_ticker(self, q: str) -> bool:
+        q = (q or "").strip()
+        return bool(re.fullmatch(r"\d{6}", q))
+
+    def _resolve_or_candidates(self, q: str) -> Tuple[Optional[str], List[Dict[str, str]], str]:
+        """
+        반환:
+          - resolved_ticker: 확정된 6자리 티커 (없으면 None)
+          - candidates: 후보 리스트 (없으면 [])
+          - reason: 'TICKER' | 'EXACT' | 'UNIQUE' | 'AMBIGUOUS' | 'NOT_FOUND'
+        """
+        q = (q or "").strip()
+        if not q:
+            return None, [], "NOT_FOUND"
+
+        # 1) 정확히 6자리 숫자일 때만 ticker로 확정
+        if self._is_exact_6digit_ticker(q):
+            return q, [], "TICKER"
+
+        # 2) 그 외(종목명/초성/부분티커/1~5자리 숫자)는 DB search로 후보 찾기
+        results = self.finance_data.search(q)  # [{"srtnCd": "...", "itmsNm": "..."}]
+        if not results:
+            return None, [], "NOT_FOUND"
+        
+        exact_matches = [
+            r for r in results
+            if r["itmsNm"] == q
+        ]
+
+        if len(exact_matches) == 1:
+            return exact_matches[0]["srtnCd"], [], "EXACT"
+        
+        if len(results) == 1:
+            return results[0]["srtnCd"], [], "UNIQUE"
+
+        candidates = [{"srtnCd": r["srtnCd"], "itmsNm": r["itmsNm"]} for r in results]
+        return None, candidates, "AMBIGUOUS"
+
+    async def get_stock_detail(self, q: str) -> Dict:
         """
         1.3 종목 상세 및 차트 데이터 통합 엔드포인트
         - ka10004: 실시간 호가 및 현재가 정보
         - ka10005: 캔들 차트용 일별 주가 데이터
         """
+
+        query = (q or "").strip()
+        resolved_ticker, candidates, reason = self._resolve_or_candidates(query)
+
+        if reason == "NOT_FOUND":
+            return {
+                "status": "fail",
+                "error": "NOT_FOUND",
+                "message": f"'{query}'에 해당하는 종목을 찾지 못했습니다.",
+                "query": query,
+            }
+
+        if reason == "AMBIGUOUS":
+            return {
+                "status": "need_clarification",
+                "error": "AMBIGUOUS",
+                "message": f"'{query}'는 여러 종목이 검색됩니다. 일부 결과를 보여드립니다.",
+                "query": query,
+                "candidates": candidates,
+            }
+        
+        ticker = resolved_ticker  # 확정된 티커 사용
+
         # 1. 실시간 호가 정보 가져오기 (ka10004)
         quote_data = await self.get_market_data(api_id="ka10004", stk_cd=ticker)
 
@@ -76,6 +141,8 @@ class KiwoomService:
 
         # 프론트엔드 담당자가 쓰기 좋게 정리해서 반환
         return {
+            "status": "success",
+            "query": query,
             "ticker": ticker,
             "stock_info": {
                 "current_price": int(
@@ -300,8 +367,10 @@ class KiwoomService:
         await self.ensure_token()  # 변경됨
 
         # 1. API ID에 따른 엔드포인트 자동 선택
-        if api_id.startswith("kt"):
-            endpoint = "/api/dostk/acnt"  # 계좌 관련 (kt00004, kt00018 등)
+        if api_id == "ka10001":
+            endpoint = "/api/dostk/stkinfo"   # 시세 조회 전용 엔드포인트 추가!
+        elif api_id == "ka01690" or api_id.startswith("kt"): # ka01690과 kt 계열은 모두 acnt
+            endpoint = "/api/dostk/acnt"
         elif api_id.startswith("ka"):
             # 기존 ka10004, ka10005 등은 원래 쓰던 mrkcond 엔드포인트 유지
             endpoint = "/api/dostk/mrkcond"
@@ -317,12 +386,12 @@ class KiwoomService:
             "next-key": next_key,
         }
 
-        # Body 데이터 결정 로직
-        # params가 명시적으로 들어오면 그것을 사용하고, 아니면 stk_cd를 사용합니다.
-        data = params if params else {"stk_cd": stk_cd}
+        # Body 데이터 (종목코드 등)
+        data = {"stk_cd": stk_cd}
+        if params:
+            data.update(params) # qry_tp, cano 등이 여기서 추가됨
 
         response = await self.client.post(endpoint, headers=headers, json=data)
-
         # 토큰 만료 시 재시도
         if response.status_code == 401:
             await self.refresh_token()
@@ -331,14 +400,17 @@ class KiwoomService:
 
         response.raise_for_status()
         return response.json()
-      
-      
-    async def post_trade(self, ticker: str, qty: int, is_buy: bool, price: int = 0, is_market_price: bool = True) -> Dict[str, Any]:
-        """키움 API를 통한 매   수/매도 주문 전송"""
+
+    async def post_trade(self, ticker: str, qty: int, price: int = 0, is_buy: bool = True) -> Dict[str, Any]:
+        """키움 API를 통한 매수/매도 주문 전송"""
         
         await self.ensure_token() # 변경됨
 
-        endpoint = "/api/dostk/ordr"
+        # 1. 시장가 여부 판단 (가격이 0으로 들어오면 시장가로 간주)
+        is_market_price = (price == 0)
+
+        endpoint = "/api/dostk/ordr" 
+
         headers = {
             "authorization": f"Bearer {self.access_token}",
             "Content-Type": "application/json; charset=UTF-8",
@@ -346,13 +418,12 @@ class KiwoomService:
 
         # 2. 주문 데이터 구성 (공용 계좌번호 자동으로 포함!)
         payload = {
-            "cano": settings.KIWOOM_ACCOUNT_NO,  # 계좌번호 (8자리)
-            "acpt_m_pwd": settings.KIWOOM_ACCOUNT_PWD,  # 계좌비밀번호 (4자리, .env에 추가 필요)
-            "pdno": ticker,  # 종목번호
-            "ord_qty": str(qty),  # 주문수량 (문자열 요구할 수 있음)
-            "ord_unpr": "0",  # 시장가면 0
-            "tr_dv": "01" if is_buy else "02",  # 01:매수, 02:매도
-            "ord_dv": "03" if is_market_price else "00",  # 03:시장가, 00:지정가
+            "cano": settings.KIWOOM_ACCOUNT_NO,         # 계좌번호 (8자리)
+            "pdno": ticker,                             # 종목번호
+            "ord_qty": str(qty),                        # 주문수량 (문자열 요구할 수 있음)
+            "ord_unpr": str(price),                            # 시장가면 0
+            "tr_dv": "01" if is_buy else "02",          # 01:매수, 02:매도
+            "ord_dv": "03" if is_market_price else "00" # 03:시장가, 00:지정가
         }
 
         # 3. 키움 서버로 주문 전송
@@ -436,43 +507,74 @@ class KiwoomService:
         except ValueError:
             return 0
 
+    from datetime import datetime
+
     async def get_account_balance(self) -> Dict[str, Any]:
-        """[마이페이지] 전체 자산 요약 및 개별 종목 수익률 조회"""
-        # 1. 계좌 요약(kt00004) 및 상세(kt00018) 요청 파라미터 구성
-        common_params = {"cano": self.default_account_no, "dmst_stex_tp": "KRX"}
+        """[마이페이지] 종목별 데이터를 직접 합산하여 총 평가금액, 손익금액, 수익률 산출"""
+        try:
+            common_params = {"cano": self.default_account_no, "dmst_stex_tp": "KRX"}
+            # 1. 상세 종목 리스트(kt00018)와 기본 요약(kt00004) 호출
+            summary_res = await self.get_market_data(api_id="kt00004", params={**common_params, "qry_tp": "0"})
+            detail_res = await self.get_market_data(api_id="kt00018", params={**common_params, "qry_tp": "1"})
 
-        summary_res = await self.get_market_data(
-            api_id="kt00004", params={**common_params, "qry_tp": "0"}
-        )
-        detail_res = await self.get_market_data(
-            api_id="kt00018", params={**common_params, "qry_tp": "1"}
-        )
+            summary_data = summary_res.get("output") or summary_res
+            holdings_list = detail_res.get("acnt_evlt_remn_indv_tot") or detail_res.get("output1") or []
 
-        # 2. 통합 결과 반환
-        return {
-            "summary": {
-                "total_asset": self._parse_num(summary_res.get("aset_evlt_amt")),
-                "available_cash": self._parse_num(summary_res.get("d2_entra")),
-                "total_profit_loss": self._parse_num(summary_res.get("lspft_amt")),
-                "total_return_rate": self._parse_num(
-                    summary_res.get("lspft_rt"), is_float=True
-                ),
-            },
-            "holdings": [
-                {
+            # --- 직접 합산 변수 초기화 ---
+            total_buy_amt = 0   # 총 매수금액 (원금)
+            total_evl_amt = 0   # 총 평가금액 (현재 가치)
+            
+            parsed_holdings = []
+            for item in holdings_list:
+                qty = self._parse_num(item.get("hldg_qty") or item.get("trde_able_qty"))
+                pchs_price = self._parse_num(item.get("pchs_avg_pric") or item.get("pur_pric"))
+                curr_price = self._parse_num(item.get("prpr") or item.get("cur_prc"))
+                
+                # 종목별 금액 계산
+                row_buy_amt = qty * pchs_price   # 이 종목 산 돈
+                row_evl_amt = qty * curr_price   # 이 종목 현재 가치
+                
+                # 전체 합계에 누적
+                total_buy_amt += row_buy_amt
+                total_evl_amt += row_evl_amt
+                
+                parsed_holdings.append({
                     "ticker": item.get("stk_cd", "").replace("A", ""),
-                    "name": item.get("stk_nm"),
-                    "quantity": self._parse_num(item.get("trde_able_qty")),
-                    "purchase_price": self._parse_num(item.get("pur_pric")),
-                    "current_price": self._parse_num(item.get("cur_prc")),
-                    "profit_loss_rate": self._parse_num(
-                        item.get("prft_rt"), is_float=True
-                    ),
-                }
-                for item in detail_res.get("acnt_evlt_remn_indv_tot", [])
-            ],
-        }
+                    "name": item.get("stk_nm") or item.get("prdt_nm"),
+                    "quantity": qty,
+                    "purchase_price": pchs_price,
+                    "current_price": curr_price,
+                    "profit_loss_rate": self._parse_num(item.get("evlu_pfls_rt") or item.get("prft_rt"), is_float=True)
+                })
 
+            # --- 최종 요약 수치 계산 ---
+            # 1. 총 평가 손익 = 총 평가금액 - 총 매수금액
+            total_pnl = total_evl_amt - total_buy_amt
+            
+            # 2. 총 수익률 = (총 손익 / 총 매수금액) * 100
+            if total_buy_amt > 0:
+                final_rt = (total_pnl / total_buy_amt) * 100
+            else:
+                final_rt = 0.0
+
+            # 3. 예수금 (예수금은 합산이 안 되므로 서버에서 직접 가져옴)
+            available_cash = self._parse_num(summary_data.get("d2_entra") or summary_data.get("dnca_tot_amt"))
+
+            return {
+                "summary": {
+                    "total_asset": total_evl_amt + available_cash, # 총 자산 = 주식평가금 + 현금
+                    "stock_evaluation": total_evl_amt,            # 총 주식 평가 금액
+                    "available_cash": available_cash,             # 예수금
+                    "total_profit_loss": total_pnl,               # 총 평가 수익금액
+                    "total_return_rate": round(final_rt, 2)       # 총 수익률
+                },
+                "holdings": parsed_holdings
+            }
+
+        except Exception as e:
+            print(f"🚨 [잔고 합산 계산 에러]: {str(e)}")
+            return {"summary": {"total_asset": 0, "available_cash": 0, "total_profit_loss": 0, "total_return_rate": 0.0}, "holdings": []}    
+        
     async def close(self):
         """서버 종료 시 연결을 안전하게 닫습니다."""
         await self.client.aclose()

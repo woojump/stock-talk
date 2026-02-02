@@ -1,7 +1,11 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:stock_talk/core/design_system/design_system.dart';
 import 'package:stock_talk/features/chat/presentation/pages/chat_page.dart';
+import 'package:stock_talk/features/explore/domain/entities/news_entities.dart';
 import 'package:stock_talk/features/explore/presentation/pages/explore_page.dart';
+import 'package:stock_talk/features/explore/presentation/pages/news_detail_page.dart';
+import 'package:stock_talk/features/explore/presentation/pages/search_page.dart';
 import 'package:stock_talk/features/portfolio/domain/entities/portfolio_entities.dart';
 import 'package:stock_talk/features/portfolio/presentation/pages/portfolio_detail_page.dart';
 import 'package:stock_talk/features/portfolio/presentation/pages/portfolio_page.dart';
@@ -22,6 +26,10 @@ class AppRouter extends RootStackRouter {
       ],
     ),
 
+    // Explore
+    AutoRoute(page: SearchRoute.page),
+    AutoRoute(page: NewsDetailRoute.page),
+
     // Portfolio
     AutoRoute(page: PortfolioDetailRoute.page),
   ];
@@ -39,20 +47,20 @@ class MainShellPage extends StatelessWidget {
         return BottomNavigationBar(
           currentIndex: tabsRouter.activeIndex,
           onTap: tabsRouter.setActiveIndex,
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.chat_bubble_outline),
-              activeIcon: Icon(Icons.chat_bubble),
+              icon: AppIcon.nav('chat', active: false),
+              activeIcon: AppIcon.nav('chat', active: true),
               label: '채팅',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.search),
-              activeIcon: Icon(Icons.search),
+              icon: AppIcon.nav('explore', active: false),
+              activeIcon: AppIcon.nav('explore', active: true),
               label: '탐색',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.account_balance_wallet_outlined),
-              activeIcon: Icon(Icons.account_balance_wallet),
+              icon: AppIcon.nav('portfolio', active: false),
+              activeIcon: AppIcon.nav('portfolio', active: true),
               label: '포트폴리오',
             ),
           ],

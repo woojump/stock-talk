@@ -3,8 +3,45 @@ from fastapi import APIRouter, Query, HTTPException
 from app.services.news_service import news_service
 # 팀원분이 구현한 KiwoomService 인스턴스를 가져옵니다
 from app.services.kiwoom import kiwoom_service 
+from app.core.config import settings
+from langchain_openai import ChatOpenAI
 
 router = APIRouter()
+
+# 요약 전용 LLM 초기화 (에이전트보다 가볍게 설정)
+summary_llm = ChatOpenAI(
+    model=settings.MODEL_NAME,
+    api_key=settings.OPENAI_API_KEY,
+    temperature=0.3
+)
+
+# AI 요약 함수
+async def generate_ai_summary(content: str) -> str:
+    """뉴스 본문을 분석하여 3줄 요약 및 인사이트 생성"""
+    if not content or len(content) < 150:
+        return "본문 내용이 충분하지 않아 요약을 생성할 수 없습니다."
+
+    prompt = f"""
+    당신은 주식 투자자를 돕는 전문 금융 애널리스트입니다. 
+    제공된 뉴스 본문을 읽고 투자자가 즉시 참고할 수 있도록 요약하세요.
+
+    [요청 사항]
+    1. 핵심 내용을 3줄 이내로 요약할 것.
+    2. 말투는 '~함', '~임'과 같은 개조식으로 작성할 것.
+    3. 주가에 영향을 줄 수 있는 호재/악재 요소가 있다면 마지막에 반드시 언급할 것.
+
+    뉴스 본문:
+    {content[:2500]}  # 최대 토큰을 고려한 본문 슬라이싱
+    """
+    
+    try:
+        response = await summary_llm.ainvoke(prompt)
+        return response.content
+    except Exception as e:
+        return f"AI 요약 도중 오류가 발생했습니다: {str(e)}"
+
+
+# --- [API 엔드포인트] ---
 
 @router.get("/popular")
 async def get_popular_news():
@@ -14,9 +51,13 @@ async def get_popular_news():
     """
     # 1. '인기 종목 TOP 5' 데이터 호출 (당일 누적)
     popular_stocks = await kiwoom_service.get_popular_stocks(qry_tp='4')
-    
+
     if not popular_stocks:
-        return await news_service.fetch_unique_news(query="주식 시황", display=5)
+        fallback_news = await news_service.fetch_unique_news(query="주식 시황", display=5)
+        return {
+            "target_stocks": [],
+            "news": fallback_news
+        }
 
     # 2. 각 종목별로 뉴스 2개씩 가져오는 비동기 작업 리스트 생성
     # 상위 5개 종목을 대상으로 합니다.
@@ -58,9 +99,19 @@ async def get_news_detail(url: str = Query(..., description="기사 원문 URL")
     
     if article_data["status"] == "error":
         raise HTTPException(status_code=400, detail=article_data["message"])
-        
-    # TODO: LLM 요약 함수가 완성되면 여기서 article_data['content']를 넘깁니다
-    # summary = await yongbin_llm_service.generate_summary(article_data['content'])
-    # article_data['ai_summary'] = summary
     
     return article_data
+
+@router.get("/summarize")
+async def get_news_summary(url: str = Query(..., description="기사 원문 URL")):
+    """
+    [뉴스 상세 - STEP 2] AI 요약 생성
+    - 본문을 읽고 요약을 생성하여 반환합니다. (시간 소요됨)
+    """
+    article_data = news_service.get_article_content(url)
+    
+    if article_data["status"] == "error":
+        return {"ai_summary": "기사 본문을 가져올 수 없어 요약에 실패했습니다."}
+        
+    summary = await generate_ai_summary(article_data['content'])
+    return {"ai_summary": summary}

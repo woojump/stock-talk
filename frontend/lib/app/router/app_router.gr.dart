@@ -59,6 +59,53 @@ class MainShellRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
+/// [NewsDetailPage]
+class NewsDetailRoute extends PageRouteInfo<NewsDetailRouteArgs> {
+  NewsDetailRoute({
+    Key? key,
+    required NewsItem news,
+    List<PageRouteInfo>? children,
+  }) : super(
+         NewsDetailRoute.name,
+         args: NewsDetailRouteArgs(key: key, news: news),
+         initialChildren: children,
+       );
+
+  static const String name = 'NewsDetailRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<NewsDetailRouteArgs>();
+      return NewsDetailPage(key: args.key, news: args.news);
+    },
+  );
+}
+
+class NewsDetailRouteArgs {
+  const NewsDetailRouteArgs({this.key, required this.news});
+
+  final Key? key;
+
+  final NewsItem news;
+
+  @override
+  String toString() {
+    return 'NewsDetailRouteArgs{key: $key, news: $news}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! NewsDetailRouteArgs) return false;
+    return key == other.key && news == other.news;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ news.hashCode;
+}
+
+/// generated route for
 /// [PortfolioDetailPage]
 class PortfolioDetailRoute extends PageRouteInfo<PortfolioDetailRouteArgs> {
   PortfolioDetailRoute({
@@ -117,6 +164,22 @@ class PortfolioRoute extends PageRouteInfo<void> {
     name,
     builder: (data) {
       return const PortfolioPage();
+    },
+  );
+}
+
+/// generated route for
+/// [SearchPage]
+class SearchRoute extends PageRouteInfo<void> {
+  const SearchRoute({List<PageRouteInfo>? children})
+    : super(SearchRoute.name, initialChildren: children);
+
+  static const String name = 'SearchRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const SearchPage();
     },
   );
 }

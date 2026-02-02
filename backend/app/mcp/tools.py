@@ -1,4 +1,7 @@
 # backend/app/mcp/tools.py
+from __future__ import annotations
+
+from typing import Any, Dict, List
 from langchain_core.tools import tool  # 랭체인용 도구 도장
 from app.services.kiwoom import kiwoom_service
 
@@ -55,43 +58,137 @@ async def get_investor_rank(action_type: str = "매수", investor_type: str = "�
     lines = [f"{i+1}. {s['name']} - {s['amount']}억" for i, s in enumerate(data[:5])]
     
     return f"{title}\n" + "\n".join(lines)
+
+
 # 4. 종목 시세 상세 데이터
+def _format_candidates_text(candidates: List[Dict[str, Any]], max_items: int = 10) -> str:
+    # candidates: [{"srtnCd":"005930","itmsNm":"삼성전자"}, ...]
+    # tool에서 보여줄 텍스트로 변환 (너무 길어지지 않게)
+    lines = []
+    for i, item in enumerate(candidates[:max_items], start=1):
+        name = item.get("itmsNm", "")
+        code = item.get("srtnCd", "")
+        if name and code:
+            lines.append(f"{i}. {name} ({code})")
+        elif name:
+            lines.append(f"{i}. {name}")
+        elif code:
+            lines.append(f"{i}. ({code})")
+
+    return "\n".join(lines)
+
+
 @tool
-async def get_market_data(ticker: str) -> str:
+async def get_market_data(q: str) -> str:
     """
     특정 종목의 현재가, 전일대비, 거래량 등 상세 마켓 데이터를 조회합니다.
-    ticker: 종목코드 6자리 (예: '005930')
+    query: 종목명 또는 종목코드
     """
     try:
-        # 1. 사용자님의 서비스 함수 규격에 맞춰 호출
-        # 국내주식 현재가 시세 조회를 위해 api_id를 'ka10001'로 설정합니다.
-        result = await kiwoom_service.get_market_data(
-            api_id="ka10001", 
-            stk_cd=ticker
-        )
+        print(f"🔍 [시세조회] 입력된 종목: {q}")
+        query = (q or "").strip()
 
-        # 2. 응답 데이터에서 필요한 정보 추출 (키움 API 응답 필드 기준)
-        # 키움 현재가(ka10001) 응답은 보통 'output' 키 안에 들어옵니다.
-        output = result.get("output", {})
+        # ✅ 티커 resolve + ambiguous 처리까지 서비스 함수에 맡김
+        data = await kiwoom_service.get_stock_detail(query)
+
+        status = data.get("status")
+
+        # 1) 못 찾음
+        if status == "fail":
+            # service message 그대로 사용
+            return data.get("message", "종목을 찾지 못했습니다.")
+
+        # 2) 여러 개(모호함) → 일부 결과 + 리스트
+        if status == "need_clarification":
+            msg = data.get("message", "여러 종목이 검색되었습니다.")
+            candidates = data.get("candidates", []) or []
+            cand_text = _format_candidates_text(candidates)
+
+            if cand_text:
+                return f"{msg}\n{cand_text}\n\n정확한 종목명 또는 6자리 티커로 다시 입력해 주세요."
+            return f"{msg}\n\n정확한 종목명 또는 6자리 티커로 다시 입력해 주세요."
         
-        if not output:
-            return f"❌ {ticker} 종목의 데이터를 불러오지 못했습니다. (응답 없음)"
+        # 3) 성공 → 기존 예쁜 텍스트 포맷 최대한 유지
+        if status == "success":
+            ticker_formatted = (data.get("ticker") or "").strip()
+        
+            if not ticker_formatted:
+                return "🚨 종목 티커를 확정하지 못했습니다. 정확한 종목명 또는 6자리 티커로 다시 입력해 주세요."
 
-        name = output.get("stck_nm", ticker)          # 종목명
-        price = output.get("stck_prpr", "0")         # 현재가
-        diff = output.get("prdy_vrss", "0")          # 전일대비
-        rate = output.get("prdy_ctrt", "0")          # 전일대비율
-        volume = output.get("acml_tr_pbmn", "0")     # 누적 거래대금
+            result = await kiwoom_service.get_market_data(
+                api_id="ka10001", 
+                stk_cd=ticker_formatted
+            )
 
-        return (
-            f"📊 **{name} ({ticker}) 현재 시세**\n"
-            f"- 현재가: {int(price):,}원\n"
-            f"- 전일대비: {diff}원 ({rate}%)\n"
-            f"- 거래대금: {int(volume):,}원"
-        )
+            print(f"📦 [API 응답]: {result}")
+
+            # 1. 응답 데이터에서 실제 필드값 추출 (보내주신 로그 기준)
+            # 데이터가 'output'에 담겨오지 않고 바로 result에 있으므로 result.get 사용
+            name = result.get("stk_nm", ticker_formatted)
+            price = result.get("cur_prc", "0")      # 현재가
+            diff = result.get("pred_pre", "0")      # 전일대비 (변동액)
+            rate = result.get("flu_rt", "0")        # 등락률
+            volume = result.get("trde_qty", "0")    # 거래량
+
+            # 2. 부호(+, -) 제거 및 숫자 포맷팅
+            # 데이터가 '-160500' 처럼 오기 때문에 부호를 떼고 계산해야 함
+            clean_price = str(price).replace('-', '').replace('+', '')
+            clean_diff = str(diff).replace('-', '').replace('+', '')
+            clean_volume = str(volume).replace(',', '')
+
+            try:
+                formatted_price = f"{int(clean_price):,}원"
+                formatted_volume = f"{int(clean_volume):,}주" # 거래량 단위는 '주'가 적절
+            except (ValueError, TypeError):
+                formatted_price = f"{price}원"
+                formatted_volume = f"{volume}주"
+
+            # 3. 등락 상태에 따른 아이콘 
+            try:
+                rate_f = float(str(rate).replace("+", "").replace("%", ""))
+            except Exception:
+                rate_f = 0.0
+
+            icon = "▲" if rate_f > 0 else "▼"
+            if rate_f == 0:
+                icon = "〓"
+
+            return (
+                f"📊 **{name} ({ticker_formatted}) 현재 시세**\n"
+                f"- 현재가: {formatted_price}\n"
+                f"- 전일대비: {icon} {clean_diff}원 ({rate}%)\n"
+                f"- 거래량: {formatted_volume}"
+            )
+        # 예상치 못한 status
+        return "🚨 시세 조회 중 알 수 없는 응답 상태가 발생했습니다."
 
     except Exception as e:
-        return f"🚨 시세 조회 중 에러 발생: {str(e)}"
+        print(f"🚨 [도구 에러]: {str(e)}")
+        return f"🚨 시세 조회 중 파싱 에러가 발생했습니다: {str(e)}"
+
+'''    
+@tool
+async def search_stock_ticker(query: str) -> str:
+    """
+    사용자가 입력한 종목명(예: 삼성전자, 현대차)으로 종목 코드(티커)를 찾습니다.
+    시세 조회나 주문 전 단계에서 반드시 이 도구를 사용해 코드를 먼저 확인해야 합니다.
+    """
+    try:
+        # 기존에 만들어두신 finance_data_service의 search 기능을 활용합니다.
+        from app.api.api_v1.endpoints.stock import finance_data_service # 임포트 체크 필요
+        
+        results = finance_data_service.search(query)
+        
+        if not results:
+            return f"'{query}'에 해당하는 종목을 찾을 수 없습니다. 정확한 이름을 입력해 주세요."
+        
+        # 검색 결과 중 첫 번째 종목의 정보를 에이전트에게 전달
+        top_match = results[0]
+        return f"검색 결과: {top_match['name']}의 종목 코드는 {top_match['ticker']}입니다."
+    
+    except Exception as e:
+        return f"종목 검색 중 오류 발생: {str(e)}"
+'''
 
 # 5. 주식 주문 (매수/매도)
 @tool
@@ -194,7 +291,7 @@ async def get_account_balance() -> str:
     try:
         # KiwoomService의 get_account_balance 호출
         result = await kiwoom_service.get_account_balance()
-        
+        print(f"💰 [잔고 응답 데이터]: {result}") # 이 로그를 확인해야 합니다!
         summary = result.get("summary", {})
         holdings = result.get("holdings", [])
 
@@ -227,3 +324,11 @@ async def get_account_balance() -> str:
 def register_tools(mcp):
     # 위에서 정의한 함수를 MCP 도구로 등록합니다.
     mcp.tool()(get_top_movers)
+    mcp.tool()(get_popular_stocks)
+    mcp.tool()(get_investor_rank)
+    mcp.tool()(get_market_data)
+#    mcp.tool()(search_stock_ticker)
+    mcp.tool()(post_trade)        # <--- 매수/매도 주문 필수!
+    mcp.tool()(amend_order)       # 주문 정정
+    mcp.tool()(cancel_order)      # 주문 취소
+    mcp.tool()(get_account_balance) # 계좌 조회
