@@ -16,4 +16,6 @@ class ApiConfig {
   static const String baseUrl = isProd ? prodBaseUrl : devBaseUrl;
 
   static const String balancePath = '/trade/balance';
+  static const String topMoversPath = '/market/top-movers';
+  static const String popularNewsPath = '/news/popular';
 }

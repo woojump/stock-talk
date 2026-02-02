@@ -18,8 +18,8 @@ class ChatMessage(Base):
     message_id = Column(BigInteger, primary_key=True, autoincrement=True)
     room_id = Column(BigInteger, ForeignKey("chat_room.room_id"), nullable=False)
 
-    role = Column(Enum("user", "assistant", "system", "tool"), nullable=False)
-    msg_type = Column(Enum("TEXT", "CARD", "EVENT"), nullable=False, default="TEXT")
+    role = Column(Enum("user", "assistant"), nullable=False)
+    msg_type = Column(Enum("TEXT", "CARD"), nullable=False, server_default="TEXT")
 
     content = Column(Text, nullable=True)
     payload_json = Column(JSON, nullable=True)
@@ -27,4 +27,4 @@ class ChatMessage(Base):
     sent_at = Column(DateTime(timezone=True), server_default=func.now())
 
     parent_id = Column(BigInteger, nullable=True)
-    status = Column(Enum("final", "streaming", "error"), default="final")
+    status = Column(Enum("final", "error"), default="final")

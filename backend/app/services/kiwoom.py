@@ -5,9 +5,12 @@ from __future__ import annotations
 import httpx
 import json
 import os
+import re
+
 from datetime import datetime, timedelta  # 시간 계산을 위해 추가
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List, Tuple
 from app.core.config import settings
+from app.services.finance_data_reader import FinanceDataService
 
 
 class KiwoomService:
@@ -22,13 +25,75 @@ class KiwoomService:
         self.default_account_no = os.getenv(
             "KIWOOM_ACCOUNT_NO"
         )  # 환경변수에서 기본 계좌번호 로드
+        self.finance_data = FinanceDataService()
 
-    async def get_stock_detail(self, ticker: str) -> Dict:
+    def _is_exact_6digit_ticker(self, q: str) -> bool:
+        q = (q or "").strip()
+        return bool(re.fullmatch(r"\d{6}", q))
+
+    def _resolve_or_candidates(self, q: str) -> Tuple[Optional[str], List[Dict[str, str]], str]:
+        """
+        반환:
+          - resolved_ticker: 확정된 6자리 티커 (없으면 None)
+          - candidates: 후보 리스트 (없으면 [])
+          - reason: 'TICKER' | 'EXACT' | 'UNIQUE' | 'AMBIGUOUS' | 'NOT_FOUND'
+        """
+        q = (q or "").strip()
+        if not q:
+            return None, [], "NOT_FOUND"
+
+        # 1) 정확히 6자리 숫자일 때만 ticker로 확정
+        if self._is_exact_6digit_ticker(q):
+            return q, [], "TICKER"
+
+        # 2) 그 외(종목명/초성/부분티커/1~5자리 숫자)는 DB search로 후보 찾기
+        results = self.finance_data.search(q)  # [{"srtnCd": "...", "itmsNm": "..."}]
+        if not results:
+            return None, [], "NOT_FOUND"
+        
+        exact_matches = [
+            r for r in results
+            if r["itmsNm"] == q
+        ]
+
+        if len(exact_matches) == 1:
+            return exact_matches[0]["srtnCd"], [], "EXACT"
+        
+        if len(results) == 1:
+            return results[0]["srtnCd"], [], "UNIQUE"
+
+        candidates = [{"srtnCd": r["srtnCd"], "itmsNm": r["itmsNm"]} for r in results]
+        return None, candidates, "AMBIGUOUS"
+
+    async def get_stock_detail(self, q: str) -> Dict:
         """
         1.3 종목 상세 및 차트 데이터 통합 엔드포인트
         - ka10004: 실시간 호가 및 현재가 정보
         - ka10005: 캔들 차트용 일별 주가 데이터
         """
+
+        query = (q or "").strip()
+        resolved_ticker, candidates, reason = self._resolve_or_candidates(query)
+
+        if reason == "NOT_FOUND":
+            return {
+                "status": "fail",
+                "error": "NOT_FOUND",
+                "message": f"'{query}'에 해당하는 종목을 찾지 못했습니다.",
+                "query": query,
+            }
+
+        if reason == "AMBIGUOUS":
+            return {
+                "status": "need_clarification",
+                "error": "AMBIGUOUS",
+                "message": f"'{query}'는 여러 종목이 검색됩니다. 일부 결과를 보여드립니다.",
+                "query": query,
+                "candidates": candidates,
+            }
+        
+        ticker = resolved_ticker  # 확정된 티커 사용
+
         # 1. 실시간 호가 정보 가져오기 (ka10004)
         quote_data = await self.get_market_data(api_id="ka10004", stk_cd=ticker)
 
@@ -76,6 +141,8 @@ class KiwoomService:
 
         # 프론트엔드 담당자가 쓰기 좋게 정리해서 반환
         return {
+            "status": "success",
+            "query": query,
             "ticker": ticker,
             "stock_info": {
                 "current_price": int(
@@ -323,8 +390,8 @@ class KiwoomService:
         data = {"stk_cd": stk_cd}
         if params:
             data.update(params) # qry_tp, cano 등이 여기서 추가됨
-        response = await self.client.post(endpoint, headers=headers, json=data)
 
+        response = await self.client.post(endpoint, headers=headers, json=data)
         # 토큰 만료 시 재시도
         if response.status_code == 401:
             await self.refresh_token()

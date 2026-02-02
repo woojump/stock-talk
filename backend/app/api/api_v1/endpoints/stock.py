@@ -49,6 +49,6 @@ async def search(query: str = Query(...)):
     return finance_data_service.search(query)
 
 # 1.3 종목 상세 및 차트
-@router.get("/stock/{ticker}/detail")
-async def get_stock_detail(ticker: str):
-    return await kiwoom_service.get_stock_detail(ticker)
+@router.get("/stock/{query}/detail")
+async def get_stock_detail(query: str):
+    return await kiwoom_service.get_stock_detail(query)

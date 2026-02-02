@@ -25,9 +25,9 @@ def initialize_stock_db():
         
         with conn.cursor() as cursor:
             # 3. 테이블 생성 (없을 때만)
-            print("🏗️ stock_master 테이블 생성 중...")
+            print("🏗️ stock_info 테이블 생성 중...")
             cursor.execute("""
-            CREATE TABLE IF NOT EXISTS stock_master (
+            CREATE TABLE IF NOT EXISTS stock_info (
                 ticker VARCHAR(20) PRIMARY KEY,
                 name VARCHAR(100) NOT NULL,
                 market VARCHAR(20),
@@ -41,7 +41,7 @@ def initialize_stock_db():
             # 4. 데이터 삽입 (UPSERT)
             print(f"📦 데이터 저장 중... (총 {len(data_to_insert)}개)")
             sql = """
-            INSERT INTO stock_master (ticker, name, market, dept, marcap, market_id)
+            INSERT INTO stock_info (ticker, name, market, dept, marcap, market_id)
             VALUES (%s, %s, %s, %s, %s, %s)
             ON DUPLICATE KEY UPDATE
                 name = VALUES(name),

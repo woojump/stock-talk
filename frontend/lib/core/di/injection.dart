@@ -2,6 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:stock_talk/app/router/app_router.dart';
 import 'package:stock_talk/core/config/api_config.dart';
+import 'package:stock_talk/features/explore/data/datasources/explore_remote_data_source.dart';
+import 'package:stock_talk/features/explore/data/repositories/explore_repository_impl.dart';
+import 'package:stock_talk/features/explore/domain/repositories/explore_repository.dart';
+import 'package:stock_talk/features/explore/presentation/providers/explore_provider.dart';
 import 'package:stock_talk/features/portfolio/data/datasources/portfolio_remote_data_source.dart';
 import 'package:stock_talk/features/portfolio/data/repositories/portfolio_repository_impl.dart';
 import 'package:stock_talk/features/portfolio/domain/repositories/portfolio_repository.dart';
@@ -33,5 +37,16 @@ Future<void> configureDependencies() async {
   );
   getIt.registerFactory<PortfolioProvider>(
     () => PortfolioProvider(getIt<PortfolioRepository>()),
+  );
+
+  // Explore
+  getIt.registerLazySingleton<ExploreRemoteDataSource>(
+    () => ExploreRemoteDataSource(getIt<Dio>()),
+  );
+  getIt.registerLazySingleton<ExploreRepository>(
+    () => ExploreRepositoryImpl(getIt<ExploreRemoteDataSource>()),
+  );
+  getIt.registerFactory<ExploreProvider>(
+    () => ExploreProvider(getIt<ExploreRepository>()),
   );
 }
