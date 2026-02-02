@@ -9,7 +9,6 @@ class OrderRequest(BaseModel):
     qty: int
     price: int
     is_buy : bool = True    # True: 매수, False: 매도
-    type: str               # limit: 지정가, market: 시장가
 
 # 정정 주문 요청 모델
 class AmendRequest(BaseModel):

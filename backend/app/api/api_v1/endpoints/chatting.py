@@ -85,7 +85,6 @@ SYSTEM_PROMPT_DICT = {
 OUTPUT_FORMAT = """
 [차트 카드 생성 규칙] 
 - 사용자가 "시세", "현재가", "주가", "차트", "그래프", "캔들", "추세", "주가 흐름" 중 하나라도 요구하면 need_chart=true로 판단한다. 
-<<<<<<< HEAD
 - 종목명으로 요청이 들어오면 search_stock_ticker 도구로 ticker(6자리)를 먼저 확인한다. 
 - candles(차트 데이터)는 절대 도구로 가져오거나 대답에 포함하지 말고, 서버가 처리한다. 
 - 최종 응답은 반드시 아래 JSON 형식으로만 출력한다(문장/마크다운 금지). { "answer_text": "사용자에게 보여줄 요약 텍스트", "ticker": "005930", "need_chart": true } 
@@ -97,22 +96,6 @@ SYSTEM_PROMPT = (
     json.dumps(SYSTEM_PROMPT_DICT, ensure_ascii=False, indent=2)
     + "\n\n"
     + OUTPUT_FORMAT
-=======
-- 종목 식별(티커/종목명/키워드 매칭)과 모호성(여러 종목 검색) 처리는 get_market_data 도구가 수행한다. LLM은 종목을 임의로 확정하지 않는다.
-- candles(차트 데이터)는 절대 응답에 포함하지 않는다(서버가 처리).
-- get_market_data 도구 사용 규칙:
-  - 도구가 "여러 종목" 안내를 반환하면 ticker는 null로 출력하고, answer_text에는 도구가 준 안내/목록을 그대로 넣어 사용자에게 재입력을 유도한다.
-  - 도구가 특정 종목 시세를 반환하면 ticker는 6자리 티커로 채운다. (티커를 모르면 추측하지 말고 null)
-- 최종 응답은 반드시 아래 JSON 형식으로만 출력한다(문장/마크다운 금지):
-  { "answer_text": "사용자에게 보여줄 요약 텍스트", "ticker": "005930 또는 null", "need_chart": true }
-- 차트가 필요 없으면 need_chart=false로 출력한다.
-"""
-
-SYSTEM_PROMPT = (
-    OUTPUT_FORMAT
-    + "\n\n"
-    + json.dumps(SYSTEM_PROMPT_DICT, ensure_ascii=False, indent=2)
->>>>>>> 966f378 (시세·차트 조회 LLM 응답 안정화 및 채팅 MySQL 구조 정리)
 )
 
 memory = MemorySaver()
@@ -200,10 +183,6 @@ async def chat_with_agent(query: str, room_id: int = None):
                 """,
                 (room_id, query),
             )
-<<<<<<< HEAD
-=======
-            user_msg_id = cursor.lastrowid
->>>>>>> 966f378 (시세·차트 조회 LLM 응답 안정화 및 채팅 MySQL 구조 정리)
 
             messages: List[Dict[str, Any]] = []
 
@@ -219,7 +198,6 @@ async def chat_with_agent(query: str, room_id: int = None):
             # --- [STEP 3-2] 메시지 저장 (AI) ---
             cursor.execute(
                 """
-<<<<<<< HEAD
                 INSERT INTO chat_message (room_id, role, msg_type, content)
                 VALUES (%s, 'assistant', 'TEXT', %s)
                 """,
@@ -228,40 +206,17 @@ async def chat_with_agent(query: str, room_id: int = None):
             messages.append({"role": "assistant", "msg_type": "TEXT", "content": answer_text})
 
             # 차트가 필요하면 서버가 직접 get_stock_detail 호출 후 CARD 저장
-=======
-                INSERT INTO chat_message (room_id, role, msg_type, content, parent_id, status)
-                VALUES (%s, 'assistant', 'TEXT', %s, %s, 'final')
-                """,
-                (room_id, answer_text, user_msg_id),
-            )
-            assistant_text_id = cursor.lastrowid
-            last_message_id = assistant_text_id
-            messages.append({"role": "assistant", "msg_type": "TEXT", "content": answer_text})
-
-            # 차트가 필요하면 서버가 직접 get_stock_detail 호출 후 CARD 저장
-
->>>>>>> 966f378 (시세·차트 조회 LLM 응답 안정화 및 채팅 MySQL 구조 정리)
             if need_chart and ticker:
                 stock_detail = await kiwoom_service.get_stock_detail(str(ticker))
                 card_payload = _build_chart_card_payload(stock_detail)
 
                 cursor.execute(
                     """
-<<<<<<< HEAD
                     INSERT INTO chat_message (room_id, role, msg_type, payload_json)
                     VALUES (%s, 'assistant', 'CARD', %s)
                     """,
                     (room_id, json.dumps(card_payload, ensure_ascii=False)),
                 )
-=======
-                    INSERT INTO chat_message (room_id, role, msg_type, payload_json, parent_id, status)
-                    VALUES (%s, 'assistant', 'CARD', %s, %s, 'final')
-                    """,
-                    (room_id, json.dumps(card_payload, ensure_ascii=False), assistant_text_id),
-                )
-                assistant_card_id = cursor.lastrowid
-                last_message_id = assistant_card_id
->>>>>>> 966f378 (시세·차트 조회 LLM 응답 안정화 및 채팅 MySQL 구조 정리)
                 messages.append({"role": "assistant", "msg_type": "CARD", "payload_json": card_payload})
 
 

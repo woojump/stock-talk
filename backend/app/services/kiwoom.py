@@ -386,7 +386,8 @@ class KiwoomService:
             "next-key": next_key,
         }
 
-        # Body 데이터 (종목코드 등)
+        # 2. Body 데이터 결정 로직
+        # params가 명시적 으로 들어오면 그것을 사용하고, 아니면 기존처럼 stk_cd를 사용합니다.
         data = {"stk_cd": stk_cd}
         if params:
             data.update(params) # qry_tp, cano 등이 여기서 추가됨
@@ -414,17 +415,17 @@ class KiwoomService:
         headers = {
             "authorization": f"Bearer {self.access_token}",
             "Content-Type": "application/json; charset=UTF-8",
+            "api-id": "kt10000" if is_buy else "kt10001"
         }
 
         # 2. 주문 데이터 구성 (공용 계좌번호 자동으로 포함!)
         payload = {
-            "cano": settings.KIWOOM_ACCOUNT_NO,         # 계좌번호 (8자리)
-            "pdno": ticker,                             # 종목번호
-            "ord_qty": str(qty),                        # 주문수량 (문자열 요구할 수 있음)
-            "ord_unpr": str(price),                            # 시장가면 0
-            "tr_dv": "01" if is_buy else "02",          # 01:매수, 02:매도
-            "ord_dv": "03" if is_market_price else "00" # 03:시장가, 00:지정가
-        }
+        "dmst_stex_tp": "KRX",
+        "stk_cd": ticker,
+        "ord_qty": str(qty),
+        "ord_uv": str(price),
+        "trde_tp": "3" if price == 0 else "0"  # <--- 시장가(3) vs 지정가(0)
+        }   
 
         # 3. 키움 서버로 주문 전송
         response = await self.client.post(endpoint, headers=headers, json=payload)
@@ -507,7 +508,6 @@ class KiwoomService:
         except ValueError:
             return 0
 
-    from datetime import datetime
 
     async def get_account_balance(self) -> Dict[str, Any]:
         """[마이페이지] 종목별 데이터를 직접 합산하여 총 평가금액, 손익금액, 수익률 산출"""

@@ -166,7 +166,7 @@ async def get_market_data(q: str) -> str:
         print(f"🚨 [도구 에러]: {str(e)}")
         return f"🚨 시세 조회 중 파싱 에러가 발생했습니다: {str(e)}"
 
-'''    
+
 @tool
 async def search_stock_ticker(query: str) -> str:
     """
@@ -188,7 +188,7 @@ async def search_stock_ticker(query: str) -> str:
     
     except Exception as e:
         return f"종목 검색 중 오류 발생: {str(e)}"
-'''
+
 
 # 5. 주식 주문 (매수/매도)
 @tool
@@ -327,7 +327,7 @@ def register_tools(mcp):
     mcp.tool()(get_popular_stocks)
     mcp.tool()(get_investor_rank)
     mcp.tool()(get_market_data)
-#    mcp.tool()(search_stock_ticker)
+    mcp.tool()(search_stock_ticker)
     mcp.tool()(post_trade)        # <--- 매수/매도 주문 필수!
     mcp.tool()(amend_order)       # 주문 정정
     mcp.tool()(cancel_order)      # 주문 취소
