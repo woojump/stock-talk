@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:stock_talk/core/design_system/design_system.dart';
 import 'package:stock_talk/core/utils/stock_utils.dart';
-import 'package:stock_talk/features/explore/domain/entities/explore_entities.dart';
+import 'package:stock_talk/features/explore/domain/entities/top_movers_entities.dart';
 
 class StockListItem extends StatelessWidget {
   final StockItem stock;

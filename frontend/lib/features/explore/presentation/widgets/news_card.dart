@@ -2,7 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_talk/app/router/app_router.dart';
 import 'package:stock_talk/core/design_system/design_system.dart';
-import 'package:stock_talk/features/explore/domain/entities/explore_entities.dart';
+import 'package:stock_talk/features/explore/domain/entities/news_entities.dart';
 
 class NewsCard extends StatelessWidget {
   final NewsItem news;

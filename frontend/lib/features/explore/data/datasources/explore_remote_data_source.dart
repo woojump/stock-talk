@@ -29,4 +29,30 @@ class ExploreRemoteDataSource {
       response.data as Map<String, dynamic>,
     );
   }
+
+  Future<NewsDetailDto> getNewsDetail(String url) async {
+    final response = await _dio.get(
+      ApiConfig.newsDetailPath,
+      queryParameters: {'url': url},
+    );
+
+    if (response.data == null) {
+      throw Exception('No data received from news detail endpoint');
+    }
+
+    return NewsDetailDto.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<NewsSummaryDto> getNewsSummary(String url) async {
+    final response = await _dio.get(
+      ApiConfig.newsSummaryPath,
+      queryParameters: {'url': url},
+    );
+
+    if (response.data == null) {
+      throw Exception('No data received from news summary endpoint');
+    }
+
+    return NewsSummaryDto.fromJson(response.data as Map<String, dynamic>);
+  }
 }

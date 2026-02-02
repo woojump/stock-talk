@@ -6,6 +6,7 @@ import 'package:stock_talk/features/explore/data/datasources/explore_remote_data
 import 'package:stock_talk/features/explore/data/repositories/explore_repository_impl.dart';
 import 'package:stock_talk/features/explore/domain/repositories/explore_repository.dart';
 import 'package:stock_talk/features/explore/presentation/providers/explore_provider.dart';
+import 'package:stock_talk/features/explore/presentation/providers/news_detail_provider.dart';
 import 'package:stock_talk/features/portfolio/data/datasources/portfolio_remote_data_source.dart';
 import 'package:stock_talk/features/portfolio/data/repositories/portfolio_repository_impl.dart';
 import 'package:stock_talk/features/portfolio/domain/repositories/portfolio_repository.dart';
@@ -48,5 +49,8 @@ Future<void> configureDependencies() async {
   );
   getIt.registerFactory<ExploreProvider>(
     () => ExploreProvider(getIt<ExploreRepository>()),
+  );
+  getIt.registerFactory<NewsDetailProvider>(
+    () => NewsDetailProvider(getIt<ExploreRepository>()),
   );
 }

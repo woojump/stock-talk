@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:stock_talk/features/explore/domain/entities/explore_entities.dart';
+import 'package:stock_talk/features/explore/domain/entities/top_movers_entities.dart';
 
 part 'top_movers_dto.freezed.dart';
 part 'top_movers_dto.g.dart';

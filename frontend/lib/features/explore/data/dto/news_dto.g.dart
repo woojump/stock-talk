@@ -40,3 +40,27 @@ Map<String, dynamic> _$NewsItemDtoToJson(_NewsItemDto instance) =>
       'description': instance.description,
       'link': instance.link,
     };
+
+_NewsDetailDto _$NewsDetailDtoFromJson(Map<String, dynamic> json) =>
+    _NewsDetailDto(
+      status: json['status'] as String,
+      title: json['title'] as String,
+      content: json['content'] as String,
+      topImage: json['top_image'] as String?,
+      publishedDate: json['published_date'] as String,
+    );
+
+Map<String, dynamic> _$NewsDetailDtoToJson(_NewsDetailDto instance) =>
+    <String, dynamic>{
+      'status': instance.status,
+      'title': instance.title,
+      'content': instance.content,
+      'top_image': instance.topImage,
+      'published_date': instance.publishedDate,
+    };
+
+_NewsSummaryDto _$NewsSummaryDtoFromJson(Map<String, dynamic> json) =>
+    _NewsSummaryDto(aiSummary: json['ai_summary'] as String);
+
+Map<String, dynamic> _$NewsSummaryDtoToJson(_NewsSummaryDto instance) =>
+    <String, dynamic>{'ai_summary': instance.aiSummary};
