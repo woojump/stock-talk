@@ -6,6 +6,7 @@ import 'package:stock_talk/features/explore/domain/entities/news_entities.dart';
 import 'package:stock_talk/features/explore/presentation/pages/explore_page.dart';
 import 'package:stock_talk/features/explore/presentation/pages/news_detail_page.dart';
 import 'package:stock_talk/features/explore/presentation/pages/search_page.dart';
+import 'package:stock_talk/features/explore/presentation/pages/stock_detail_page.dart';
 import 'package:stock_talk/features/portfolio/domain/entities/portfolio_entities.dart';
 import 'package:stock_talk/features/portfolio/presentation/pages/portfolio_detail_page.dart';
 import 'package:stock_talk/features/portfolio/presentation/pages/portfolio_page.dart';
@@ -29,6 +30,7 @@ class AppRouter extends RootStackRouter {
     // Explore
     AutoRoute(page: SearchRoute.page),
     AutoRoute(page: NewsDetailRoute.page),
+    AutoRoute(page: StockDetailRoute.page),
 
     // Portfolio
     AutoRoute(page: PortfolioDetailRoute.page),
