@@ -14,7 +14,7 @@ from app.core.config import settings
 from app.services.kiwoom import kiwoom_service
 from app.mcp.tools import (
     get_top_movers, get_popular_stocks, get_investor_rank, 
-    get_market_data, search_stock_ticker, post_trade, amend_order, 
+    get_market_data, post_trade, amend_order, 
     cancel_order, get_account_balance
 )
 
@@ -42,7 +42,7 @@ llm = ChatOpenAI(
 )
 tools = [
     get_top_movers, get_popular_stocks, get_investor_rank, 
-    get_market_data, search_stock_ticker, post_trade, amend_order, 
+    get_market_data, post_trade, amend_order, 
     cancel_order, get_account_balance
 ]
 
