@@ -4,6 +4,7 @@ from app.core.database import engine, Base
 from app.models.chat_room import ChatRoom
 from app.models.chat_message import ChatMessage
 from app.models.tool_call_log import ToolCallLog
+from app.models.stock_info import StockInfo
 
 
 async def init_db():

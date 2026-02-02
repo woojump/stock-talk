@@ -407,9 +407,6 @@ class KiwoomService:
         
         await self.ensure_token() # 변경됨
 
-        # 1. 시장가 여부 판단 (가격이 0으로 들어오면 시장가로 간주)
-        is_market_price = (price == 0)
-
         endpoint = "/api/dostk/ordr" 
 
         headers = {
@@ -418,13 +415,14 @@ class KiwoomService:
             "api-id": "kt10000" if is_buy else "kt10001"
         }
 
-        # 2. 주문 데이터 구성 (공용 계좌번호 자동으로 포함!)
+        # 2. 주문 데이터 구성
         payload = {
         "dmst_stex_tp": "KRX",
         "stk_cd": ticker,
         "ord_qty": str(qty),
         "ord_uv": str(price),
-        "trde_tp": "3" if price == 0 else "0"  # <--- 시장가(3) vs 지정가(0)
+        "trde_tp": "3" if price == 0 else "0",  # <--- 시장가(3) vs 지정가(0)
+        "cond_uv": ""             # 조건단가 (기본 빈값)
         }   
 
         # 3. 키움 서버로 주문 전송

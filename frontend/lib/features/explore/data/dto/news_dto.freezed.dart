@@ -564,4 +564,542 @@ as String?,
 
 }
 
+
+/// @nodoc
+mixin _$NewsDetailDto {
+
+ String get status; String get title; String get content;@JsonKey(name: 'top_image') String? get topImage;@JsonKey(name: 'published_date') String get publishedDate;
+/// Create a copy of NewsDetailDto
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$NewsDetailDtoCopyWith<NewsDetailDto> get copyWith => _$NewsDetailDtoCopyWithImpl<NewsDetailDto>(this as NewsDetailDto, _$identity);
+
+  /// Serializes this NewsDetailDto to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NewsDetailDto&&(identical(other.status, status) || other.status == status)&&(identical(other.title, title) || other.title == title)&&(identical(other.content, content) || other.content == content)&&(identical(other.topImage, topImage) || other.topImage == topImage)&&(identical(other.publishedDate, publishedDate) || other.publishedDate == publishedDate));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,status,title,content,topImage,publishedDate);
+
+@override
+String toString() {
+  return 'NewsDetailDto(status: $status, title: $title, content: $content, topImage: $topImage, publishedDate: $publishedDate)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $NewsDetailDtoCopyWith<$Res>  {
+  factory $NewsDetailDtoCopyWith(NewsDetailDto value, $Res Function(NewsDetailDto) _then) = _$NewsDetailDtoCopyWithImpl;
+@useResult
+$Res call({
+ String status, String title, String content,@JsonKey(name: 'top_image') String? topImage,@JsonKey(name: 'published_date') String publishedDate
+});
+
+
+
+
+}
+/// @nodoc
+class _$NewsDetailDtoCopyWithImpl<$Res>
+    implements $NewsDetailDtoCopyWith<$Res> {
+  _$NewsDetailDtoCopyWithImpl(this._self, this._then);
+
+  final NewsDetailDto _self;
+  final $Res Function(NewsDetailDto) _then;
+
+/// Create a copy of NewsDetailDto
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? title = null,Object? content = null,Object? topImage = freezed,Object? publishedDate = null,}) {
+  return _then(_self.copyWith(
+status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
+as String,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
+as String,topImage: freezed == topImage ? _self.topImage : topImage // ignore: cast_nullable_to_non_nullable
+as String?,publishedDate: null == publishedDate ? _self.publishedDate : publishedDate // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [NewsDetailDto].
+extension NewsDetailDtoPatterns on NewsDetailDto {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _NewsDetailDto value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _NewsDetailDto() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _NewsDetailDto value)  $default,){
+final _that = this;
+switch (_that) {
+case _NewsDetailDto():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _NewsDetailDto value)?  $default,){
+final _that = this;
+switch (_that) {
+case _NewsDetailDto() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String status,  String title,  String content, @JsonKey(name: 'top_image')  String? topImage, @JsonKey(name: 'published_date')  String publishedDate)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _NewsDetailDto() when $default != null:
+return $default(_that.status,_that.title,_that.content,_that.topImage,_that.publishedDate);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String status,  String title,  String content, @JsonKey(name: 'top_image')  String? topImage, @JsonKey(name: 'published_date')  String publishedDate)  $default,) {final _that = this;
+switch (_that) {
+case _NewsDetailDto():
+return $default(_that.status,_that.title,_that.content,_that.topImage,_that.publishedDate);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String status,  String title,  String content, @JsonKey(name: 'top_image')  String? topImage, @JsonKey(name: 'published_date')  String publishedDate)?  $default,) {final _that = this;
+switch (_that) {
+case _NewsDetailDto() when $default != null:
+return $default(_that.status,_that.title,_that.content,_that.topImage,_that.publishedDate);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _NewsDetailDto extends NewsDetailDto {
+  const _NewsDetailDto({required this.status, required this.title, required this.content, @JsonKey(name: 'top_image') this.topImage, @JsonKey(name: 'published_date') required this.publishedDate}): super._();
+  factory _NewsDetailDto.fromJson(Map<String, dynamic> json) => _$NewsDetailDtoFromJson(json);
+
+@override final  String status;
+@override final  String title;
+@override final  String content;
+@override@JsonKey(name: 'top_image') final  String? topImage;
+@override@JsonKey(name: 'published_date') final  String publishedDate;
+
+/// Create a copy of NewsDetailDto
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$NewsDetailDtoCopyWith<_NewsDetailDto> get copyWith => __$NewsDetailDtoCopyWithImpl<_NewsDetailDto>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$NewsDetailDtoToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _NewsDetailDto&&(identical(other.status, status) || other.status == status)&&(identical(other.title, title) || other.title == title)&&(identical(other.content, content) || other.content == content)&&(identical(other.topImage, topImage) || other.topImage == topImage)&&(identical(other.publishedDate, publishedDate) || other.publishedDate == publishedDate));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,status,title,content,topImage,publishedDate);
+
+@override
+String toString() {
+  return 'NewsDetailDto(status: $status, title: $title, content: $content, topImage: $topImage, publishedDate: $publishedDate)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$NewsDetailDtoCopyWith<$Res> implements $NewsDetailDtoCopyWith<$Res> {
+  factory _$NewsDetailDtoCopyWith(_NewsDetailDto value, $Res Function(_NewsDetailDto) _then) = __$NewsDetailDtoCopyWithImpl;
+@override @useResult
+$Res call({
+ String status, String title, String content,@JsonKey(name: 'top_image') String? topImage,@JsonKey(name: 'published_date') String publishedDate
+});
+
+
+
+
+}
+/// @nodoc
+class __$NewsDetailDtoCopyWithImpl<$Res>
+    implements _$NewsDetailDtoCopyWith<$Res> {
+  __$NewsDetailDtoCopyWithImpl(this._self, this._then);
+
+  final _NewsDetailDto _self;
+  final $Res Function(_NewsDetailDto) _then;
+
+/// Create a copy of NewsDetailDto
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? title = null,Object? content = null,Object? topImage = freezed,Object? publishedDate = null,}) {
+  return _then(_NewsDetailDto(
+status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
+as String,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
+as String,topImage: freezed == topImage ? _self.topImage : topImage // ignore: cast_nullable_to_non_nullable
+as String?,publishedDate: null == publishedDate ? _self.publishedDate : publishedDate // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$NewsSummaryDto {
+
+@JsonKey(name: 'ai_summary') String get aiSummary;
+/// Create a copy of NewsSummaryDto
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$NewsSummaryDtoCopyWith<NewsSummaryDto> get copyWith => _$NewsSummaryDtoCopyWithImpl<NewsSummaryDto>(this as NewsSummaryDto, _$identity);
+
+  /// Serializes this NewsSummaryDto to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NewsSummaryDto&&(identical(other.aiSummary, aiSummary) || other.aiSummary == aiSummary));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,aiSummary);
+
+@override
+String toString() {
+  return 'NewsSummaryDto(aiSummary: $aiSummary)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $NewsSummaryDtoCopyWith<$Res>  {
+  factory $NewsSummaryDtoCopyWith(NewsSummaryDto value, $Res Function(NewsSummaryDto) _then) = _$NewsSummaryDtoCopyWithImpl;
+@useResult
+$Res call({
+@JsonKey(name: 'ai_summary') String aiSummary
+});
+
+
+
+
+}
+/// @nodoc
+class _$NewsSummaryDtoCopyWithImpl<$Res>
+    implements $NewsSummaryDtoCopyWith<$Res> {
+  _$NewsSummaryDtoCopyWithImpl(this._self, this._then);
+
+  final NewsSummaryDto _self;
+  final $Res Function(NewsSummaryDto) _then;
+
+/// Create a copy of NewsSummaryDto
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? aiSummary = null,}) {
+  return _then(_self.copyWith(
+aiSummary: null == aiSummary ? _self.aiSummary : aiSummary // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [NewsSummaryDto].
+extension NewsSummaryDtoPatterns on NewsSummaryDto {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _NewsSummaryDto value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _NewsSummaryDto() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _NewsSummaryDto value)  $default,){
+final _that = this;
+switch (_that) {
+case _NewsSummaryDto():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _NewsSummaryDto value)?  $default,){
+final _that = this;
+switch (_that) {
+case _NewsSummaryDto() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'ai_summary')  String aiSummary)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _NewsSummaryDto() when $default != null:
+return $default(_that.aiSummary);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'ai_summary')  String aiSummary)  $default,) {final _that = this;
+switch (_that) {
+case _NewsSummaryDto():
+return $default(_that.aiSummary);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'ai_summary')  String aiSummary)?  $default,) {final _that = this;
+switch (_that) {
+case _NewsSummaryDto() when $default != null:
+return $default(_that.aiSummary);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _NewsSummaryDto extends NewsSummaryDto {
+  const _NewsSummaryDto({@JsonKey(name: 'ai_summary') required this.aiSummary}): super._();
+  factory _NewsSummaryDto.fromJson(Map<String, dynamic> json) => _$NewsSummaryDtoFromJson(json);
+
+@override@JsonKey(name: 'ai_summary') final  String aiSummary;
+
+/// Create a copy of NewsSummaryDto
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$NewsSummaryDtoCopyWith<_NewsSummaryDto> get copyWith => __$NewsSummaryDtoCopyWithImpl<_NewsSummaryDto>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$NewsSummaryDtoToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _NewsSummaryDto&&(identical(other.aiSummary, aiSummary) || other.aiSummary == aiSummary));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,aiSummary);
+
+@override
+String toString() {
+  return 'NewsSummaryDto(aiSummary: $aiSummary)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$NewsSummaryDtoCopyWith<$Res> implements $NewsSummaryDtoCopyWith<$Res> {
+  factory _$NewsSummaryDtoCopyWith(_NewsSummaryDto value, $Res Function(_NewsSummaryDto) _then) = __$NewsSummaryDtoCopyWithImpl;
+@override @useResult
+$Res call({
+@JsonKey(name: 'ai_summary') String aiSummary
+});
+
+
+
+
+}
+/// @nodoc
+class __$NewsSummaryDtoCopyWithImpl<$Res>
+    implements _$NewsSummaryDtoCopyWith<$Res> {
+  __$NewsSummaryDtoCopyWithImpl(this._self, this._then);
+
+  final _NewsSummaryDto _self;
+  final $Res Function(_NewsSummaryDto) _then;
+
+/// Create a copy of NewsSummaryDto
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? aiSummary = null,}) {
+  return _then(_NewsSummaryDto(
+aiSummary: null == aiSummary ? _self.aiSummary : aiSummary // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
 // dart format on
