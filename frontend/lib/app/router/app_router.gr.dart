@@ -183,3 +183,67 @@ class SearchRoute extends PageRouteInfo<void> {
     },
   );
 }
+
+/// generated route for
+/// [StockDetailPage]
+class StockDetailRoute extends PageRouteInfo<StockDetailRouteArgs> {
+  StockDetailRoute({
+    Key? key,
+    required String ticker,
+    required String stockName,
+    List<PageRouteInfo>? children,
+  }) : super(
+         StockDetailRoute.name,
+         args: StockDetailRouteArgs(
+           key: key,
+           ticker: ticker,
+           stockName: stockName,
+         ),
+         initialChildren: children,
+       );
+
+  static const String name = 'StockDetailRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<StockDetailRouteArgs>();
+      return StockDetailPage(
+        key: args.key,
+        ticker: args.ticker,
+        stockName: args.stockName,
+      );
+    },
+  );
+}
+
+class StockDetailRouteArgs {
+  const StockDetailRouteArgs({
+    this.key,
+    required this.ticker,
+    required this.stockName,
+  });
+
+  final Key? key;
+
+  final String ticker;
+
+  final String stockName;
+
+  @override
+  String toString() {
+    return 'StockDetailRouteArgs{key: $key, ticker: $ticker, stockName: $stockName}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! StockDetailRouteArgs) return false;
+    return key == other.key &&
+        ticker == other.ticker &&
+        stockName == other.stockName;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ ticker.hashCode ^ stockName.hashCode;
+}

@@ -20,4 +20,6 @@ class ApiConfig {
   static const String popularNewsPath = '/news/popular';
   static const String newsDetailPath = '/news/detail';
   static const String newsSummaryPath = '/news/summarize';
+  static const String stockDetailPath = '/market/stock';
+  static const String stockNewsPath = '/news/stock';
 }
