@@ -29,27 +29,31 @@ class NewsDetailProvider extends ChangeNotifier {
     _summaryError = null;
     notifyListeners();
 
-    // 병렬 로딩
-    await Future.wait([_fetchDetail(url), _fetchSummary(url)]);
-
-    _isLoadingDetail = false;
-    _isLoadingSummary = false;
-    notifyListeners();
+    _fetchDetail(url);
+    _fetchSummary(url);
   }
 
   Future<void> _fetchDetail(String url) async {
     try {
       _newsDetail = await _repository.getNewsDetail(url);
+      _isLoadingDetail = false;
+      notifyListeners();
     } catch (e) {
       _detailError = '기사를 불러올 수 없습니다';
+      _isLoadingDetail = false;
+      notifyListeners();
     }
   }
 
   Future<void> _fetchSummary(String url) async {
     try {
       _newsSummary = await _repository.getNewsSummary(url);
+      _isLoadingSummary = false;
+      notifyListeners();
     } catch (e) {
       _summaryError = 'AI 요약을 생성할 수 없습니다';
+      _isLoadingSummary = false;
+      notifyListeners();
     }
   }
 
