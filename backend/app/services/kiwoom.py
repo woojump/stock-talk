@@ -300,15 +300,10 @@ class KiwoomService:
         await self.ensure_token()  # 변경됨
 
         # 1. API ID에 따른 엔드포인트 자동 선택
-<<<<<<< HEAD
         if api_id == "ka10001":
             endpoint = "/api/dostk/stkinfo"   # 시세 조회 전용 엔드포인트 추가!
         elif api_id == "ka01690" or api_id.startswith("kt"): # ka01690과 kt 계열은 모두 acnt
             endpoint = "/api/dostk/acnt"
-=======
-        if api_id.startswith("kt"):
-            endpoint = "/api/dostk/acnt"  # 계좌 관련 (kt00004, kt00018 등)
->>>>>>> 9dc10b48b1c739aeda4ef751a5685f28a18b8ce0
         elif api_id.startswith("ka"):
             # 기존 ka10004, ka10005 등은 원래 쓰던 mrkcond 엔드포인트 유지
             endpoint = "/api/dostk/mrkcond"
@@ -324,17 +319,10 @@ class KiwoomService:
             "next-key": next_key,
         }
 
-<<<<<<< HEAD
         # Body 데이터 (종목코드 등)
         data = {"stk_cd": stk_cd}
         if params:
             data.update(params) # qry_tp, cano 등이 여기서 추가됨
-=======
-        # Body 데이터 결정 로직
-        # params가 명시적으로 들어오면 그것을 사용하고, 아니면 stk_cd를 사용합니다.
-        data = params if params else {"stk_cd": stk_cd}
-
->>>>>>> 9dc10b48b1c739aeda4ef751a5685f28a18b8ce0
         response = await self.client.post(endpoint, headers=headers, json=data)
 
         # 토큰 만료 시 재시도
@@ -455,7 +443,6 @@ class KiwoomService:
     from datetime import datetime
 
     async def get_account_balance(self) -> Dict[str, Any]:
-<<<<<<< HEAD
         """[마이페이지] 종목별 데이터를 직접 합산하여 총 평가금액, 손익금액, 수익률 산출"""
         try:
             common_params = {"cano": self.default_account_no, "dmst_stex_tp": "KRX"}
@@ -492,43 +479,6 @@ class KiwoomService:
                     "current_price": curr_price,
                     "profit_loss_rate": self._parse_num(item.get("evlu_pfls_rt") or item.get("prft_rt"), is_float=True)
                 })
-=======
-        """[마이페이지] 전체 자산 요약 및 개별 종목 수익률 조회"""
-        # 1. 계좌 요약(kt00004) 및 상세(kt00018) 요청 파라미터 구성
-        common_params = {"cano": self.default_account_no, "dmst_stex_tp": "KRX"}
-
-        summary_res = await self.get_market_data(
-            api_id="kt00004", params={**common_params, "qry_tp": "0"}
-        )
-        detail_res = await self.get_market_data(
-            api_id="kt00018", params={**common_params, "qry_tp": "1"}
-        )
-
-        # 2. 통합 결과 반환
-        return {
-            "summary": {
-                "total_asset": self._parse_num(summary_res.get("aset_evlt_amt")),
-                "available_cash": self._parse_num(summary_res.get("d2_entra")),
-                "total_profit_loss": self._parse_num(summary_res.get("lspft_amt")),
-                "total_return_rate": self._parse_num(
-                    summary_res.get("lspft_rt"), is_float=True
-                ),
-            },
-            "holdings": [
-                {
-                    "ticker": item.get("stk_cd", "").replace("A", ""),
-                    "name": item.get("stk_nm"),
-                    "quantity": self._parse_num(item.get("trde_able_qty")),
-                    "purchase_price": self._parse_num(item.get("pur_pric")),
-                    "current_price": self._parse_num(item.get("cur_prc")),
-                    "profit_loss_rate": self._parse_num(
-                        item.get("prft_rt"), is_float=True
-                    ),
-                }
-                for item in detail_res.get("acnt_evlt_remn_indv_tot", [])
-            ],
-        }
->>>>>>> 9dc10b48b1c739aeda4ef751a5685f28a18b8ce0
 
             # --- 최종 요약 수치 계산 ---
             # 1. 총 평가 손익 = 총 평가금액 - 총 매수금액
