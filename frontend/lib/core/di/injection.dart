@@ -10,6 +10,7 @@ import 'package:stock_talk/features/explore/presentation/providers/news_detail_p
 import 'package:stock_talk/features/explore/data/datasources/stock_detail_remote_data_source.dart';
 import 'package:stock_talk/features/explore/data/repositories/stock_detail_repository_impl.dart';
 import 'package:stock_talk/features/explore/domain/repositories/stock_detail_repository.dart';
+import 'package:stock_talk/features/explore/presentation/providers/stock_detail_provider.dart';
 import 'package:stock_talk/features/portfolio/data/datasources/portfolio_remote_data_source.dart';
 import 'package:stock_talk/features/portfolio/data/repositories/portfolio_repository_impl.dart';
 import 'package:stock_talk/features/portfolio/domain/repositories/portfolio_repository.dart';
@@ -63,5 +64,8 @@ Future<void> configureDependencies() async {
   );
   getIt.registerLazySingleton<StockDetailRepository>(
     () => StockDetailRepositoryImpl(getIt<StockDetailRemoteDataSource>()),
+  );
+  getIt.registerFactory<StockDetailProvider>(
+    () => StockDetailProvider(getIt<StockDetailRepository>()),
   );
 }
