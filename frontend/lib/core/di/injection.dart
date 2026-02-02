@@ -7,6 +7,9 @@ import 'package:stock_talk/features/explore/data/repositories/explore_repository
 import 'package:stock_talk/features/explore/domain/repositories/explore_repository.dart';
 import 'package:stock_talk/features/explore/presentation/providers/explore_provider.dart';
 import 'package:stock_talk/features/explore/presentation/providers/news_detail_provider.dart';
+import 'package:stock_talk/features/explore/data/datasources/stock_detail_remote_data_source.dart';
+import 'package:stock_talk/features/explore/data/repositories/stock_detail_repository_impl.dart';
+import 'package:stock_talk/features/explore/domain/repositories/stock_detail_repository.dart';
 import 'package:stock_talk/features/portfolio/data/datasources/portfolio_remote_data_source.dart';
 import 'package:stock_talk/features/portfolio/data/repositories/portfolio_repository_impl.dart';
 import 'package:stock_talk/features/portfolio/domain/repositories/portfolio_repository.dart';
@@ -52,5 +55,13 @@ Future<void> configureDependencies() async {
   );
   getIt.registerFactory<NewsDetailProvider>(
     () => NewsDetailProvider(getIt<ExploreRepository>()),
+  );
+
+  // Stock Detail
+  getIt.registerLazySingleton<StockDetailRemoteDataSource>(
+    () => StockDetailRemoteDataSource(getIt<Dio>()),
+  );
+  getIt.registerLazySingleton<StockDetailRepository>(
+    () => StockDetailRepositoryImpl(getIt<StockDetailRemoteDataSource>()),
   );
 }
