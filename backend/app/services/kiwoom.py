@@ -27,6 +27,18 @@ class KiwoomService:
         )  # 환경변수에서 기본 계좌번호 로드
         self.finance_data = FinanceDataService()
 
+    @staticmethod
+    def _clean_ticker(ticker: str) -> str:
+        """티커 코드에서 불필요한 접두사/접미사 제거"""
+        if not ticker:
+            return ""
+        # "_AL", "_AQ" 등 접미사 제거
+        if "_" in ticker:
+            ticker = ticker.split("_")[0]
+        # "A" 접두사 제거
+        ticker = ticker.replace("A", "")
+        return ticker
+
     def _is_exact_6digit_ticker(self, q: str) -> bool:
         q = (q or "").strip()
         return bool(re.fullmatch(r"\d{6}", q))
@@ -241,6 +253,7 @@ class KiwoomService:
                     "name": stock.get("stk_nm", "N/A"),
                     "rate": stock.get("flu_rt", "0"),
                     "price": clean_price,
+                    "code": self._clean_ticker(stock.get("stk_cd", "")),
                 }
             )
 
@@ -296,7 +309,7 @@ class KiwoomService:
                     "name": stock.get("stk_nm", "N/A"),
                     "price": clean_price,  # 현재가
                     "rate": stock.get("base_comp_chgr", "0"),  # 등락률
-                    "code": stock.get("stk_cd", ""),  # 종목코드(티커)
+                    "code": self._clean_ticker(stock.get("stk_cd", "")),  # 종목코드(티커)
                 }
             )
 
@@ -344,7 +357,7 @@ class KiwoomService:
                         "net_amount": stock.get("netslmt", "0"),  # 순매수량
                         "buy_qty": stock.get("buy_qty", "0"),  # 매수량
                         "sel_qty": stock.get("sel_qty", "0"),  # 매도량
-                        "code": stock.get("stk_cd", ""),  # 종목코드
+                        "code": self._clean_ticker(stock.get("stk_cd", "")),  # 종목코드
                     }
                 )
 
@@ -537,7 +550,7 @@ class KiwoomService:
                 total_evl_amt += row_evl_amt
                 
                 parsed_holdings.append({
-                    "ticker": item.get("stk_cd", "").replace("A", ""),
+                    "ticker": self._clean_ticker(item.get("stk_cd", "")),
                     "name": item.get("stk_nm") or item.get("prdt_nm"),
                     "quantity": qty,
                     "purchase_price": pchs_price,

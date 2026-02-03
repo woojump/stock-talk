@@ -1,6 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:stock_talk/app/router/app_router.dart';
 import 'package:stock_talk/core/design_system/design_system.dart';
 import 'package:stock_talk/features/portfolio/domain/entities/portfolio_entities.dart';
 import 'package:stock_talk/features/portfolio/presentation/utils/portfolio_utils.dart';
@@ -122,8 +123,14 @@ class PortfolioDetailPage extends StatelessWidget {
                 // Action Button
                 Center(
                   child: SecondaryButton(
-                    // TODO: 종목 상세 페이지로 이동
-                    onPressed: null,
+                    onPressed: () {
+                      context.pushRoute(
+                        StockDetailRoute(
+                          ticker: holding.ticker,
+                          stockName: holding.name,
+                        ),
+                      );
+                    },
                     child: const Text('현재가 보러가기'),
                   ),
                 ),

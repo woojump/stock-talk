@@ -6,6 +6,7 @@ import 'package:stock_talk/core/di/injection.dart';
 import 'package:stock_talk/features/explore/domain/entities/news_entities.dart';
 import 'package:stock_talk/features/explore/presentation/providers/news_detail_provider.dart';
 import 'package:stock_talk/features/explore/presentation/utils/explore_utils.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 @RoutePage()
 class NewsDetailPage extends StatelessWidget {
@@ -35,8 +36,9 @@ class NewsDetailPage extends StatelessWidget {
                     }
 
                     if (provider.detailError != null) {
-                      return ErrorState(
+                      return _NewsDetailErrorState(
                         message: provider.detailError!,
+                        newsUrl: news.link,
                         onRetry: ({bool showLoading = true}) =>
                             provider.retryDetail(news.link!),
                       );
@@ -277,5 +279,67 @@ class _ArticleContent extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+// 뉴스 상세 에러 상태 (원본 링크 제공)
+class _NewsDetailErrorState extends StatelessWidget {
+  final String message;
+  final String? newsUrl;
+  final Future<void> Function({bool showLoading}) onRetry;
+
+  const _NewsDetailErrorState({
+    required this.message,
+    required this.newsUrl,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xxl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 48,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              '일부 기사는 원문에서만 볼 수 있습니다',
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.gray500),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            if (newsUrl != null)
+              PrimaryButton(
+                onPressed: () => _launchUrl(newsUrl!),
+                child: const Text('원문 기사 보기'),
+              ),
+            const SizedBox(height: AppSpacing.md),
+            SecondaryButton(
+              onPressed: () => onRetry(showLoading: true),
+              child: const Text('다시 시도'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _launchUrl(String urlString) async {
+    final url = Uri.parse(urlString);
+    await launchUrl(url, mode: LaunchMode.externalApplication);
   }
 }
