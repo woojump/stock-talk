@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stock_talk/app/router/app_router.dart';
 import 'package:stock_talk/core/config/api_config.dart';
 import 'package:stock_talk/features/explore/data/datasources/explore_remote_data_source.dart';
@@ -19,6 +20,10 @@ import 'package:stock_talk/features/portfolio/presentation/providers/portfolio_p
 final getIt = GetIt.instance;
 
 Future<void> configureDependencies() async {
+  // SharedPreferences
+  final sharedPreferences = await SharedPreferences.getInstance();
+  getIt.registerLazySingleton<SharedPreferences>(() => sharedPreferences);
+
   // 라우팅
   getIt.registerLazySingleton<AppRouter>(() => AppRouter());
 
