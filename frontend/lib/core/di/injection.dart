@@ -4,8 +4,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stock_talk/app/router/app_router.dart';
 import 'package:stock_talk/core/config/api_config.dart';
 import 'package:stock_talk/features/explore/data/datasources/explore_remote_data_source.dart';
+import 'package:stock_talk/features/explore/data/datasources/search_local_data_source.dart';
 import 'package:stock_talk/features/explore/data/repositories/explore_repository_impl.dart';
+import 'package:stock_talk/features/explore/data/repositories/search_repository_impl.dart';
 import 'package:stock_talk/features/explore/domain/repositories/explore_repository.dart';
+import 'package:stock_talk/features/explore/domain/repositories/search_repository.dart';
 import 'package:stock_talk/features/explore/presentation/providers/explore_provider.dart';
 import 'package:stock_talk/features/explore/presentation/providers/news_detail_provider.dart';
 import 'package:stock_talk/features/explore/data/datasources/stock_detail_remote_data_source.dart';
@@ -61,6 +64,17 @@ Future<void> configureDependencies() async {
   );
   getIt.registerFactory<NewsDetailProvider>(
     () => NewsDetailProvider(getIt<ExploreRepository>()),
+  );
+
+  // Search
+  getIt.registerLazySingleton<SearchLocalDataSource>(
+    () => SearchLocalDataSource(getIt<SharedPreferences>()),
+  );
+  getIt.registerLazySingleton<SearchRepository>(
+    () => SearchRepositoryImpl(
+      getIt<ExploreRemoteDataSource>(),
+      getIt<SearchLocalDataSource>(),
+    ),
   );
 
   // Stock Detail

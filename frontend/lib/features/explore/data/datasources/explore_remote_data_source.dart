@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:stock_talk/core/config/api_config.dart';
 import 'package:stock_talk/features/explore/data/dto/news_dto.dart';
+import 'package:stock_talk/features/explore/data/dto/search_result_dto.dart';
 import 'package:stock_talk/features/explore/data/dto/top_movers_dto.dart';
 
 class ExploreRemoteDataSource {
@@ -54,5 +55,20 @@ class ExploreRemoteDataSource {
     }
 
     return NewsSummaryDto.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<List<SearchResultDto>> searchStocks(String query) async {
+    final response = await _dio.get(
+      ApiConfig.searchPath,
+      queryParameters: {'query': query},
+    );
+
+    if (response.data == null) {
+      throw Exception('No data received from search endpoint');
+    }
+
+    return (response.data as List)
+        .map((json) => SearchResultDto.fromJson(json as Map<String, dynamic>))
+        .toList();
   }
 }
