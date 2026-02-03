@@ -3,7 +3,7 @@ import pymysql
 import json
 from typing import Any, Dict, Optional, List
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage
 from langgraph.prebuilt import create_react_agent
@@ -307,3 +307,107 @@ async def chat_with_agent(query: str, room_id: int = None):
     finally:
         if conn:
             conn.close()
+
+
+
+# -----------------------------
+# 1) 채팅방 목록 조회
+# GET /rooms?limit=50&offset=0
+# -----------------------------
+@router.get("/rooms")
+async def list_rooms(limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0)):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT room_id, owner_user_id, title, last_preview, last_message_id, last_sent_at, updated_at
+                FROM chat_room
+                ORDER BY last_sent_at DESC
+                LIMIT %s OFFSET %s
+                """,
+                (limit, offset),
+            )
+            rooms = cursor.fetchall()
+        return {"status": "success", "data": rooms}
+    finally:
+        conn.close()
+
+
+# --------------------------------------------
+# 2) 채팅방 내역 조회 (room_id로 메시지 불러오기)
+# GET /rooms/{room_id}/messages?limit=200&before_id=...
+# --------------------------------------------
+@router.get("/rooms/{room_id}/messages")
+async def get_room_messages(
+    room_id: int,
+    limit: int = Query(200, ge=1, le=500),
+    before_id: Optional[int] = Query(None, description="페이징용: 이 메시지 ID보다 작은 것들만 조회"),
+):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # 방 존재 확인
+            cursor.execute("SELECT 1 FROM chat_room WHERE room_id=%s", (room_id,))
+            if not cursor.fetchone():
+                raise HTTPException(status_code=404, detail="chat room not found")
+
+            if before_id is None:
+                cursor.execute(
+                    """
+                    SELECT message_id, room_id, role, msg_type, content, payload_json, parent_id, status
+                    FROM chat_message
+                    WHERE room_id=%s
+                    ORDER BY message_id DESC
+                    LIMIT %s
+                    """,
+                    (room_id, limit),
+                )
+            else:
+                cursor.execute(
+                    """
+                    SELECT message_id, room_id, role, msg_type, content, payload_json, parent_id, status
+                    FROM chat_message
+                    WHERE room_id=%s AND message_id < %s
+                    ORDER BY message_id DESC
+                    LIMIT %s
+                    """,
+                    (room_id, before_id, limit),
+                )
+
+            msgs = cursor.fetchall()
+
+            # payload_json이 문자열로 들어있으면 dict로 변환해서 내려주고 싶을 때(옵션)
+            for m in msgs:
+                if m.get("payload_json"):
+                    try:
+                        m["payload_json"] = json.loads(m["payload_json"])
+                    except Exception:
+                        pass
+
+        return {"status": "success", "room_id": room_id, "messages": list(reversed(msgs))}
+    finally:
+        conn.close()
+
+
+# -----------------------------
+# 3) 채팅방 삭제
+# DELETE /rooms/{room_id}
+# -----------------------------
+@router.delete("/rooms/{room_id}")
+async def delete_room(room_id: int):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT 1 FROM chat_room WHERE room_id=%s", (room_id,))
+            if not cursor.fetchone():
+                raise HTTPException(status_code=404, detail="chat room not found")
+
+            # 메시지 먼저 삭제 (FK cascade 없을 경우 필수)
+            cursor.execute("DELETE FROM chat_message WHERE room_id=%s", (room_id,))
+            cursor.execute("DELETE FROM chat_room WHERE room_id=%s", (room_id,))
+            conn.commit()
+
+        return {"status": "success", "room_id": room_id}
+    finally:
+        conn.close()
