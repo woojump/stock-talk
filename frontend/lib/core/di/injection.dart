@@ -11,6 +11,7 @@ import 'package:stock_talk/features/explore/domain/repositories/explore_reposito
 import 'package:stock_talk/features/explore/domain/repositories/search_repository.dart';
 import 'package:stock_talk/features/explore/presentation/providers/explore_provider.dart';
 import 'package:stock_talk/features/explore/presentation/providers/news_detail_provider.dart';
+import 'package:stock_talk/features/explore/presentation/providers/search_provider.dart';
 import 'package:stock_talk/features/explore/data/datasources/stock_detail_remote_data_source.dart';
 import 'package:stock_talk/features/explore/data/repositories/stock_detail_repository_impl.dart';
 import 'package:stock_talk/features/explore/domain/repositories/stock_detail_repository.dart';
@@ -75,6 +76,9 @@ Future<void> configureDependencies() async {
       getIt<ExploreRemoteDataSource>(),
       getIt<SearchLocalDataSource>(),
     ),
+  );
+  getIt.registerFactory<SearchProvider>(
+    () => SearchProvider(getIt<SearchRepository>()),
   );
 
   // Stock Detail
