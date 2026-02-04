@@ -23,6 +23,7 @@ import 'package:stock_talk/features/portfolio/presentation/providers/portfolio_p
 import 'package:stock_talk/features/chat/data/datasources/chat_remote_data_source.dart';
 import 'package:stock_talk/features/chat/data/repositories/chat_repository_impl.dart';
 import 'package:stock_talk/features/chat/domain/repositories/chat_repository.dart';
+import 'package:stock_talk/features/chat/presentation/providers/chat_provider.dart';
 
 final getIt = GetIt.instance;
 
@@ -101,5 +102,8 @@ Future<void> configureDependencies() async {
   );
   getIt.registerLazySingleton<ChatRepository>(
     () => ChatRepositoryImpl(getIt<ChatRemoteDataSource>()),
+  );
+  getIt.registerFactory<ChatProvider>(
+    () => ChatProvider(getIt<ChatRepository>()),
   );
 }
