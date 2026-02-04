@@ -167,29 +167,6 @@ async def get_market_data(q: str) -> str:
         return f"🚨 시세 조회 중 파싱 에러가 발생했습니다: {str(e)}"
 
 
-@tool
-async def search_stock_ticker(query: str) -> str:
-    """
-    사용자가 입력한 종목명(예: 삼성전자, 현대차)으로 종목 코드(티커)를 찾습니다.
-    시세 조회나 주문 전 단계에서 반드시 이 도구를 사용해 코드를 먼저 확인해야 합니다.
-    """
-    try:
-        # 기존에 만들어두신 finance_data_service의 search 기능을 활용합니다.
-        from app.api.api_v1.endpoints.stock import finance_data_service # 임포트 체크 필요
-        
-        results = finance_data_service.search(query)
-        
-        if not results:
-            return f"'{query}'에 해당하는 종목을 찾을 수 없습니다. 정확한 이름을 입력해 주세요."
-        
-        # 검색 결과 중 첫 번째 종목의 정보를 에이전트에게 전달
-        top_match = results[0]
-        return f"검색 결과: {top_match['name']}의 종목 코드는 {top_match['ticker']}입니다."
-    
-    except Exception as e:
-        return f"종목 검색 중 오류 발생: {str(e)}"
-
-
 # 5. 주식 주문 (매수/매도)
 @tool
 async def post_trade(ticker: str, quantity: int, price: int = 0, side: str = "buy") -> str:
@@ -327,7 +304,6 @@ def register_tools(mcp):
     mcp.tool()(get_popular_stocks)
     mcp.tool()(get_investor_rank)
     mcp.tool()(get_market_data)
-    mcp.tool()(search_stock_ticker)
     mcp.tool()(post_trade)        # <--- 매수/매도 주문 필수!
     mcp.tool()(amend_order)       # 주문 정정
     mcp.tool()(cancel_order)      # 주문 취소
