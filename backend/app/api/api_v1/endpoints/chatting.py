@@ -18,6 +18,8 @@ from app.mcp.tools import (
     cancel_order, get_account_balance
 )
 
+from app.callbacks.tool_call_log_handler import ToolCallLogHandler
+
 # 1. 설정 로드
 load_dotenv()
 router = APIRouter()
@@ -165,20 +167,8 @@ async def chat_with_agent(query: str, room_id: int = None):
                 room_id = cursor.lastrowid
                 conn.commit()  # DB에 즉시 반영하여 ID 확정
                 print(f"🆕 새 채팅방 생성 완료 (ID: {room_id})")
-
-            # --- [STEP 2] 에이전트 실행 (이 부분이 에러 해결의 핵심) ---
-            # 💡 반드시 thread_id를 문자열로 변환하여 전달해야 합니다.
-            config = {"configurable": {"thread_id": str(room_id)}}
-            inputs = {"messages": [HumanMessage(content=query)]}
             
-            print(f"🤖 에이전트 호출 시작 (thread_id: {room_id})")
-            # 🚀 두 번째 인자로 config를 반드시 넘깁니다.
-            result = await agent_executor.ainvoke(inputs, config=config)
-            final_answer = result["messages"][-1].content
-
-            parsed = _safe_json_load(final_answer)
-
-            # --- [STEP 3-1] 메시지 저장 (사용자) ---
+            # --- [STEP 2] 메시지 저장 (사용자) ---
             cursor.execute(
                 """
                 INSERT INTO chat_message (room_id, role, msg_type, content, status)
@@ -187,6 +177,31 @@ async def chat_with_agent(query: str, room_id: int = None):
                 (room_id, query),
             )
             user_msg_id = cursor.lastrowid
+            conn.commit()
+
+            # ✅ ToolCallLog handler 만들고 callbacks로 주입
+            handler = ToolCallLogHandler(
+                conn=conn,
+                room_id=room_id,
+                message_id=user_msg_id,
+                parent_id=user_msg_id,  # 보통 tool call은 “이 유저 질문에 대한 실행”이니까 parent를 user_msg로 두는게 자연스러움
+            )
+
+            # --- [STEP 3] 에이전트 실행 (이 부분이 에러 해결의 핵심) ---
+            # 💡 반드시 thread_id를 문자열로 변환하여 전달해야 합니다.
+            config = {
+                "configurable": {"thread_id": str(room_id)},
+                "callbacks": [handler],
+            }
+            
+            inputs = {"messages": [HumanMessage(content=query)]}
+
+            print(f"🤖 에이전트 호출 시작 (thread_id: {room_id})")
+            # 🚀 두 번째 인자로 config를 반드시 넘깁니다.
+            result = await agent_executor.ainvoke(inputs, config=config)
+            final_answer = result["messages"][-1].content
+
+            parsed = _safe_json_load(final_answer)
 
             messages: List[Dict[str, Any]] = []
 
@@ -199,7 +214,7 @@ async def chat_with_agent(query: str, room_id: int = None):
                 need_chart = bool(parsed.get("need_chart"))
                 ticker = parsed.get("ticker")
 
-            # --- [STEP 3-2] 메시지 저장 (AI) ---
+            # --- [STEP 4] 메시지 저장 (AI) ---
             cursor.execute(
                 """
                 INSERT INTO chat_message (room_id, role, msg_type, content, parent_id, status)
@@ -229,7 +244,7 @@ async def chat_with_agent(query: str, room_id: int = None):
                 messages.append({"role": "assistant", "msg_type": "CARD", "payload_json": card_payload})
 
 
-            # --- [STEP 4] 방 정보 최종 업데이트 (진짜 답변 내용 반영) ---
+            # --- [STEP 5] 방 정보 최종 업데이트 (진짜 답변 내용 반영) ---
             room_title = query[:20] + "..." if len(query) > 20 else query
             preview_src = (answer_text or "").strip() or (final_answer or "").strip()
             preview = preview_src[:250] + "..." if len(preview_src) > 250 else preview_src
