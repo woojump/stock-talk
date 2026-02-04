@@ -23,4 +23,9 @@ class ApiConfig {
   static const String stockDetailPath = '/market/stock';
   static const String stockNewsPath = '/news/stock';
   static const String searchPath = '/market/search';
+  static const String chattingAskPath = '/chatting/ask';
+  static const String chattingRoomsPath = '/chatting/rooms';
+  static String chattingRoomMessagesPath(int roomId) =>
+      '/chatting/rooms/$roomId/messages';
+  static String chattingRoomDeletePath(int roomId) => '/chatting/rooms/$roomId';
 }
