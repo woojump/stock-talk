@@ -2,6 +2,7 @@ import os
 import pymysql
 import json
 from typing import Any, Dict, Optional, List
+import asyncio
 
 from fastapi import APIRouter, HTTPException, Query
 from langchain_openai import ChatOpenAI
@@ -89,12 +90,26 @@ OUTPUT_FORMAT = """
 - 사용자가 "시세", "현재가", "주가", "차트", "그래프", "캔들", "추세", "주가 흐름" 중 하나라도 요구하면 need_chart=true로 판단한다. 
 - 종목 식별(티커/종목명/키워드 매칭)과 모호성(여러 종목 검색) 처리는 get_market_data 도구가 수행한다. LLM은 종목을 임의로 확정하지 않는다.
 - candles(차트 데이터)는 절대 응답에 포함하지 않는다(서버가 처리).
+
 - get_market_data 도구 사용 규칙:
-  - 도구가 "여러 종목" 안내를 반환하면 ticker는 null로 출력하고, answer_text에는 도구가 준 안내/목록을 그대로 넣어 사용자에게 재입력을 유도한다.
-  - 도구가 특정 종목 시세를 반환하면 ticker는 6자리 티커로 채운다. (티커를 모르면 추측하지 말고 null)
+  - 사용자가 여러 종목을 물어보면, **언급된 모든 종목에 대해 예외 없이 get_market_data를 각각 호출**하여 정보를 수집해야 한다.
+  - 종목이 3개 이상이어도 누락하지 말고 반드시 모든 종목을 순차적으로 조회한다.
+  - 도구가 특정 종목 시세를 반환하면 ticker 필드에 6자리 티커를 채운다. 
+  - **여러 종목일 경우 ticker 필드에 모든 티커를 콤마(,)로 구분하여 빠짐없이 작성한다. (예: "005930,000660,005380")**
+
 - 최종 응답은 반드시 아래 JSON 형식으로만 출력한다(문장/마크다운 금지):
-  { "answer_text": "사용자에게 보여줄 요약 텍스트", "ticker": "005930 또는 null", "need_chart": true }
+  { "answer_text": "조회된 모든 종목의 시세를 요약한 메시지", "ticker": "005930,000660,005380 또는 null", "need_chart": true }
+
 - 차트가 필요 없으면 need_chart=false로 출력한다.
+
+[응답 예시 - 반드시 이 패턴을 따를 것]
+- 사용자: "하이닉스랑 삼전 시세 알려줘"
+- JSON 응답: 
+{
+  "answer_text": "SK하이닉스의 현재가는 900,000원(전일대비 -0.77%)이며, 삼성전자의 현재가는 169,100원(전일대비 +0.96%)입니다. 아래에서 각 종목의 상세 차트를 확인하실 수 있습니다.",
+  "ticker": "000660,005930",
+  "need_chart": true
+}
 """
 
 SYSTEM_PROMPT = (
@@ -229,22 +244,41 @@ async def chat_with_agent(query: str, room_id: int = None):
             # 차트가 필요하면 서버가 직접 get_stock_detail 호출 후 CARD 저장
 
             if need_chart and ticker:
-                stock_detail = await kiwoom_service.get_stock_detail(str(ticker))
-                card_payload = _build_chart_card_payload(stock_detail)
+                # "000660,005930" -> ["000660", "005930"]
+                ticker_list = [t.strip() for t in str(ticker).split(",") if t.strip()]
+                
+                print(f"📡 총 {len(ticker_list)}개의 종목 차트를 생성합니다: {ticker_list}")
 
-                cursor.execute(
-                    """
-                    INSERT INTO chat_message (room_id, role, msg_type, payload_json, parent_id, status)
-                    VALUES (%s, 'assistant', 'CARD', %s, %s, 'final')
-                    """,
-                    (room_id, json.dumps(card_payload, ensure_ascii=False), assistant_text_id),
-                )
-                assistant_card_id = cursor.lastrowid
-                last_message_id = assistant_card_id
-                messages.append({"role": "assistant", "msg_type": "CARD", "payload_json": card_payload})
+                for i, t in enumerate(ticker_list):
+                    try:
+                        # 🚀 [추가] 두 번째 종목부터는 0.5초 대기하여 429 에러 방지
+                        if i > 0:
+                            await asyncio.sleep(1.0)
 
+                        # 각 종목 상세 데이터 호출
+                        stock_detail = await kiwoom_service.get_stock_detail(t)
+                        card_payload = _build_chart_card_payload(stock_detail)
 
-            # --- [STEP 5] 방 정보 최종 업데이트 (진짜 답변 내용 반영) ---
+                        # 각 종목별로 개별 카드 저장
+                        cursor.execute(
+                            """
+                            INSERT INTO chat_message (room_id, role, msg_type, payload_json, parent_id, status)
+                            VALUES (%s, 'assistant', 'CARD', %s, %s, 'final')
+                            """,
+                            (room_id, json.dumps(card_payload, ensure_ascii=False), assistant_text_id),
+                        )
+                        
+                        # 마지막 카드 ID 업데이트 (STEP 4에서 사용)
+                        last_message_id = cursor.lastrowid
+                        
+                        # 화면 반환 리스트에 추가
+                        messages.append({"role": "assistant", "msg_type": "CARD", "payload_json": card_payload})
+                        print(f"✅ {t} 차트 생성 완료")
+                    except Exception as e:
+                        print(f"⚠️ {t} 차트 생성 중 오류: {str(e)}")
+                        
+            # --- [STEP 4] 방 정보 최종 업데이트 ---
+
             room_title = query[:20] + "..." if len(query) > 20 else query
             preview_src = (answer_text or "").strip() or (final_answer or "").strip()
             preview = preview_src[:250] + "..." if len(preview_src) > 250 else preview_src
@@ -260,7 +294,6 @@ async def chat_with_agent(query: str, room_id: int = None):
         return {
             "status": "success", 
             "room_id": room_id, 
-            "answer": answer_text, 
             "messages": messages
         }
 

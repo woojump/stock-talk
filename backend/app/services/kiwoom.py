@@ -420,12 +420,15 @@ class KiwoomService:
         
         await self.ensure_token() # 변경됨
 
+        is_market_price = (price == 0)
+
         endpoint = "/api/dostk/ordr" 
 
         headers = {
             "authorization": f"Bearer {self.access_token}",
             "Content-Type": "application/json; charset=UTF-8",
             "api-id": "kt10000" if is_buy else "kt10001"
+
         }
 
         # 2. 주문 데이터 구성
@@ -439,18 +442,40 @@ class KiwoomService:
         }   
 
         # 3. 키움 서버로 주문 전송
-        response = await self.client.post(endpoint, headers=headers, json=payload)
-        response.raise_for_status()
+        try:
+            print(f"\n🚀 [주문 시도] {ticker} / {qty}주 / {'매수' if is_buy else '매도'} / {'시장가' if is_market_price else '지정가'}")
+            
+            response = await self.client.post(endpoint, headers=headers, json=payload)
+            
+            # 응답 상태 코드가 200이 아닐 경우 에러 발생
+            if response.status_code != 200:
+                print(f"❌ [API 에러] 상태 코드: {response.status_code}")
+                print(f"❌ [에러 내용] {response.text}")
+            
+            response.raise_for_status()
+            res_json = response.json()
 
-        res_json = response.json()
+            # [여기에 이 줄을 추가해서 전체를 다 보세요!]
+            print(f"🔍 [RAW DATA] 전체 응답: {res_json}") 
 
-        """
-        # 응답 Boby에서 주문번호("ord_no") 확인 가능
-        if res_json.get("ord_no"):
-            print(f"[DEBUG]주문 성공! 주문번호: {res_json.get('ord_no')}")
-        """
+            #       4. 결과 출력
+            print("-" * 30)
 
-        return res_json
+            # 4. 결과 출력 (주석 해제 및 강화)
+            print("-" * 30)
+            if res_json.get("ord_no") or res_json.get("rt_cd") == "0":
+                print(f"✅ [주문 성공] 주문번호: {res_json.get('ord_no')}")
+                print(f"✅ [메시지]: {res_json.get('msg1')}")
+            else:
+                print(f"⚠️ [주문 거절] 코드: {res_json.get('rt_cd')}")
+                print(f"⚠️ [사유]: {res_json.get('msg1')}")
+            print("-" * 30 + "\n")
+
+            return res_json
+
+        except Exception as e:
+            print(f"🚨 [런타임 에러] 주문 함수 실행 중 오류 발생: {str(e)}")
+            return {"status": "error", "message": str(e)}
 
     async def amend_order(
         self, orig_ord_no: str, ticker: str, qty: int, price: int

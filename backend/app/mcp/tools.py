@@ -268,7 +268,7 @@ async def get_account_balance() -> str:
     try:
         # KiwoomService의 get_account_balance 호출
         result = await kiwoom_service.get_account_balance()
-        print(f"💰 [잔고 응답 데이터]: {result}") # 이 로그를 확인해야 합니다!
+        # print(f"💰 [잔고 응답 데이터]: {result}") # 이 로그를 확인해야 합니다!
         summary = result.get("summary", {})
         holdings = result.get("holdings", [])
 
