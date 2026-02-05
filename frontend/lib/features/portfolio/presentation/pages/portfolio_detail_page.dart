@@ -33,18 +33,24 @@ class PortfolioDetailPage extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('평가금액', style: Theme.of(context).textTheme.headlineSmall),
-                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  '평가금액',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: AppColors.gray600),
+                ),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,
                   children: [
                     Text(
                       numberFormat.format(totalEvaluation),
-                      style: Theme.of(context).textTheme.headlineLarge
-                          ?.copyWith(fontWeight: AppTypography.bold),
+                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                        fontWeight: AppTypography.bold,
+                      ),
                     ),
-                    Text('원', style: Theme.of(context).textTheme.headlineSmall),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text('원', style: Theme.of(context).textTheme.headlineLarge),
                   ],
                 ),
               ],
@@ -94,7 +100,7 @@ class PortfolioDetailPage extends StatelessWidget {
                   value: '${numberFormat.format(holding.currentPrice)}원',
                 ),
 
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: AppSpacing.xxxxxl),
 
                 // Action Button
                 Center(
@@ -135,11 +141,11 @@ class _MetricRow extends StatelessWidget {
           label,
           style: Theme.of(
             context,
-          ).textTheme.labelLarge?.copyWith(color: AppColors.gray500),
+          ).textTheme.bodyMedium?.copyWith(color: AppColors.gray500),
         ),
         Text(
           value,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: valueColor ?? AppColors.black,
           ),
         ),
