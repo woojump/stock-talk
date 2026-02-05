@@ -4,9 +4,9 @@ import 'package:provider/provider.dart';
 import 'package:stock_talk/core/design_system/design_system.dart';
 import 'package:stock_talk/core/di/injection.dart';
 import 'package:stock_talk/features/explore/presentation/providers/stock_detail_provider.dart';
-import 'package:stock_talk/features/explore/presentation/widgets/stock_detail/stock_header_section.dart';
 import 'package:stock_talk/features/explore/presentation/widgets/stock_detail/candlestick_chart_section.dart';
 import 'package:stock_talk/features/explore/presentation/widgets/stock_detail/price_info_section.dart';
+import 'package:stock_talk/features/explore/presentation/widgets/stock_detail/stock_header_section.dart';
 import 'package:stock_talk/features/explore/presentation/widgets/stock_detail/stock_news_section.dart';
 
 @RoutePage()
@@ -78,11 +78,9 @@ class _StockDetailView extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Text(
               provider.detailError!,
-              style: const TextStyle(
-                fontFamily: AppTypography.fontFamily,
-                fontSize: AppTypography.bodyMedium,
-                color: AppColors.gray500,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.gray500),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.lg),

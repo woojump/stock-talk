@@ -29,11 +29,9 @@ class PriceInfoSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 섹션 제목
-        const Text(
+        Text(
           '시세',
-          style: TextStyle(
-            fontFamily: AppTypography.fontFamily,
-            fontSize: 17,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: AppTypography.semiBold,
             color: AppColors.black,
           ),
@@ -42,6 +40,7 @@ class PriceInfoSection extends StatelessWidget {
 
         // 1일 가격 범위 바
         _buildPriceRangeBar(
+          context,
           label: '1일',
           lowPrice: lowPrice,
           highPrice: highPrice,
@@ -52,6 +51,7 @@ class PriceInfoSection extends StatelessWidget {
 
         // 시작가 / 종가 / 거래량
         _buildInfoGrid(
+          context,
           openPrice: openPrice,
           closePrice: closePrice,
           volume: volume,
@@ -61,7 +61,8 @@ class PriceInfoSection extends StatelessWidget {
     );
   }
 
-  Widget _buildPriceRangeBar({
+  Widget _buildPriceRangeBar(
+    BuildContext context, {
     required String label,
     required double lowPrice,
     required double highPrice,
@@ -119,8 +120,8 @@ class PriceInfoSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildPriceLabel('$label 최저가', lowPrice, priceFormat),
-            _buildPriceLabel('$label 최고가', highPrice, priceFormat),
+            _buildPriceLabel(context, '$label 최저가', lowPrice, priceFormat),
+            _buildPriceLabel(context, '$label 최고가', highPrice, priceFormat),
           ],
         ),
         const SizedBox(height: AppSpacing.xs),
@@ -129,39 +130,45 @@ class PriceInfoSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildPriceValue(lowPrice, priceFormat),
-            _buildPriceValue(highPrice, priceFormat),
+            _buildPriceValue(context, lowPrice, priceFormat),
+            _buildPriceValue(context, highPrice, priceFormat),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildPriceLabel(String label, double price, NumberFormat format) {
+  Widget _buildPriceLabel(
+    BuildContext context,
+    String label,
+    double price,
+    NumberFormat format,
+  ) {
     return Text(
       label,
-      style: const TextStyle(
-        fontFamily: AppTypography.fontFamily,
-        fontSize: 13,
+      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
         fontWeight: AppTypography.regular,
         color: AppColors.gray500,
       ),
     );
   }
 
-  Widget _buildPriceValue(double price, NumberFormat format) {
+  Widget _buildPriceValue(
+    BuildContext context,
+    double price,
+    NumberFormat format,
+  ) {
     return Text(
       '${format.format(price)}원',
-      style: const TextStyle(
-        fontFamily: AppTypography.fontFamily,
-        fontSize: 13,
+      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
         fontWeight: AppTypography.regular,
         color: AppColors.gray500,
       ),
     );
   }
 
-  Widget _buildInfoGrid({
+  Widget _buildInfoGrid(
+    BuildContext context, {
     required double openPrice,
     required double closePrice,
     required int volume,
@@ -175,9 +182,17 @@ class PriceInfoSection extends StatelessWidget {
         Expanded(
           child: Column(
             children: [
-              _buildInfoRow('시작가', '${priceFormat.format(openPrice)}원'),
+              _buildInfoRow(
+                context,
+                '시작가',
+                '${priceFormat.format(openPrice)}원',
+              ),
               const SizedBox(height: AppSpacing.xs),
-              _buildInfoRow('종가', '${priceFormat.format(closePrice)}원'),
+              _buildInfoRow(
+                context,
+                '종가',
+                '${priceFormat.format(closePrice)}원',
+              ),
             ],
           ),
         ),
@@ -192,9 +207,9 @@ class PriceInfoSection extends StatelessWidget {
         Expanded(
           child: Column(
             children: [
-              _buildInfoRow('거래량', '${volumeFormat.format(volume)}주'),
+              _buildInfoRow(context, '거래량', '${volumeFormat.format(volume)}주'),
               const SizedBox(height: AppSpacing.xs),
-              _buildInfoRow('거래대금', '-'), // API 미지원
+              _buildInfoRow(context, '거래대금', '-'), // API 미지원
             ],
           ),
         ),
@@ -202,24 +217,20 @@ class PriceInfoSection extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(BuildContext context, String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontFamily: AppTypography.fontFamily,
-            fontSize: 13,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontWeight: AppTypography.regular,
             color: AppColors.gray500,
           ),
         ),
         Text(
           value,
-          style: const TextStyle(
-            fontFamily: AppTypography.fontFamily,
-            fontSize: 13,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontWeight: AppTypography.regular,
             color: AppColors.black,
           ),
