@@ -1,6 +1,7 @@
 # backend/app/mcp/tools.py
 from __future__ import annotations
 
+import asyncio
 from typing import Any, Dict, List
 from langchain_core.tools import tool  # 랭체인용 도구 도장
 from app.services.kiwoom import kiwoom_service
@@ -84,6 +85,8 @@ async def get_market_data(q: str) -> str:
     특정 종목의 현재가, 전일대비, 거래량 등 상세 마켓 데이터를 조회합니다.
     query: 종목명 또는 종목코드
     """
+    await asyncio.sleep(0.3)
+    
     try:
         print(f"🔍 [시세조회] 입력된 종목: {q}")
         query = (q or "").strip()
