@@ -71,20 +71,29 @@ class _ExplorePageView extends StatelessWidget {
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return AppBar(
-      backgroundColor: AppColors.white,
-      elevation: 0,
-      toolbarHeight: 64,
-      title: Text('탐색', style: Theme.of(context).textTheme.headlineLarge),
-      actions: [
-        IconButton(
-          icon: AppIcon.action('search'),
-          onPressed: () {
-            context.router.push(const SearchRoute());
-          },
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(64),
+      child: AppBar(
+        backgroundColor: AppColors.white,
+        elevation: 0,
+        toolbarHeight: 64,
+        titleSpacing: 20,
+        title: Padding(
+          padding: const EdgeInsets.only(top: 20),
+          child: Text('탐색', style: Theme.of(context).textTheme.displayLarge),
         ),
-        SizedBox(width: AppSpacing.xs),
-      ],
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(top: 20, right: 8),
+            child: IconButton(
+              icon: AppIcon.action('search'),
+              onPressed: () {
+                context.router.push(const SearchRoute());
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

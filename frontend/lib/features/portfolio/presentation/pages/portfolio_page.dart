@@ -45,7 +45,7 @@ class _PortfolioView extends StatelessWidget {
             padding: const EdgeInsets.only(top: 20),
             child: Text(
               '포트폴리오',
-              style: Theme.of(context).textTheme.headlineLarge,
+              style: Theme.of(context).textTheme.displayLarge,
             ),
           ),
         ),
