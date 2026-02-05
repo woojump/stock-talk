@@ -34,11 +34,9 @@ class SecondaryButton extends StatelessWidget {
               vertical: AppSpacing.xs,
             ),
             child: DefaultTextStyle(
-              style: TextStyle(
-                fontSize: AppTypography.bodyMedium,
-                fontWeight: AppTypography.medium,
+              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                 color: AppColors.gray400,
-                height: AppTypography.lineHeightBody / AppTypography.bodyMedium,
+                height: 1.5,
               ),
               child: child,
             ),
@@ -48,10 +46,7 @@ class SecondaryButton extends StatelessWidget {
     );
 
     if (isFullWidth) {
-      return SizedBox(
-        width: double.infinity,
-        child: button,
-      );
+      return SizedBox(width: double.infinity, child: button);
     }
 
     return button;

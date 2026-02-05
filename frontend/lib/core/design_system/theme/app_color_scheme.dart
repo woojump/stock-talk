@@ -23,7 +23,7 @@ class AppColorScheme {
       onSurface: AppColors.black,
       surfaceContainerHighest: AppColors.gray100,
       onSurfaceVariant: AppColors.gray600,
-      outline: AppColors.borderDefault,
+      outline: AppColors.gray200,
       outlineVariant: AppColors.gray300,
       shadow: AppColors.black,
       scrim: AppColors.black,

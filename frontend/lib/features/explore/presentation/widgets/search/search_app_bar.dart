@@ -83,17 +83,13 @@ class _SearchAppBarState extends State<SearchAppBar> {
               focusNode: widget.focusNode,
               autofocus: true,
               onChanged: widget.onChanged,
-              style: const TextStyle(
-                fontFamily: AppTypography.fontFamily,
-                fontSize: AppTypography.titleMedium,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: AppTypography.medium,
                 color: AppColors.black,
               ),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: '어떤 주식을 찾고 있나요?',
-                hintStyle: TextStyle(
-                  fontFamily: AppTypography.fontFamily,
-                  fontSize: AppTypography.titleMedium,
+                hintStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: AppTypography.medium,
                   color: AppColors.gray500,
                 ),
@@ -103,7 +99,7 @@ class _SearchAppBarState extends State<SearchAppBar> {
                 focusedBorder: InputBorder.none,
                 errorBorder: InputBorder.none,
                 focusedErrorBorder: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(
+                contentPadding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.md,
                   vertical: AppSpacing.sm,
                 ),

@@ -28,11 +28,8 @@ class ChartTabWidget extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: TextStyle(
-            fontSize: AppTypography.bodyMedium,
-            fontWeight: AppTypography.medium,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: isSelected ? AppColors.gray300 : AppColors.gray500,
-            height: AppTypography.lineHeightBody / AppTypography.bodyMedium,
           ),
         ),
       ),

@@ -37,14 +37,9 @@ class StockListItem extends StatelessWidget {
               width: 20,
               child: Text(
                 '$rank',
-                style: TextStyle(
-                  fontSize: AppTypography.labelSmall,
-                  fontWeight: AppTypography.regular,
-                  color: AppColors.gray500,
-                  height:
-                      AppTypography.lineHeightBodySmall /
-                      AppTypography.labelSmall,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.labelSmall?.copyWith(color: AppColors.gray500),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -58,19 +53,12 @@ class StockListItem extends StatelessWidget {
                     children: [
                       Text(
                         stock.name,
-                        style: TextStyle(
-                          fontSize: AppTypography.titleMedium,
-                          fontWeight: AppTypography.semiBold,
-                          color: AppColors.black,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                       Text(
                         '${numberFormat.format(stock.price)}원',
-                        style: TextStyle(
-                          fontSize: AppTypography.titleMedium,
-                          fontWeight: AppTypography.medium,
-                          color: AppColors.black,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: AppTypography.medium),
                       ),
                     ],
                   ),
@@ -80,13 +68,8 @@ class StockListItem extends StatelessWidget {
                     children: [
                       Text(
                         stock.ticker,
-                        style: TextStyle(
-                          fontSize: AppTypography.labelSmall,
-                          fontWeight: AppTypography.regular,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: AppColors.gray500,
-                          height:
-                              AppTypography.lineHeightBodySmall /
-                              AppTypography.labelSmall,
                         ),
                       ),
                       Text(
@@ -95,13 +78,8 @@ class StockListItem extends StatelessWidget {
                           stock.changeRate,
                           numberFormat,
                         ),
-                        style: TextStyle(
-                          fontSize: AppTypography.labelSmall,
-                          fontWeight: AppTypography.regular,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: getProfitColor(stock.change),
-                          height:
-                              AppTypography.lineHeightBodySmall /
-                              AppTypography.labelSmall,
                         ),
                       ),
                     ],

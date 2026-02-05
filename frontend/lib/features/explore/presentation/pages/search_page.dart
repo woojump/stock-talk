@@ -147,14 +147,12 @@ class _SearchPageViewState extends State<_SearchPageView> {
   }
 
   Widget _buildNoResults() {
-    return const Center(
+    return Center(
       child: Text(
         '검색 결과가 없어요',
-        style: TextStyle(
-          fontFamily: AppTypography.fontFamily,
-          fontSize: AppTypography.titleLarge,
-          fontWeight: AppTypography.medium,
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
           color: AppColors.gray400,
+          fontWeight: AppTypography.medium,
         ),
       ),
     );

@@ -33,15 +33,7 @@ class PortfolioDetailPage extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '평가금액',
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: AppTypography.semiBold,
-                    color: AppColors.black,
-                    height: 1.43,
-                  ),
-                ),
+                Text('평가금액', style: Theme.of(context).textTheme.headlineSmall),
                 const SizedBox(height: AppSpacing.sm),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -49,22 +41,10 @@ class PortfolioDetailPage extends StatelessWidget {
                   children: [
                     Text(
                       numberFormat.format(totalEvaluation),
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: AppTypography.bold,
-                        color: AppColors.black,
-                        height: 1.64,
-                      ),
+                      style: Theme.of(context).textTheme.headlineLarge
+                          ?.copyWith(fontWeight: AppTypography.bold),
                     ),
-                    Text(
-                      '원',
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: AppTypography.semiBold,
-                        color: AppColors.black,
-                        height: 1.43,
-                      ),
-                    ),
+                    Text('원', style: Theme.of(context).textTheme.headlineSmall),
                   ],
                 ),
               ],
@@ -99,11 +79,7 @@ class PortfolioDetailPage extends StatelessWidget {
                 const SizedBox(height: AppSpacing.lg),
 
                 // Divider
-                const Divider(
-                  color: AppColors.gray300,
-                  thickness: 1,
-                  height: 1,
-                ),
+                const Divider(),
 
                 const SizedBox(height: AppSpacing.lg),
 
@@ -157,20 +133,14 @@ class _MetricRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: AppTypography.bodyMedium,
-            fontWeight: AppTypography.medium,
-            color: AppColors.gray500,
-            height: 1.6,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.labelLarge?.copyWith(color: AppColors.gray500),
         ),
         Text(
           value,
-          style: TextStyle(
-            fontSize: AppTypography.bodyMedium,
-            fontWeight: AppTypography.medium,
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
             color: valueColor ?? AppColors.black,
-            height: 1.6,
           ),
         ),
       ],

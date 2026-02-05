@@ -1,126 +1,100 @@
 import 'package:flutter/material.dart';
 import 'package:stock_talk/core/design_system/tokens/typography.dart';
 
-/// Material TextTheme을 Figma 타이포그래피에 매핑
 class AppTextTheme {
   AppTextTheme._();
 
   static TextTheme get textTheme {
     return TextTheme(
-      // Display styles
       displayLarge: TextStyle(
-        fontSize: AppTypography.displayLarge,
+        fontSize: AppTypography.titleXL,
         fontWeight: AppTypography.bold,
         fontFamily: AppTypography.fontFamily,
-        height:
-            AppTypography.lineHeightDisplayLarge / AppTypography.displayLarge,
-        letterSpacing: AppTypography.letterSpacing,
+        height: 1.35,
       ),
       displayMedium: TextStyle(
-        fontSize: AppTypography.headlineLarge,
-        fontWeight: AppTypography.bold,
+        fontSize: AppTypography.titleL,
+        fontWeight: AppTypography.semiBold,
         fontFamily: AppTypography.fontFamily,
-        height: AppTypography.lineHeightHeadline / AppTypography.headlineLarge,
-        letterSpacing: AppTypography.letterSpacing,
+        height: 1.64,
       ),
       displaySmall: TextStyle(
-        fontSize: AppTypography.headlineMedium,
-        fontWeight: AppTypography.bold,
-        fontFamily: AppTypography.fontFamily,
-        height: AppTypography.lineHeightHeadline / AppTypography.headlineMedium,
-        letterSpacing: AppTypography.letterSpacing,
-      ),
-
-      // Headline styles
-      headlineLarge: TextStyle(
-        fontSize: AppTypography.headlineLarge,
+        fontSize: AppTypography.titleM,
         fontWeight: AppTypography.semiBold,
         fontFamily: AppTypography.fontFamily,
-        height: AppTypography.lineHeightHeadline / AppTypography.headlineLarge,
-        letterSpacing: AppTypography.letterSpacing,
+        height: 1.43,
+      ),
+      headlineLarge: TextStyle(
+        fontSize: AppTypography.titleL,
+        fontWeight: AppTypography.semiBold,
+        fontFamily: AppTypography.fontFamily,
+        height: 1.64,
       ),
       headlineMedium: TextStyle(
-        fontSize: AppTypography.headlineMedium,
+        fontSize: AppTypography.titleM,
         fontWeight: AppTypography.semiBold,
         fontFamily: AppTypography.fontFamily,
-        height: AppTypography.lineHeightHeadline / AppTypography.headlineMedium,
-        letterSpacing: AppTypography.letterSpacing,
+        height: 1.43,
       ),
       headlineSmall: TextStyle(
-        fontSize: AppTypography.titleLarge,
+        fontSize: AppTypography.titleS,
         fontWeight: AppTypography.semiBold,
         fontFamily: AppTypography.fontFamily,
-        height: AppTypography.lineHeightHeadline / AppTypography.titleLarge,
-        letterSpacing: AppTypography.letterSpacing,
+        height: 1.0,
       ),
-
-      // Title styles
       titleLarge: TextStyle(
-        fontSize: AppTypography.titleLarge,
+        fontSize: AppTypography.titleXS,
         fontWeight: AppTypography.semiBold,
         fontFamily: AppTypography.fontFamily,
-        height: AppTypography.lineHeightBody / AppTypography.titleLarge,
-        letterSpacing: AppTypography.letterSpacing,
+        height: 1.0,
       ),
       titleMedium: TextStyle(
-        fontSize: AppTypography.titleMedium,
-        fontWeight: AppTypography.semiBold,
+        fontSize: AppTypography.labelXL,
+        fontWeight: AppTypography.medium,
         fontFamily: AppTypography.fontFamily,
-        height: AppTypography.lineHeightBody / AppTypography.titleMedium,
-        letterSpacing: AppTypography.letterSpacing,
+        height: 1.6,
       ),
       titleSmall: TextStyle(
-        fontSize: AppTypography.bodyMedium,
+        fontSize: AppTypography.labelL,
+        fontWeight: AppTypography.regular,
+        fontFamily: AppTypography.fontFamily,
+        height: 1.27,
+      ),
+      bodyLarge: TextStyle(
+        fontSize: AppTypography.bodyL,
         fontWeight: AppTypography.semiBold,
         fontFamily: AppTypography.fontFamily,
-        height: AppTypography.lineHeightBody / AppTypography.bodyMedium,
-        letterSpacing: AppTypography.letterSpacing,
-      ),
-
-      // Body styles
-      bodyLarge: TextStyle(
-        fontSize: AppTypography.bodyLarge,
-        fontWeight: AppTypography.regular,
-        fontFamily: AppTypography.fontFamily,
-        height: AppTypography.lineHeightBody / AppTypography.bodyLarge,
-        letterSpacing: AppTypography.letterSpacing,
+        height: 1.51,
       ),
       bodyMedium: TextStyle(
-        fontSize: AppTypography.bodyMedium,
-        fontWeight: AppTypography.regular,
+        fontSize: AppTypography.bodyM,
+        fontWeight: AppTypography.medium,
         fontFamily: AppTypography.fontFamily,
-        height: AppTypography.lineHeightBody / AppTypography.bodyMedium,
-        letterSpacing: AppTypography.letterSpacing,
+        height: 1.7,
       ),
       bodySmall: TextStyle(
-        fontSize: AppTypography.bodySmall,
-        fontWeight: AppTypography.regular,
-        fontFamily: AppTypography.fontFamily,
-        height: AppTypography.lineHeightBodySmall / AppTypography.bodySmall,
-        letterSpacing: AppTypography.letterSpacing,
-      ),
-
-      // Label styles
-      labelLarge: TextStyle(
-        fontSize: AppTypography.bodyMedium,
+        fontSize: AppTypography.bodyS,
         fontWeight: AppTypography.medium,
         fontFamily: AppTypography.fontFamily,
-        height: AppTypography.lineHeightBody / AppTypography.bodyMedium,
-        letterSpacing: AppTypography.letterSpacing,
+        height: 1.3,
+      ),
+      labelLarge: TextStyle(
+        fontSize: AppTypography.labelXL,
+        fontWeight: AppTypography.medium,
+        fontFamily: AppTypography.fontFamily,
+        height: 1.6,
       ),
       labelMedium: TextStyle(
-        fontSize: AppTypography.bodySmall,
-        fontWeight: AppTypography.medium,
+        fontSize: AppTypography.labelL,
+        fontWeight: AppTypography.regular,
         fontFamily: AppTypography.fontFamily,
-        height: AppTypography.lineHeightBodySmall / AppTypography.bodySmall,
-        letterSpacing: AppTypography.letterSpacing,
+        height: 1.27,
       ),
       labelSmall: TextStyle(
-        fontSize: AppTypography.labelSmall,
-        fontWeight: AppTypography.medium,
+        fontSize: AppTypography.labelM,
+        fontWeight: AppTypography.regular,
         fontFamily: AppTypography.fontFamily,
-        height: AppTypography.lineHeightBodySmall / AppTypography.labelSmall,
-        letterSpacing: AppTypography.letterSpacing,
+        height: 1.27,
       ),
     );
   }
