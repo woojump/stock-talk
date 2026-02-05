@@ -31,6 +31,7 @@ class ApiConfig {
   }
 
   static const String balancePath = '/trade/balance';
+  static const String orderHistoryPath = '/trade/order-history';
   static const String topMoversPath = '/market/top-movers';
   static const String popularNewsPath = '/news/popular';
   static const String newsDetailPath = '/news/detail';
