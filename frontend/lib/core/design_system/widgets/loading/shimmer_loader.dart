@@ -136,3 +136,41 @@ class AppSkeletonList extends StatelessWidget {
     );
   }
 }
+
+/// 테이블 형태의 스켈레톤 로더
+class AppSkeletonTable extends StatelessWidget {
+  const AppSkeletonTable({
+    super.key,
+    this.rowCount = 5,
+    this.padding = EdgeInsets.zero,
+  });
+
+  final int rowCount;
+  final EdgeInsets padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: padding,
+      child: Column(
+        children: List.generate(
+          rowCount,
+          (index) => Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Row(
+              children: [
+                const AppShimmer.rect(width: 60, height: 16),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppShimmer.rect(width: double.infinity, height: 16),
+                ),
+                const SizedBox(width: 12),
+                const AppShimmer.rect(width: 40, height: 16),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

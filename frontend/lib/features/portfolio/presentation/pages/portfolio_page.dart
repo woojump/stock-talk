@@ -10,6 +10,7 @@ import 'package:stock_talk/features/portfolio/presentation/utils/portfolio_utils
 import 'package:stock_talk/features/portfolio/presentation/widgets/asset_section.dart';
 import 'package:stock_talk/features/portfolio/presentation/widgets/balance_summary_card.dart';
 import 'package:stock_talk/features/portfolio/presentation/widgets/holdings_header.dart';
+import 'package:stock_talk/features/portfolio/presentation/widgets/order_history_section.dart';
 import 'package:stock_talk/features/portfolio/presentation/widgets/stock_card.dart';
 
 @RoutePage()
@@ -169,6 +170,8 @@ class _PortfolioView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 32),
+                  // 주문 내역 섹션
+                  const OrderHistorySection(),
                 ],
               ),
             );
