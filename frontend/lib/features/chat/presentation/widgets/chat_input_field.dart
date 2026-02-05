@@ -41,24 +41,10 @@ class _ChatInputFieldState extends State<ChatInputField> {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 상단 블러 그라데이션
-            Container(
-              height: 20,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    AppColors.white.withValues(alpha: 0),
-                    AppColors.white,
-                  ],
-                ),
-              ),
-            ),
             // 입력창 컨테이너
             Container(
               color: AppColors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
