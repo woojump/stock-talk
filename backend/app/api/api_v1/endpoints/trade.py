@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Header
+from fastapi import APIRouter, Header, HTTPException, Depends, Query
 from app.services.kiwoom import kiwoom_service
 from pydantic import BaseModel
+from typing import Optional
 
 router = APIRouter()
 
@@ -120,3 +121,23 @@ async def cancel_order(cancel_data: CancelRequest):
         "message": f"주문번호 {cancel_data.orig_ord_no}의 취소 주문이 정상 접수되었습니다.",
         "kiwoom_response": result
     }
+
+@router.get("/order-history")
+async def get_order_history(
+    qry_tp: str = Query("3", description="1:주문순, 2:역순, 3:미체결, 4:체결내역만"), # 기본값 미체결
+    ticker: Optional[str] = Query(None, description="특정 종목 조회 시 종목코드")
+):
+    try:
+        # 서비스 함수 호출
+        orders = await kiwoom_service.get_order_history(
+            qry_tp=qry_tp, 
+            stk_cd=ticker if ticker else ""
+        )
+        return {
+            "status": "success",
+            "count": len(orders),
+            "data": orders
+        }
+    except Exception as e:
+        # 에러 발생 시 상세 메시지 반환
+        raise HTTPException(status_code=500, detail=f"주문 내역 조회 실패: {str(e)}")
