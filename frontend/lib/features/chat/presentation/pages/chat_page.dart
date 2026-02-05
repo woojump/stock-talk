@@ -34,7 +34,7 @@ class _ChatPageView extends StatelessWidget {
       child: Scaffold(
         backgroundColor: AppColors.white,
         drawer: const ChatHistoryDrawer(),
-        drawerEnableOpenDragGesture: false,
+        drawerEnableOpenDragGesture: true,
         body: Consumer<ChatProvider>(
           builder: (context, provider, _) {
             return Stack(
