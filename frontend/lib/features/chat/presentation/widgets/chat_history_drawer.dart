@@ -55,11 +55,9 @@ class _ChatHistoryDrawerState extends State<ChatHistoryDrawer> {
             onPressed: () => Navigator.of(context).pop(),
           ),
           const SizedBox(width: AppSpacing.xs),
-          const Text(
+          Text(
             '대화 내역',
-            style: TextStyle(
-              fontFamily: AppTypography.fontFamily,
-              fontSize: AppTypography.titleLarge,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               fontWeight: AppTypography.semiBold,
               color: AppColors.gray800,
             ),
@@ -87,11 +85,9 @@ class _ChatHistoryDrawerState extends State<ChatHistoryDrawer> {
                   color: AppColors.gray400,
                 ),
                 const SizedBox(height: AppSpacing.lg),
-                const Text(
+                Text(
                   '대화 내역이 없어요',
-                  style: TextStyle(
-                    fontFamily: AppTypography.fontFamily,
-                    fontSize: AppTypography.bodyMedium,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontWeight: AppTypography.regular,
                     color: AppColors.gray500,
                   ),

@@ -14,30 +14,23 @@ class SuggestionChip extends StatelessWidget {
       onTap: onTap,
       child: Container(
         constraints: const BoxConstraints(maxWidth: 265),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.md,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              offset: const Offset(0, 1),
-              blurRadius: 4,
+              color: Colors.black.withValues(alpha: 0.04),
+              offset: const Offset(0, 4),
+              blurRadius: 10,
             ),
           ],
         ),
         child: Text(
           label,
-          style: const TextStyle(
-            fontFamily: AppTypography.fontFamily,
-            fontSize: AppTypography.titleMedium,
-            fontWeight: AppTypography.medium,
-            color: AppColors.gray800,
-            height: 1.3,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: AppColors.gray800),
         ),
       ),
     );

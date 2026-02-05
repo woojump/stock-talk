@@ -26,14 +26,11 @@ class ChatAppBar extends StatelessWidget {
             ),
           ),
           // 타이틀
-          const Text(
+          Text(
             '채팅하기',
-            style: TextStyle(
-              fontFamily: AppTypography.fontFamily,
-              fontSize: 17,
-              fontWeight: AppTypography.semiBold,
-              color: AppColors.black,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(color: AppColors.black),
           ),
           // 새 대화 버튼
           GestureDetector(
