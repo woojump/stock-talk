@@ -27,6 +27,18 @@ class KiwoomService:
         )  # 환경변수에서 기본 계좌번호 로드
         self.finance_data = FinanceDataService()
 
+    @staticmethod
+    def _clean_ticker(ticker: str) -> str:
+        """티커 코드에서 불필요한 접두사/접미사 제거"""
+        if not ticker:
+            return ""
+        # "_AL", "_AQ" 등 접미사 제거
+        if "_" in ticker:
+            ticker = ticker.split("_")[0]
+        # "A" 접두사 제거
+        ticker = ticker.replace("A", "")
+        return ticker
+
     def _is_exact_6digit_ticker(self, q: str) -> bool:
         q = (q or "").strip()
         return bool(re.fullmatch(r"\d{6}", q))
@@ -241,6 +253,7 @@ class KiwoomService:
                     "name": stock.get("stk_nm", "N/A"),
                     "rate": stock.get("flu_rt", "0"),
                     "price": clean_price,
+                    "code": self._clean_ticker(stock.get("stk_cd", "")),
                 }
             )
 
@@ -296,7 +309,7 @@ class KiwoomService:
                     "name": stock.get("stk_nm", "N/A"),
                     "price": clean_price,  # 현재가
                     "rate": stock.get("base_comp_chgr", "0"),  # 등락률
-                    "code": stock.get("stk_cd", ""),  # 종목코드(티커)
+                    "code": self._clean_ticker(stock.get("stk_cd", "")),  # 종목코드(티커)
                 }
             )
 
@@ -344,7 +357,7 @@ class KiwoomService:
                         "net_amount": stock.get("netslmt", "0"),  # 순매수량
                         "buy_qty": stock.get("buy_qty", "0"),  # 매수량
                         "sel_qty": stock.get("sel_qty", "0"),  # 매도량
-                        "code": stock.get("stk_cd", ""),  # 종목코드
+                        "code": self._clean_ticker(stock.get("stk_cd", "")),  # 종목코드
                     }
                 )
 
@@ -407,12 +420,15 @@ class KiwoomService:
         
         await self.ensure_token() # 변경됨
 
+        is_market_price = (price == 0)
+
         endpoint = "/api/dostk/ordr" 
 
         headers = {
             "authorization": f"Bearer {self.access_token}",
             "Content-Type": "application/json; charset=UTF-8",
             "api-id": "kt10000" if is_buy else "kt10001"
+
         }
 
         # 2. 주문 데이터 구성
@@ -426,18 +442,40 @@ class KiwoomService:
         }   
 
         # 3. 키움 서버로 주문 전송
-        response = await self.client.post(endpoint, headers=headers, json=payload)
-        response.raise_for_status()
+        try:
+            print(f"\n🚀 [주문 시도] {ticker} / {qty}주 / {'매수' if is_buy else '매도'} / {'시장가' if is_market_price else '지정가'}")
+            
+            response = await self.client.post(endpoint, headers=headers, json=payload)
+            
+            # 응답 상태 코드가 200이 아닐 경우 에러 발생
+            if response.status_code != 200:
+                print(f"❌ [API 에러] 상태 코드: {response.status_code}")
+                print(f"❌ [에러 내용] {response.text}")
+            
+            response.raise_for_status()
+            res_json = response.json()
 
-        res_json = response.json()
+            # [여기에 이 줄을 추가해서 전체를 다 보세요!]
+            print(f"🔍 [RAW DATA] 전체 응답: {res_json}") 
 
-        """
-        # 응답 Boby에서 주문번호("ord_no") 확인 가능
-        if res_json.get("ord_no"):
-            print(f"[DEBUG]주문 성공! 주문번호: {res_json.get('ord_no')}")
-        """
+            #       4. 결과 출력
+            print("-" * 30)
 
-        return res_json
+            # 4. 결과 출력 (주석 해제 및 강화)
+            print("-" * 30)
+            if res_json.get("ord_no") or res_json.get("rt_cd") == "0":
+                print(f"✅ [주문 성공] 주문번호: {res_json.get('ord_no')}")
+                print(f"✅ [메시지]: {res_json.get('msg1')}")
+            else:
+                print(f"⚠️ [주문 거절] 코드: {res_json.get('rt_cd')}")
+                print(f"⚠️ [사유]: {res_json.get('msg1')}")
+            print("-" * 30 + "\n")
+
+            return res_json
+
+        except Exception as e:
+            print(f"🚨 [런타임 에러] 주문 함수 실행 중 오류 발생: {str(e)}")
+            return {"status": "error", "message": str(e)}
 
     async def amend_order(
         self, orig_ord_no: str, ticker: str, qty: int, price: int
@@ -537,7 +575,7 @@ class KiwoomService:
                 total_evl_amt += row_evl_amt
                 
                 parsed_holdings.append({
-                    "ticker": item.get("stk_cd", "").replace("A", ""),
+                    "ticker": self._clean_ticker(item.get("stk_cd", "")),
                     "name": item.get("stk_nm") or item.get("prdt_nm"),
                     "quantity": qty,
                     "purchase_price": pchs_price,

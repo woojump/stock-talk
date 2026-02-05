@@ -26,25 +26,16 @@ class NewsCard extends StatelessWidget {
           children: [
             Text(
               news.title,
-              style: TextStyle(
-                fontSize: AppTypography.titleMedium,
-                fontWeight: AppTypography.semiBold,
-                color: AppColors.black,
-              ),
+              style: Theme.of(context).textTheme.titleMedium,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
             SizedBox(height: AppSpacing.xs),
             Text(
               news.description ?? '본문 미리보기 내용',
-              style: TextStyle(
-                fontSize: AppTypography.labelSmall,
-                fontWeight: AppTypography.regular,
-                color: AppColors.gray500,
-                height:
-                    AppTypography.lineHeightBodySmall /
-                    AppTypography.labelSmall,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: AppColors.gray500),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

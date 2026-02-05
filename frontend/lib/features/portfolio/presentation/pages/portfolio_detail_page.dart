@@ -1,6 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:stock_talk/app/router/app_router.dart';
 import 'package:stock_talk/core/design_system/design_system.dart';
 import 'package:stock_talk/features/portfolio/domain/entities/portfolio_entities.dart';
 import 'package:stock_talk/features/portfolio/presentation/utils/portfolio_utils.dart';
@@ -32,15 +33,7 @@ class PortfolioDetailPage extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '평가금액',
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: AppTypography.semiBold,
-                    color: AppColors.black,
-                    height: 1.43,
-                  ),
-                ),
+                Text('평가금액', style: Theme.of(context).textTheme.headlineSmall),
                 const SizedBox(height: AppSpacing.sm),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -48,22 +41,10 @@ class PortfolioDetailPage extends StatelessWidget {
                   children: [
                     Text(
                       numberFormat.format(totalEvaluation),
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: AppTypography.bold,
-                        color: AppColors.black,
-                        height: 1.64,
-                      ),
+                      style: Theme.of(context).textTheme.headlineLarge
+                          ?.copyWith(fontWeight: AppTypography.bold),
                     ),
-                    Text(
-                      '원',
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: AppTypography.semiBold,
-                        color: AppColors.black,
-                        height: 1.43,
-                      ),
-                    ),
+                    Text('원', style: Theme.of(context).textTheme.headlineSmall),
                   ],
                 ),
               ],
@@ -98,11 +79,7 @@ class PortfolioDetailPage extends StatelessWidget {
                 const SizedBox(height: AppSpacing.lg),
 
                 // Divider
-                const Divider(
-                  color: AppColors.gray300,
-                  thickness: 1,
-                  height: 1,
-                ),
+                const Divider(),
 
                 const SizedBox(height: AppSpacing.lg),
 
@@ -122,8 +99,14 @@ class PortfolioDetailPage extends StatelessWidget {
                 // Action Button
                 Center(
                   child: SecondaryButton(
-                    // TODO: 종목 상세 페이지로 이동
-                    onPressed: null,
+                    onPressed: () {
+                      context.pushRoute(
+                        StockDetailRoute(
+                          ticker: holding.ticker,
+                          stockName: holding.name,
+                        ),
+                      );
+                    },
                     child: const Text('현재가 보러가기'),
                   ),
                 ),
@@ -150,20 +133,14 @@ class _MetricRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: AppTypography.bodyMedium,
-            fontWeight: AppTypography.medium,
-            color: AppColors.gray500,
-            height: 1.6,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.labelLarge?.copyWith(color: AppColors.gray500),
         ),
         Text(
           value,
-          style: TextStyle(
-            fontSize: AppTypography.bodyMedium,
-            fontWeight: AppTypography.medium,
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
             color: valueColor ?? AppColors.black,
-            height: 1.6,
           ),
         ),
       ],

@@ -75,14 +75,7 @@ class _ExplorePageView extends StatelessWidget {
       backgroundColor: AppColors.white,
       elevation: 0,
       toolbarHeight: 64,
-      title: Text(
-        '탐색',
-        style: TextStyle(
-          fontSize: AppTypography.headlineMedium,
-          fontWeight: AppTypography.semiBold,
-          color: AppColors.black,
-        ),
-      ),
+      title: Text('탐색', style: Theme.of(context).textTheme.headlineMedium),
       actions: [
         IconButton(
           icon: AppIcon.action('search'),

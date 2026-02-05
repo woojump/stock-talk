@@ -14,14 +14,7 @@ class NewsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '인기 뉴스',
-            style: TextStyle(
-              fontSize: AppTypography.headlineMedium,
-              fontWeight: AppTypography.semiBold,
-              color: AppColors.black,
-            ),
-          ),
+          Text('인기 뉴스', style: Theme.of(context).textTheme.titleLarge),
           SizedBox(height: AppSpacing.lg),
           _buildNewsList(),
         ],
@@ -51,10 +44,9 @@ class NewsSection extends StatelessWidget {
                 children: [
                   Text(
                     provider.newsError!,
-                    style: TextStyle(
-                      fontSize: AppTypography.bodyMedium,
-                      color: AppColors.gray500,
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: AppColors.gray500),
                     textAlign: TextAlign.center,
                   ),
                   SizedBox(height: AppSpacing.md),
@@ -62,8 +54,7 @@ class NewsSection extends StatelessWidget {
                     onPressed: provider.retryNews,
                     child: Text(
                       '다시 시도',
-                      style: TextStyle(
-                        fontSize: AppTypography.bodyMedium,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColors.blue400,
                       ),
                     ),

@@ -22,7 +22,7 @@ class SummaryCard extends StatelessWidget {
           for (int i = 0; i < items.length; i++) ...[
             if (i > 0) const SizedBox(height: AppSpacing.md),
             if (i == items.length - 1 && items.length > 1) ...[
-              const Divider(color: AppColors.gray300, thickness: 1, height: 1),
+              const Divider(),
               const SizedBox(height: AppSpacing.md),
             ],
             SummaryItemRow(item: items[i]),
@@ -46,21 +46,15 @@ class SummaryItemRow extends StatelessWidget {
       children: [
         Text(
           item.label,
-          style: TextStyle(
-            fontSize: AppTypography.bodyMedium,
-            fontWeight: AppTypography.medium,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: item.isHighlighted ? AppColors.gray600 : AppColors.gray500,
-            height: 1.6,
           ),
         ),
         Text(
           item.value,
-          style: const TextStyle(
-            fontSize: AppTypography.bodyMedium,
-            fontWeight: AppTypography.medium,
-            color: AppColors.black,
-            height: 1.6,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppColors.black),
         ),
       ],
     );

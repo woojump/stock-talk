@@ -1,5 +1,7 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:stock_talk/app/router/app_router.dart';
 import 'package:stock_talk/core/design_system/design_system.dart';
 import 'package:stock_talk/core/utils/stock_utils.dart';
 import 'package:stock_talk/features/explore/domain/entities/top_movers_entities.dart';
@@ -14,94 +16,79 @@ class StockListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final numberFormat = NumberFormat.decimalPattern('ko_KR');
 
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 20,
-            child: Text(
-              '$rank',
-              style: TextStyle(
-                fontSize: AppTypography.labelSmall,
-                fontWeight: AppTypography.regular,
-                color: AppColors.gray500,
-                height:
-                    AppTypography.lineHeightBodySmall /
-                    AppTypography.labelSmall,
+    return GestureDetector(
+      onTap: () {
+        context.pushRoute(
+          StockDetailRoute(ticker: stock.ticker, stockName: stock.name),
+        );
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 20,
+              child: Text(
+                '$rank',
+                style: Theme.of(
+                  context,
+                ).textTheme.labelSmall?.copyWith(color: AppColors.gray500),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
             ),
-          ),
-          SizedBox(width: AppSpacing.lg),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      stock.name,
-                      style: TextStyle(
-                        fontSize: AppTypography.titleMedium,
-                        fontWeight: AppTypography.semiBold,
-                        color: AppColors.black,
+            SizedBox(width: AppSpacing.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        stock.name,
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
-                    ),
-                    Text(
-                      '${numberFormat.format(stock.price)}원',
-                      style: TextStyle(
-                        fontSize: AppTypography.titleMedium,
-                        fontWeight: AppTypography.medium,
-                        color: AppColors.black,
+                      Text(
+                        '${numberFormat.format(stock.price)}원',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: AppTypography.medium),
                       ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: AppSpacing.xs),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      stock.ticker,
-                      style: TextStyle(
-                        fontSize: AppTypography.labelSmall,
-                        fontWeight: AppTypography.regular,
-                        color: AppColors.gray500,
-                        height:
-                            AppTypography.lineHeightBodySmall /
-                            AppTypography.labelSmall,
+                    ],
+                  ),
+                  SizedBox(height: AppSpacing.xs),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        stock.ticker,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: AppColors.gray500,
+                        ),
                       ),
-                    ),
-                    Text(
-                      formatChangeText(
-                        stock.change,
-                        stock.changeRate,
-                        numberFormat,
+                      Text(
+                        formatChangeText(
+                          stock.change,
+                          stock.changeRate,
+                          numberFormat,
+                        ),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: getProfitColor(stock.change),
+                        ),
                       ),
-                      style: TextStyle(
-                        fontSize: AppTypography.labelSmall,
-                        fontWeight: AppTypography.regular,
-                        color: getProfitColor(stock.change),
-                        height:
-                            AppTypography.lineHeightBodySmall /
-                            AppTypography.labelSmall,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

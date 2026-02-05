@@ -6,6 +6,7 @@ import 'package:stock_talk/core/di/injection.dart';
 import 'package:stock_talk/features/explore/domain/entities/news_entities.dart';
 import 'package:stock_talk/features/explore/presentation/providers/news_detail_provider.dart';
 import 'package:stock_talk/features/explore/presentation/utils/explore_utils.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 @RoutePage()
 class NewsDetailPage extends StatelessWidget {
@@ -35,8 +36,9 @@ class NewsDetailPage extends StatelessWidget {
                     }
 
                     if (provider.detailError != null) {
-                      return ErrorState(
+                      return _NewsDetailErrorState(
                         message: provider.detailError!,
+                        newsUrl: news.link,
                         onRetry: ({bool showLoading = true}) =>
                             provider.retryDetail(news.link!),
                       );
@@ -63,7 +65,7 @@ class NewsDetailPage extends StatelessWidget {
                           _ArticleContent(
                             content: provider.newsDetail!.content,
                           ),
-                          SizedBox(height: AppSpacing.huge),
+                          SizedBox(height: AppSpacing.xxxxxl),
                         ],
                       ),
                     );
@@ -121,10 +123,9 @@ class _SourceLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       '출처($source)',
-      style: TextStyle(
-        fontSize: AppTypography.titleMedium,
-        fontWeight: AppTypography.semiBold,
+      style: Theme.of(context).textTheme.titleSmall?.copyWith(
         color: AppColors.gray700,
+        fontWeight: AppTypography.semiBold,
       ),
     );
   }
@@ -138,11 +139,9 @@ class _Headline extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: TextStyle(
-        fontSize: 22,
+      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
         fontWeight: AppTypography.semiBold,
         color: AppColors.black,
-        height: 1.64,
       ),
     );
   }
@@ -158,12 +157,9 @@ class _PublishDate extends StatelessWidget {
       opacity: 0.8,
       child: Text(
         formatNewsPublishDate(pubDate),
-        style: TextStyle(
-          fontSize: AppTypography.labelSmall,
-          fontWeight: AppTypography.regular,
-          color: AppColors.gray500,
-          height: 1.273,
-        ),
+        style: Theme.of(
+          context,
+        ).textTheme.labelMedium?.copyWith(color: AppColors.gray400),
       ),
     );
   }
@@ -198,11 +194,8 @@ class _AISummaryCard extends StatelessWidget {
           children: [
             Text(
               'AI 요약',
-              style: TextStyle(
-                fontSize: AppTypography.labelSmall,
-                fontWeight: AppTypography.regular,
-                color: AppColors.gray500,
-                height: 1.273,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: AppColors.gray600, // #4E5968 is close to gray600
               ),
             ),
             SizedBox(height: 4),
@@ -211,10 +204,9 @@ class _AISummaryCard extends StatelessWidget {
               children: [
                 Text(
                   '핵심요약 헤드라인',
-                  style: TextStyle(
-                    fontSize: AppTypography.titleMedium,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: AppTypography.semiBold,
-                    color: AppColors.black,
+                    color: AppColors.gray800, // #333D4B
                   ),
                 ),
                 // 드롭다운 아이콘 (펼쳐진 상태이므로 회전)
@@ -235,21 +227,15 @@ class _AISummaryCard extends StatelessWidget {
             else if (error != null)
               Text(
                 error!,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: AppTypography.medium,
-                  color: AppColors.red,
-                  height: 1.6,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: AppColors.red),
               )
             else if (summary != null)
               Text(
                 summary!.aiSummary,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: AppTypography.medium,
-                  color: AppColors.black,
-                  height: 1.6,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.gray700, // #4E5968
                 ),
               ),
           ],
@@ -269,13 +255,73 @@ class _ArticleContent extends StatelessWidget {
       opacity: 0.8,
       child: Text(
         content,
-        style: TextStyle(
-          fontSize: AppTypography.titleMedium,
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
           fontWeight: AppTypography.medium,
           color: AppColors.black,
-          height: 1.6,
         ),
       ),
     );
+  }
+}
+
+// 뉴스 상세 에러 상태 (원본 링크 제공)
+class _NewsDetailErrorState extends StatelessWidget {
+  final String message;
+  final String? newsUrl;
+  final Future<void> Function({bool showLoading}) onRetry;
+
+  const _NewsDetailErrorState({
+    required this.message,
+    required this.newsUrl,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xxl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 48,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              '일부 기사는 원문에서만 볼 수 있습니다',
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.gray500),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            if (newsUrl != null)
+              PrimaryButton(
+                onPressed: () => _launchUrl(newsUrl!),
+                child: const Text('원문 기사 보기'),
+              ),
+            const SizedBox(height: AppSpacing.md),
+            SecondaryButton(
+              onPressed: () => onRetry(showLoading: true),
+              child: const Text('다시 시도'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _launchUrl(String urlString) async {
+    final url = Uri.parse(urlString);
+    await launchUrl(url, mode: LaunchMode.externalApplication);
   }
 }

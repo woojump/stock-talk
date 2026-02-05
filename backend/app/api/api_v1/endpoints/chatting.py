@@ -2,8 +2,9 @@ import os
 import pymysql
 import json
 from typing import Any, Dict, Optional, List
+import asyncio
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage
 from langgraph.prebuilt import create_react_agent
@@ -18,6 +19,8 @@ from app.mcp.tools import (
     get_market_data, post_trade, amend_order, 
     cancel_order, get_account_balance, get_order_history
 )
+
+from app.callbacks.tool_call_log_handler import ToolCallLogHandler
 
 # 1. 설정 로드
 load_dotenv()
@@ -97,12 +100,26 @@ OUTPUT_FORMAT = """
 - 사용자가 "시세", "현재가", "주가", "차트", "그래프", "캔들", "추세", "주가 흐름" 중 하나라도 요구하면 need_chart=true로 판단한다. 
 - 종목 식별(티커/종목명/키워드 매칭)과 모호성(여러 종목 검색) 처리는 get_market_data 도구가 수행한다. LLM은 종목을 임의로 확정하지 않는다.
 - candles(차트 데이터)는 절대 응답에 포함하지 않는다(서버가 처리).
+
 - get_market_data 도구 사용 규칙:
-  - 도구가 "여러 종목" 안내를 반환하면 ticker는 null로 출력하고, answer_text에는 도구가 준 안내/목록을 그대로 넣어 사용자에게 재입력을 유도한다.
-  - 도구가 특정 종목 시세를 반환하면 ticker는 6자리 티커로 채운다. (티커를 모르면 추측하지 말고 null)
+  - 사용자가 여러 종목을 물어보면, **언급된 모든 종목에 대해 예외 없이 get_market_data를 각각 호출**하여 정보를 수집해야 한다.
+  - 종목이 3개 이상이어도 누락하지 말고 반드시 모든 종목을 순차적으로 조회한다.
+  - 도구가 특정 종목 시세를 반환하면 ticker 필드에 6자리 티커를 채운다. 
+  - **여러 종목일 경우 ticker 필드에 모든 티커를 콤마(,)로 구분하여 빠짐없이 작성한다. (예: "005930,000660,005380")**
+
 - 최종 응답은 반드시 아래 JSON 형식으로만 출력한다(문장/마크다운 금지):
-  { "answer_text": "사용자에게 보여줄 요약 텍스트", "ticker": "005930 또는 null", "need_chart": true }
+  { "answer_text": "조회된 모든 종목의 시세를 요약한 메시지", "ticker": "005930,000660,005380 또는 null", "need_chart": true }
+
 - 차트가 필요 없으면 need_chart=false로 출력한다.
+
+[응답 예시 - 반드시 이 패턴을 따를 것]
+- 사용자: "하이닉스랑 삼전 시세 알려줘"
+- JSON 응답: 
+{
+  "answer_text": "SK하이닉스의 현재가는 900,000원(전일대비 -0.77%)이며, 삼성전자의 현재가는 169,100원(전일대비 +0.96%)입니다. 아래에서 각 종목의 상세 차트를 확인하실 수 있습니다.",
+  "ticker": "000660,005930",
+  "need_chart": true
+}
 """
 
 SYSTEM_PROMPT = (
@@ -186,14 +203,7 @@ async def chat_with_agent(query: str, room_id: int = None):
 
             inputs = {"messages": [HumanMessage(content=rich_query)]}
             
-            print(f"🤖 에이전트 호출 시작 (thread_id: {room_id})")
-            # 🚀 두 번째 인자로 config를 반드시 넘깁니다.
-            result = await agent_executor.ainvoke(inputs, config=config)
-            final_answer = result["messages"][-1].content
-
-            parsed = _safe_json_load(final_answer)
-
-            # --- [STEP 3-1] 메시지 저장 (사용자) ---
+            # --- [STEP 2] 메시지 저장 (사용자) ---
             cursor.execute(
                 """
                 INSERT INTO chat_message (room_id, role, msg_type, content, status)
@@ -202,6 +212,31 @@ async def chat_with_agent(query: str, room_id: int = None):
                 (room_id, query),
             )
             user_msg_id = cursor.lastrowid
+            conn.commit()
+
+            # ✅ ToolCallLog handler 만들고 callbacks로 주입
+            handler = ToolCallLogHandler(
+                conn=conn,
+                room_id=room_id,
+                message_id=user_msg_id,
+                parent_id=user_msg_id,  # 보통 tool call은 “이 유저 질문에 대한 실행”이니까 parent를 user_msg로 두는게 자연스러움
+            )
+
+            # --- [STEP 3] 에이전트 실행 (이 부분이 에러 해결의 핵심) ---
+            # 💡 반드시 thread_id를 문자열로 변환하여 전달해야 합니다.
+            config = {
+                "configurable": {"thread_id": str(room_id)},
+                "callbacks": [handler],
+            }
+            
+            inputs = {"messages": [HumanMessage(content=query)]}
+
+            print(f"🤖 에이전트 호출 시작 (thread_id: {room_id})")
+            # 🚀 두 번째 인자로 config를 반드시 넘깁니다.
+            result = await agent_executor.ainvoke(inputs, config=config)
+            final_answer = result["messages"][-1].content
+
+            parsed = _safe_json_load(final_answer)
 
             messages: List[Dict[str, Any]] = []
 
@@ -214,7 +249,7 @@ async def chat_with_agent(query: str, room_id: int = None):
                 need_chart = bool(parsed.get("need_chart"))
                 ticker = parsed.get("ticker")
 
-            # --- [STEP 3-2] 메시지 저장 (AI) ---
+            # --- [STEP 4] 메시지 저장 (AI) ---
             cursor.execute(
                 """
                 INSERT INTO chat_message (room_id, role, msg_type, content, parent_id, status)
@@ -229,22 +264,41 @@ async def chat_with_agent(query: str, room_id: int = None):
             # 차트가 필요하면 서버가 직접 get_stock_detail 호출 후 CARD 저장
 
             if need_chart and ticker:
-                stock_detail = await kiwoom_service.get_stock_detail(str(ticker))
-                card_payload = _build_chart_card_payload(stock_detail)
+                # "000660,005930" -> ["000660", "005930"]
+                ticker_list = [t.strip() for t in str(ticker).split(",") if t.strip()]
+                
+                print(f"📡 총 {len(ticker_list)}개의 종목 차트를 생성합니다: {ticker_list}")
 
-                cursor.execute(
-                    """
-                    INSERT INTO chat_message (room_id, role, msg_type, payload_json, parent_id, status)
-                    VALUES (%s, 'assistant', 'CARD', %s, %s, 'final')
-                    """,
-                    (room_id, json.dumps(card_payload, ensure_ascii=False), assistant_text_id),
-                )
-                assistant_card_id = cursor.lastrowid
-                last_message_id = assistant_card_id
-                messages.append({"role": "assistant", "msg_type": "CARD", "payload_json": card_payload})
+                for i, t in enumerate(ticker_list):
+                    try:
+                        # 🚀 [추가] 두 번째 종목부터는 0.5초 대기하여 429 에러 방지
+                        if i > 0:
+                            await asyncio.sleep(1.0)
 
+                        # 각 종목 상세 데이터 호출
+                        stock_detail = await kiwoom_service.get_stock_detail(t)
+                        card_payload = _build_chart_card_payload(stock_detail)
 
-            # --- [STEP 4] 방 정보 최종 업데이트 (진짜 답변 내용 반영) ---
+                        # 각 종목별로 개별 카드 저장
+                        cursor.execute(
+                            """
+                            INSERT INTO chat_message (room_id, role, msg_type, payload_json, parent_id, status)
+                            VALUES (%s, 'assistant', 'CARD', %s, %s, 'final')
+                            """,
+                            (room_id, json.dumps(card_payload, ensure_ascii=False), assistant_text_id),
+                        )
+                        
+                        # 마지막 카드 ID 업데이트 (STEP 4에서 사용)
+                        last_message_id = cursor.lastrowid
+                        
+                        # 화면 반환 리스트에 추가
+                        messages.append({"role": "assistant", "msg_type": "CARD", "payload_json": card_payload})
+                        print(f"✅ {t} 차트 생성 완료")
+                    except Exception as e:
+                        print(f"⚠️ {t} 차트 생성 중 오류: {str(e)}")
+                        
+            # --- [STEP 4] 방 정보 최종 업데이트 ---
+
             room_title = query[:20] + "..." if len(query) > 20 else query
             preview_src = (answer_text or "").strip() or (final_answer or "").strip()
             preview = preview_src[:250] + "..." if len(preview_src) > 250 else preview_src
@@ -260,7 +314,6 @@ async def chat_with_agent(query: str, room_id: int = None):
         return {
             "status": "success", 
             "room_id": room_id, 
-            "answer": answer_text, 
             "messages": messages
         }
 
@@ -322,3 +375,107 @@ async def chat_with_agent(query: str, room_id: int = None):
     finally:
         if conn:
             conn.close()
+
+
+
+# -----------------------------
+# 1) 채팅방 목록 조회
+# GET /rooms?limit=50&offset=0
+# -----------------------------
+@router.get("/rooms")
+async def list_rooms(limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0)):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT room_id, owner_user_id, title, last_preview, last_message_id, last_sent_at, updated_at
+                FROM chat_room
+                ORDER BY last_sent_at DESC
+                LIMIT %s OFFSET %s
+                """,
+                (limit, offset),
+            )
+            rooms = cursor.fetchall()
+        return {"status": "success", "data": rooms}
+    finally:
+        conn.close()
+
+
+# --------------------------------------------
+# 2) 채팅방 내역 조회 (room_id로 메시지 불러오기)
+# GET /rooms/{room_id}/messages?limit=200&before_id=...
+# --------------------------------------------
+@router.get("/rooms/{room_id}/messages")
+async def get_room_messages(
+    room_id: int,
+    limit: int = Query(200, ge=1, le=500),
+    before_id: Optional[int] = Query(None, description="페이징용: 이 메시지 ID보다 작은 것들만 조회"),
+):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # 방 존재 확인
+            cursor.execute("SELECT 1 FROM chat_room WHERE room_id=%s", (room_id,))
+            if not cursor.fetchone():
+                raise HTTPException(status_code=404, detail="chat room not found")
+
+            if before_id is None:
+                cursor.execute(
+                    """
+                    SELECT message_id, room_id, role, msg_type, content, payload_json, parent_id, status, sent_at
+                    FROM chat_message
+                    WHERE room_id=%s
+                    ORDER BY message_id DESC
+                    LIMIT %s
+                    """,
+                    (room_id, limit),
+                )
+            else:
+                cursor.execute(
+                    """
+                    SELECT message_id, room_id, role, msg_type, content, payload_json, parent_id, status, sent_at
+                    FROM chat_message
+                    WHERE room_id=%s AND message_id < %s
+                    ORDER BY message_id DESC
+                    LIMIT %s
+                    """,
+                    (room_id, before_id, limit),
+                )
+
+            msgs = cursor.fetchall()
+
+            # payload_json이 문자열로 들어있으면 dict로 변환해서 내려주고 싶을 때(옵션)
+            for m in msgs:
+                if m.get("payload_json"):
+                    try:
+                        m["payload_json"] = json.loads(m["payload_json"])
+                    except Exception:
+                        pass
+
+        return {"status": "success", "room_id": room_id, "messages": list(reversed(msgs))}
+    finally:
+        conn.close()
+
+
+# -----------------------------
+# 3) 채팅방 삭제
+# DELETE /rooms/{room_id}
+# -----------------------------
+@router.delete("/rooms/{room_id}")
+async def delete_room(room_id: int):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT 1 FROM chat_room WHERE room_id=%s", (room_id,))
+            if not cursor.fetchone():
+                raise HTTPException(status_code=404, detail="chat room not found")
+
+            # 메시지 먼저 삭제 (FK cascade 없을 경우 필수)
+            cursor.execute("DELETE FROM chat_message WHERE room_id=%s", (room_id,))
+            cursor.execute("DELETE FROM chat_room WHERE room_id=%s", (room_id,))
+            conn.commit()
+
+        return {"status": "success", "room_id": room_id}
+    finally:
+        conn.close()

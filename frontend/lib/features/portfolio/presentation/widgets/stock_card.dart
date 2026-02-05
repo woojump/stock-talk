@@ -42,27 +42,12 @@ class StockCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      name,
-                      style: TextStyle(
-                        fontSize: AppTypography.bodyMedium,
-                        fontWeight: AppTypography.semiBold,
-                        color: AppColors.black,
-                        height:
-                            AppTypography.lineHeightBody /
-                            AppTypography.bodyMedium,
-                      ),
-                    ),
+                    Text(name, style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 4),
                     Text(
                       quantity,
-                      style: TextStyle(
-                        fontSize: AppTypography.labelSmall,
-                        fontWeight: AppTypography.regular,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: AppColors.gray600,
-                        height:
-                            AppTypography.lineHeightBodySmall /
-                            AppTypography.labelSmall,
                       ),
                     ),
                   ],
@@ -74,26 +59,14 @@ class StockCard extends StatelessWidget {
                 children: [
                   Text(
                     evaluationAmount,
-                    style: TextStyle(
-                      fontSize: AppTypography.bodyMedium,
-                      fontWeight: AppTypography.medium,
-                      color: AppColors.black,
-                      height:
-                          AppTypography.lineHeightBody /
-                          AppTypography.bodyMedium,
-                    ),
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     profitText,
-                    style: TextStyle(
-                      fontSize: AppTypography.labelSmall,
-                      fontWeight: AppTypography.regular,
-                      color: profitColor,
-                      height:
-                          AppTypography.lineHeightBodySmall /
-                          AppTypography.labelSmall,
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.labelSmall?.copyWith(color: profitColor),
                   ),
                 ],
               ),
