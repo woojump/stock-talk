@@ -13,7 +13,7 @@ class App extends StatelessWidget {
     return MaterialApp.router(
       title: 'Stock Talk',
       theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
+      // darkTheme: AppTheme.dark(),
       themeMode: ThemeMode.system,
       routerConfig: _appRouter.config(),
       debugShowCheckedModeBanner: false,

@@ -403,7 +403,7 @@ async def get_room_messages(
             if before_id is None:
                 cursor.execute(
                     """
-                    SELECT message_id, room_id, role, msg_type, content, payload_json, parent_id, status
+                    SELECT message_id, room_id, role, msg_type, content, payload_json, parent_id, status, sent_at
                     FROM chat_message
                     WHERE room_id=%s
                     ORDER BY message_id DESC
@@ -414,7 +414,7 @@ async def get_room_messages(
             else:
                 cursor.execute(
                     """
-                    SELECT message_id, room_id, role, msg_type, content, payload_json, parent_id, status
+                    SELECT message_id, room_id, role, msg_type, content, payload_json, parent_id, status, sent_at
                     FROM chat_message
                     WHERE room_id=%s AND message_id < %s
                     ORDER BY message_id DESC
