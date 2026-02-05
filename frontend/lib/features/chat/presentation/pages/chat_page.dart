@@ -36,8 +36,9 @@ class _ChatPageView extends StatelessWidget {
         builder: (context, provider, _) {
           return Stack(
             children: [
-              // 그라데이션 배경
-              _buildGradientBackground(),
+              // 그라데이션 배경 (랜딩 페이지에서만 표시)
+              if (provider.viewState == ChatViewState.landing)
+                _buildGradientBackground(),
 
               // 메인 콘텐츠
               SafeArea(
