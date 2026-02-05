@@ -71,3 +71,10 @@ Color getProfitColor(int profitAmount) {
 int calculatePendingOrderAmount(PortfolioBalance balance) {
   return balance.summary.totalAsset - balance.summary.availableCash;
 }
+
+String formatOrderTime(String ordTm) {
+  if (ordTm.length == 6) {
+    return '${ordTm.substring(0, 2)}:${ordTm.substring(2, 4)}:${ordTm.substring(4, 6)}';
+  }
+  return ordTm;
+}
