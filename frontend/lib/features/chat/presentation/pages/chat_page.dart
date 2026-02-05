@@ -50,6 +50,8 @@ class _ChatPageView extends StatelessWidget {
                       builder: (context) => ChatAppBar(
                         onMenuTap: () => Scaffold.of(context).openDrawer(),
                         onNewChatTap: provider.startNewConversation,
+                        showNewChatButton:
+                            provider.viewState != ChatViewState.landing,
                       ),
                     ),
 
