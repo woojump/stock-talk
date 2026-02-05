@@ -23,12 +23,7 @@ class StockNewsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 섹션 제목
-        Text(
-          '주요 뉴스',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: AppTypography.semiBold),
-        ),
+        Text('주요 뉴스', style: Theme.of(context).textTheme.headlineLarge),
         const SizedBox(height: AppSpacing.lg),
 
         // 컨텐츠

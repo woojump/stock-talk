@@ -29,13 +29,7 @@ class PriceInfoSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 섹션 제목
-        Text(
-          '시세',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: AppTypography.semiBold,
-            color: AppColors.black,
-          ),
-        ),
+        Text('시세', style: Theme.of(context).textTheme.headlineLarge),
         const SizedBox(height: AppSpacing.lg),
 
         // 1일 가격 범위 바

@@ -123,7 +123,7 @@ class _SourceLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       '출처($source)',
-      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
         color: AppColors.gray700,
         fontWeight: AppTypography.semiBold,
       ),
@@ -139,7 +139,7 @@ class _Headline extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+      style: Theme.of(context).textTheme.headlineLarge?.copyWith(
         fontWeight: AppTypography.semiBold,
         color: AppColors.black,
       ),
@@ -204,7 +204,7 @@ class _AISummaryCard extends StatelessWidget {
               children: [
                 Text(
                   '핵심요약 헤드라인',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: AppTypography.semiBold,
                     color: AppColors.gray800, // #333D4B
                   ),

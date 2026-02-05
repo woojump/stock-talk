@@ -150,9 +150,9 @@ class _SearchPageViewState extends State<_SearchPageView> {
     return Center(
       child: Text(
         '검색 결과가 없어요',
-        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
           color: AppColors.gray400,
-          fontWeight: AppTypography.medium,
+          fontWeight: AppTypography.semiBold,
         ),
       ),
     );

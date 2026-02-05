@@ -15,7 +15,7 @@ class ChartSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('실시간 차트', style: Theme.of(context).textTheme.titleLarge),
+          Text('실시간 차트', style: Theme.of(context).textTheme.headlineLarge),
           SizedBox(height: AppSpacing.lg),
           _buildTabBar(),
           SizedBox(height: AppSpacing.lg),

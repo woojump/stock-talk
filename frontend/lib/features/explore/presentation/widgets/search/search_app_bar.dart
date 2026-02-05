@@ -83,13 +83,13 @@ class _SearchAppBarState extends State<SearchAppBar> {
               focusNode: widget.focusNode,
               autofocus: true,
               onChanged: widget.onChanged,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: AppTypography.medium,
                 color: AppColors.black,
               ),
               decoration: InputDecoration(
                 hintText: '어떤 주식을 찾고 있나요?',
-                hintStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
+                hintStyle: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: AppTypography.medium,
                   color: AppColors.gray500,
                 ),

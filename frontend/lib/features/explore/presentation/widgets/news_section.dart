@@ -14,7 +14,7 @@ class NewsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('인기 뉴스', style: Theme.of(context).textTheme.titleLarge),
+          Text('인기 뉴스', style: Theme.of(context).textTheme.headlineLarge),
           SizedBox(height: AppSpacing.lg),
           _buildNewsList(),
         ],

@@ -49,7 +49,7 @@ class SearchResultItem extends StatelessWidget {
     if (query.isEmpty) {
       return Text(
         text,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
           fontWeight: AppTypography.semiBold,
           color: AppColors.black,
         ),
@@ -63,7 +63,7 @@ class SearchResultItem extends StatelessWidget {
     if (matchIndex == -1) {
       return Text(
         text,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
           fontWeight: AppTypography.semiBold,
           color: AppColors.black,
         ),
@@ -76,7 +76,7 @@ class SearchResultItem extends StatelessWidget {
 
     return RichText(
       text: TextSpan(
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
           fontWeight: AppTypography.semiBold,
           color: AppColors.black,
         ),
