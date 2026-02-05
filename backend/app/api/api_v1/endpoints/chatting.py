@@ -10,13 +10,14 @@ from langchain_core.messages import HumanMessage
 from langgraph.prebuilt import create_react_agent
 from dotenv import load_dotenv
 from langgraph.checkpoint.memory import MemorySaver
+from datetime import datetime
 
 from app.core.config import settings
 from app.services.kiwoom import kiwoom_service
 from app.mcp.tools import (
     get_top_movers, get_popular_stocks, get_investor_rank, 
     get_market_data, post_trade, amend_order, 
-    cancel_order, get_account_balance
+    cancel_order, get_account_balance, get_order_history
 )
 
 from app.callbacks.tool_call_log_handler import ToolCallLogHandler
@@ -46,7 +47,7 @@ llm = ChatOpenAI(
 tools = [
     get_top_movers, get_popular_stocks, get_investor_rank, 
     get_market_data, post_trade, amend_order, 
-    cancel_order, get_account_balance
+    cancel_order, get_account_balance, get_order_history
 ]
 
 # 시스템 프롬프트
@@ -74,14 +75,23 @@ SYSTEM_PROMPT_DICT = {
     
     "policy-education": "PER, 예수금, 지정가 등 어려운 용어는 초보자의 눈높이에서 쉬운 비유를 들어 280자 이내로 간결하게 설명하세요.",
     
-    "trade-workflow": [
-        "1단계 [상태 확인]: 계좌 잔고와 해당 종목 현재가를 먼저 조회합니다.",
-        "2단계 [상세 확인]: 수량과 주문 방식(시장가/지정가)을 확인합니다. 모르면 차이점을 설명하세요.",
-        "3단계 [위험 분석]: 위 policy-risk-management 항목에 해당하면 조언을 건넵니다.",
-        "4단계 [최종 컨펌]: [종목명/수량/예상 금액/방식]을 표 형태로 요약하여 보여주고 승인을 기다립니다.",
-        "5단계 [실행]: '응', '진행해' 등 명확한 승인 시에만 post_trade 도구를 호출합니다."
-    ],
-    
+    "trade-workflow": {
+        "buy_order": [
+            "1단계 [상태 확인]: 계좌 잔고와 해당 종목 현재가를 먼저 조회합니다.",
+            "2단계 [상세 확인]: 수량과 주문 방식(시장가/지정가)을 확인합니다. 모르면 차이점을 설명하세요.",
+            "3단계 [위험 분석 및 가이드]: 위 policy-risk-management 항목에 해당하면 조언을 건넵니다. 또한 반드시 '현재 시간'과 '15:30'을 비교하여, '실제로' 장이 마감된 경우에만 예약 주문 안내를 하세요.",
+            "4단계 [최종 컨펌]: [종목명/수량/예상 금액/방식]을 표 형태로 요약하여 보여주고 승인을 기다립니다.",
+            "5단계 [실행]: '응', '진행해' 등 명확한 승인 시에만 post_trade 도구를 호출합니다. 예약 주문 상황이라도 사용자가 승인하면 반드시 도구를 호출하여 주문을 전송해야 합니다."
+        ],
+        "amend_cancel_order": [
+            "1단계 [기억 초기화 및 강제 조회]: 사용자가 취소/정정을 요청하면 '절대' 대화 맥락에 있는 주문번호를 사용하지 마세요. 이전 번호는 정정/시간 경과로 인해 무효화되었을 가능성이 99%입니다. 가장 먼저 'get_order_history' 도구를 호출하여 최신 목록을 확보하는 것이 의무입니다.",
+            "2단계 [최신 데이터 기반 식별]: 오직 1단계에서 얻은 '도구의 결과값'만을 유일한 진실(Source of Truth)로 간주하세요. 리스트 중 'remnq_qty > 0'인 주문을 찾고, 만약 여러 개라면 가장 최근 시간(ord_tm)의 주문번호(ord_no)를 선택하세요.",
+            "3단계 [변경 사항 보고]: '팀장님, 조회를 통해 최신 주문번호(XXXX)를 확인했습니다. 정정/취소로 인해 번호가 변경되었으니 이 번호로 진행할게요'라고 사용자에게 상황을 명확히 설명하고 컨펌을 받으세요.",
+            "4단계 [최종 실행]: 2단계에서 새롭게 추출한 번호를 사용하여 amend_order 또는 cancel_order를 호출하세요. 절대로 이전 대화에서 언급된 번호로 되돌아가지 마세요."
+        ],
+    },
+
+    "order_id_policy": "금융 시스템의 특성상 정정 시마다 ord_no가 새로 발급됩니다. 대화 맥락의 이전 번호가 아닌, 항상 get_order_history 도구가 반환한 최신 번호를 기준으로 동작하십시오.",
     "format-success": "주문 성공 시: 체결가 안내 후 '이제 포트폴리오에서 실시간 수익률을 확인하실 수 있습니다'라고 안내하세요."
 }
 
@@ -182,6 +192,16 @@ async def chat_with_agent(query: str, room_id: int = None):
                 room_id = cursor.lastrowid
                 conn.commit()  # DB에 즉시 반영하여 ID 확정
                 print(f"🆕 새 채팅방 생성 완료 (ID: {room_id})")
+
+            # --- [STEP 2] 에이전트 실행 (이 부분이 에러 해결의 핵심) ---
+            # 💡 반드시 thread_id를 문자열로 변환하여 전달해야 합니다.
+            config = {"configurable": {"thread_id": str(room_id)}}
+
+            # 현재 시간을 구해서 질문 앞에 붙여줌.
+            current_now = datetime.now().strftime("%Y-%m-%d %H:&M:%S")
+            rich_query = f"[현재 시간: {current_now}]\n{query}"
+
+            inputs = {"messages": [HumanMessage(content=rich_query)]}
             
             # --- [STEP 2] 메시지 저장 (사용자) ---
             cursor.execute(

@@ -611,6 +611,85 @@ class KiwoomService:
             print(f"🚨 [잔고 합산 계산 에러]: {str(e)}")
             return {"summary": {"total_asset": 0, "available_cash": 0, "total_profit_loss": 0, "total_return_rate": 0.0}, "holdings": []}    
         
+
+    async def get_order_history(
+        self, 
+        qry_tp: str = "3",        # 1:주문순, 2:역순, 3:미체결, 4:체결내역만
+        stk_cd: str = "",         # 공백 시 전체
+        sell_tp: str = "0"        # 0:전체, 1:매도, 2:매수
+    ) -> List[Dict[str, Any]]:
+        """
+        [주문/체결 내역] 공식 규격 kt00007을 활용한 상세 조회
+        """
+        # 1. 토큰 유효성 확인 (기존 함수들과 동일한 패턴)
+        await self.ensure_token()
+
+        # 2. 엔드포인트 및 헤더 설정 (계좌 관련은 /acnt 사용)
+        endpoint = "/api/dostk/acnt"
+        headers = {
+            "Content-Type": "application/json; charset=UTF-8",
+            "authorization": f"Bearer {self.access_token}",
+            "api-id": "kt00007",  # 규격서에 명시된 TR 코드
+        }
+
+        # 3. 규격서에 명시된 Body 데이터 구성
+        payload = {
+            "ord_dt": datetime.now().strftime("%Y%m%d"), # 주문일자
+            "qry_tp": qry_tp,                             # 조회구분
+            "stk_bond_tp": "0",                           # 0:전체
+            "sell_tp": sell_tp,                           # 매도수구분
+            "stk_cd": stk_cd,                             # 종목코드
+            "fr_ord_no": "",                              # 시작번호
+            "dmst_stex_tp": "%"                           # %:전체거래소
+        }
+
+        # 4. 비동기 POST 요청 실행 (self.client 직접 사용)
+        response = await self.client.post(endpoint, headers=headers, json=payload)
+        response.raise_for_status()
+        
+        res_json = response.json()
+        
+        # 5. 응답 Body의 리스트 파싱 (acnt_ord_cntr_prps_dtl)
+        order_list = res_json.get("acnt_ord_cntr_prps_dtl", [])
+        
+        # 6. 데이터 가공 및 반환
+        results = []
+        for item in order_list:
+            ord_qty = self._parse_num(item.get("ord_qty"))
+            cntr_qty = self._parse_num(item.get("cntr_qty"))
+            remnq_qty = self._parse_num(item.get("ord_remnq"))
+            
+            # --- 상태 판별 로직 추가 ---
+            if remnq_qty > 0:
+                status_text = "미체결"
+            elif cntr_qty == 0:
+                # 잔량이 0인데 체결도 0이면 취소된 주문입니다.
+                status_text = "취소완료"
+            elif cntr_qty < ord_qty:
+                # 일부만 체결되고 나머지는 취소되거나 마감된 경우입니다.
+                status_text = f"부분체결({cntr_qty}주)"
+            else:
+                # 잔량이 0이고 체결 수량이 주문 수량과 같으면 완전히 사거나 판 것입니다.
+                status_text = "체결완료"
+            # --------------------------
+
+            results.append({
+                "ord_no": item.get("ord_no"),
+                "ticker": item.get("stk_cd").replace("A", ""), # 'A' 제거 로직 유지
+                "name": item.get("stk_nm"),
+                "ord_qty": ord_qty,
+                "ord_price": self._parse_num(item.get("ord_uv")),
+                "cntr_qty": cntr_qty,
+                "remnq_qty": remnq_qty,
+                "side": item.get("io_tp_nm"),
+                "ord_tm": item.get("ord_tm"),
+                "status": status_text  # 상세화된 상태값 반환
+            })
+            
+        return results
+        
+
+        
     async def close(self):
         """서버 종료 시 연결을 안전하게 닫습니다."""
         await self.client.aclose()
