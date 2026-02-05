@@ -61,7 +61,7 @@ class _UserBubble extends StatelessWidget {
   }
 }
 
-/// AI 응답 텍스트
+/// AI 응답 텍스트 (마크다운 렌더링)
 class _AssistantText extends StatelessWidget {
   const _AssistantText({required this.message});
 
@@ -71,12 +71,7 @@ class _AssistantText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.xl),
-      child: Text(
-        message,
-        style: Theme.of(
-          context,
-        ).textTheme.bodySmall?.copyWith(color: AppColors.black),
-      ),
+      child: AppMarkdown(data: message),
     );
   }
 }

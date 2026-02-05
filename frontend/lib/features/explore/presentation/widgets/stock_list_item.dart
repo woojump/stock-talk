@@ -39,7 +39,7 @@ class StockListItem extends StatelessWidget {
                 '$rank',
                 style: Theme.of(
                   context,
-                ).textTheme.labelSmall?.copyWith(color: AppColors.gray500),
+                ).textTheme.bodySmall?.copyWith(color: AppColors.gray500),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -53,12 +53,11 @@ class StockListItem extends StatelessWidget {
                     children: [
                       Text(
                         stock.name,
-                        style: Theme.of(context).textTheme.titleMedium,
+                        style: Theme.of(context).textTheme.headlineMedium,
                       ),
                       Text(
                         '${numberFormat.format(stock.price)}원',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: AppTypography.medium),
+                        style: Theme.of(context).textTheme.headlineMedium,
                       ),
                     ],
                   ),
@@ -68,7 +67,7 @@ class StockListItem extends StatelessWidget {
                     children: [
                       Text(
                         stock.ticker,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.gray500,
                         ),
                       ),
@@ -78,7 +77,7 @@ class StockListItem extends StatelessWidget {
                           stock.changeRate,
                           numberFormat,
                         ),
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: getProfitColor(stock.change),
                         ),
                       ),

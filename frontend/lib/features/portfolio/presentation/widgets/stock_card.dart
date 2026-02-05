@@ -42,13 +42,16 @@ class StockCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name, style: Theme.of(context).textTheme.titleLarge),
+                    Text(
+                      name,
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
                     const SizedBox(height: 4),
                     Text(
                       quantity,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: AppColors.gray600,
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: AppColors.gray600),
                     ),
                   ],
                 ),
@@ -59,14 +62,14 @@ class StockCard extends StatelessWidget {
                 children: [
                   Text(
                     evaluationAmount,
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     profitText,
                     style: Theme.of(
                       context,
-                    ).textTheme.labelSmall?.copyWith(color: profitColor),
+                    ).textTheme.bodySmall?.copyWith(color: profitColor),
                   ),
                 ],
               ),

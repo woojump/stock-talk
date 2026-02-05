@@ -32,7 +32,22 @@ class NewsDetailPage extends StatelessWidget {
                 child: Consumer<NewsDetailProvider>(
                   builder: (context, provider, _) {
                     if (provider.isLoadingDetail) {
-                      return const Center(child: CircularProgressIndicator());
+                      return Padding(
+                        padding: const EdgeInsets.all(AppSpacing.xl),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const AppShimmer.rect(width: 100, height: 16),
+                            const SizedBox(height: AppSpacing.lg),
+                            const AppShimmer.rect(width: 250, height: 32),
+                            const SizedBox(height: AppSpacing.lg),
+                            AppShimmer.rect(
+                              width: MediaQuery.of(context).size.width,
+                              height: 400,
+                            ),
+                          ],
+                        ),
+                      );
                     }
 
                     if (provider.detailError != null) {
@@ -123,7 +138,7 @@ class _SourceLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       '출처($source)',
-      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
         color: AppColors.gray700,
         fontWeight: AppTypography.semiBold,
       ),
@@ -139,7 +154,7 @@ class _Headline extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+      style: Theme.of(context).textTheme.headlineLarge?.copyWith(
         fontWeight: AppTypography.semiBold,
         color: AppColors.black,
       ),
@@ -204,7 +219,7 @@ class _AISummaryCard extends StatelessWidget {
               children: [
                 Text(
                   '핵심요약 헤드라인',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: AppTypography.semiBold,
                     color: AppColors.gray800, // #333D4B
                   ),
@@ -218,11 +233,9 @@ class _AISummaryCard extends StatelessWidget {
             ),
             SizedBox(height: 8),
             if (isLoading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: CircularProgressIndicator(),
-                ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.0),
+                child: AppShimmer.rect(width: double.infinity, height: 80),
               )
             else if (error != null)
               Text(

@@ -28,27 +28,28 @@ class StockHeaderSection extends StatelessWidget {
         // 종목명
         Text(
           stockName,
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: AppTypography.semiBold),
+          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+            fontWeight: AppTypography.semiBold,
+          ),
         ),
         const SizedBox(height: AppSpacing.md),
 
         // 현재가
         Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
           children: [
             Text(
               priceFormat.format(currentPrice),
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              style: Theme.of(context).textTheme.displayLarge?.copyWith(
                 fontWeight: AppTypography.bold,
                 color: AppColors.black,
               ),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSpacing.xs),
             Text(
               '원',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                 fontWeight: AppTypography.semiBold,
                 color: AppColors.black,
               ),
@@ -66,7 +67,7 @@ class StockHeaderSection extends StatelessWidget {
           ),
           style: Theme.of(
             context,
-          ).textTheme.labelSmall?.copyWith(color: getProfitColor(priceChange)),
+          ).textTheme.bodyMedium?.copyWith(color: getProfitColor(priceChange)),
         ),
       ],
     );

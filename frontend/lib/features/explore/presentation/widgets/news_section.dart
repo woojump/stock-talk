@@ -14,7 +14,7 @@ class NewsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('인기 뉴스', style: Theme.of(context).textTheme.titleLarge),
+          Text('인기 뉴스', style: Theme.of(context).textTheme.headlineLarge),
           SizedBox(height: AppSpacing.lg),
           _buildNewsList(),
         ],
@@ -27,11 +27,9 @@ class NewsSection extends StatelessWidget {
       builder: (context, provider, _) {
         // Show loading state
         if (provider.newsLoading && provider.newsResponse == null) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(32.0),
-              child: CircularProgressIndicator(),
-            ),
+          return const AppSkeletonList(
+            itemCount: 3,
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
           );
         }
 
@@ -78,13 +76,13 @@ class NewsSection extends StatelessWidget {
                     child: NewsCard(news: news),
                   ),
                 ),
-            SizedBox(height: AppSpacing.sm),
-            Center(
-              child: SecondaryButton(
-                onPressed: null, // TODO: 더보기 기능 구현
-                child: const Text('더보기'),
-              ),
-            ),
+            // SizedBox(height: AppSpacing.sm),
+            // Center(
+            //   child: SecondaryButton(
+            //     onPressed: null, // TODO: 더보기 기능 구현
+            //     child: const Text('더보기'),
+            //   ),
+            // ),
           ],
         );
       },

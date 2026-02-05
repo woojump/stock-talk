@@ -79,7 +79,13 @@ class _SearchPageViewState extends State<_SearchPageView> {
       case SearchState.initial:
         return _buildLandingContent(context, provider);
       case SearchState.searching:
-        return const Center(child: CircularProgressIndicator());
+        return const AppSkeletonList(
+          itemCount: 6,
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: AppSpacing.lg,
+          ),
+        );
       case SearchState.results:
         return _buildSearchResults(context, provider);
       case SearchState.noResults:
@@ -150,9 +156,9 @@ class _SearchPageViewState extends State<_SearchPageView> {
     return Center(
       child: Text(
         '검색 결과가 없어요',
-        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
           color: AppColors.gray400,
-          fontWeight: AppTypography.medium,
+          fontWeight: AppTypography.semiBold,
         ),
       ),
     );

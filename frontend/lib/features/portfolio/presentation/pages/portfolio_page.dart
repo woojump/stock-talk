@@ -45,7 +45,7 @@ class _PortfolioView extends StatelessWidget {
             padding: const EdgeInsets.only(top: 20),
             child: Text(
               '포트폴리오',
-              style: Theme.of(context).textTheme.headlineLarge,
+              style: Theme.of(context).textTheme.displayLarge,
             ),
           ),
         ),
@@ -56,7 +56,27 @@ class _PortfolioView extends StatelessWidget {
           builder: (context, provider, _) {
             final balance = provider.balance;
             if (provider.isLoading && balance == null) {
-              return const Center(child: CircularProgressIndicator());
+              return Padding(
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const AppShimmer.rect(width: 150, height: 24),
+                    const SizedBox(height: 12),
+                    const AppShimmer.rect(width: 200, height: 40),
+                    const SizedBox(height: 24),
+                    AppShimmer.rect(
+                      width: MediaQuery.of(context).size.width,
+                      height: 160,
+                    ),
+                    const SizedBox(height: 48),
+                    const AppSkeletonList(
+                      itemCount: 3,
+                      padding: EdgeInsets.zero,
+                    ),
+                  ],
+                ),
+              );
             }
 
             if (provider.errorMessage != null && balance == null) {

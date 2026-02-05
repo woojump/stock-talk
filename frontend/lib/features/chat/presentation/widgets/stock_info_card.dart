@@ -17,9 +17,16 @@ class StockInfoCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final priceFormat = NumberFormat('#,###');
+    final priceFormat = NumberFormat('#,##0');
     final changeColor = summary.isPositive ? AppColors.red : AppColors.blue400;
     final changeSign = summary.isPositive ? '+' : '';
+
+    final displayStockName = summary.stockName.isNotEmpty
+        ? summary.stockName
+        : payload.title;
+    final displayTicker = summary.ticker.isNotEmpty
+        ? summary.ticker
+        : payload.ticker;
 
     return Container(
       width: 291,
@@ -40,7 +47,7 @@ class StockInfoCard extends StatelessWidget {
                   children: [
                     Flexible(
                       child: Text(
-                        summary.stockName,
+                        displayStockName,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(
@@ -51,7 +58,7 @@ class StockInfoCard extends StatelessWidget {
                     ),
                     const SizedBox(width: AppSpacing.xs),
                     Text(
-                      summary.ticker,
+                      displayTicker,
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         color: AppColors.gray500,
                       ),

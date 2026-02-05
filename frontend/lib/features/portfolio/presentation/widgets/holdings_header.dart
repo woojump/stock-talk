@@ -11,8 +11,8 @@ class HoldingsHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Text('보유 종목', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(width: 8),
+        Text('보유 종목', style: Theme.of(context).textTheme.headlineLarge),
+        const SizedBox(width: AppSpacing.sm),
         Text(
           '$count',
           style: Theme.of(

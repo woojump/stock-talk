@@ -28,7 +28,7 @@ class AssetSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('내 자산', style: Theme.of(context).textTheme.titleLarge),
+        Text('내 자산', style: Theme.of(context).textTheme.headlineLarge),
         const SizedBox(height: 20),
         Text(
           '주식 평가 금액',
@@ -42,11 +42,12 @@ class AssetSection extends StatelessWidget {
           children: [
             Text(
               numberFormat.format(stockEvaluationAmount),
-              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+              style: Theme.of(context).textTheme.displayLarge?.copyWith(
                 fontWeight: AppTypography.bold,
               ),
             ),
-            Text('원', style: Theme.of(context).textTheme.titleLarge),
+            SizedBox(width: AppSpacing.xs),
+            Text('원', style: Theme.of(context).textTheme.headlineLarge),
           ],
         ),
         Text(

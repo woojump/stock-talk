@@ -3,10 +3,16 @@ import 'package:stock_talk/core/design_system/design_system.dart';
 
 /// 채팅 화면 앱바
 class ChatAppBar extends StatelessWidget {
-  const ChatAppBar({super.key, this.onMenuTap, this.onNewChatTap});
+  const ChatAppBar({
+    super.key,
+    this.onMenuTap,
+    this.onNewChatTap,
+    this.showNewChatButton = true,
+  });
 
   final VoidCallback? onMenuTap;
   final VoidCallback? onNewChatTap;
+  final bool showNewChatButton;
 
   @override
   Widget build(BuildContext context) {
@@ -30,17 +36,20 @@ class ChatAppBar extends StatelessWidget {
             '채팅하기',
             style: Theme.of(
               context,
-            ).textTheme.headlineSmall?.copyWith(color: AppColors.black),
+            ).textTheme.headlineMedium?.copyWith(color: AppColors.black),
           ),
           // 새 대화 버튼
-          GestureDetector(
-            onTap: onNewChatTap,
-            child: const Icon(
-              Icons.edit_square,
-              size: 24,
-              color: AppColors.black,
-            ),
-          ),
+          if (showNewChatButton)
+            GestureDetector(
+              onTap: onNewChatTap,
+              child: const SizedBox(
+                width: 24,
+                height: 24,
+                child: AppIcon.action('create'),
+              ),
+            )
+          else
+            const SizedBox(width: 24),
         ],
       ),
     );

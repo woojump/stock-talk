@@ -28,52 +28,59 @@ class _ChatPageView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.white,
-      drawer: const ChatHistoryDrawer(),
-      drawerEnableOpenDragGesture: false,
-      body: Consumer<ChatProvider>(
-        builder: (context, provider, _) {
-          return Stack(
-            children: [
-              // 그라데이션 배경
-              _buildGradientBackground(),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      behavior: HitTestBehavior.opaque,
+      child: Scaffold(
+        backgroundColor: AppColors.white,
+        drawer: const ChatHistoryDrawer(),
+        drawerEnableOpenDragGesture: true,
+        body: Consumer<ChatProvider>(
+          builder: (context, provider, _) {
+            return Stack(
+              children: [
+                // 그라데이션 배경 (랜딩 페이지에서만 표시)
+                if (provider.viewState == ChatViewState.landing)
+                  _buildGradientBackground(),
 
-              // 메인 콘텐츠
-              SafeArea(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // 앱바
-                    Builder(
-                      builder: (context) => ChatAppBar(
-                        onMenuTap: () => Scaffold.of(context).openDrawer(),
-                        onNewChatTap: provider.startNewConversation,
-                      ),
-                    ),
-
-                    // 메시지 영역
-                    Expanded(
-                      child: provider.viewState == ChatViewState.landing
-                          ? const ChatLandingView()
-                          : const ChatMessageList(),
-                    ),
-
-                    // 에러 메시지
-                    if (provider.error != null)
-                      _ErrorBanner(
-                        message: provider.error!,
-                        onDismiss: provider.clearError,
+                // 메인 콘텐츠
+                SafeArea(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // 앱바
+                      Builder(
+                        builder: (context) => ChatAppBar(
+                          onMenuTap: () => Scaffold.of(context).openDrawer(),
+                          onNewChatTap: provider.startNewConversation,
+                          showNewChatButton:
+                              provider.viewState != ChatViewState.landing,
+                        ),
                       ),
 
-                    // 입력 필드
-                    const ChatInputField(),
-                  ],
+                      // 메시지 영역
+                      Expanded(
+                        child: provider.viewState == ChatViewState.landing
+                            ? const ChatLandingView()
+                            : const ChatMessageList(),
+                      ),
+
+                      // 에러 메시지
+                      if (provider.error != null)
+                        _ErrorBanner(
+                          message: provider.error!,
+                          onDismiss: provider.clearError,
+                        ),
+
+                      // 입력 필드
+                      const ChatInputField(),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
     );
   }

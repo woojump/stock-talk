@@ -23,12 +23,7 @@ class StockNewsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 섹션 제목
-        Text(
-          '주요 뉴스',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: AppTypography.semiBold),
-        ),
+        Text('주요 뉴스', style: Theme.of(context).textTheme.headlineLarge),
         const SizedBox(height: AppSpacing.lg),
 
         // 컨텐츠
@@ -39,11 +34,9 @@ class StockNewsSection extends StatelessWidget {
 
   Widget _buildContent(BuildContext context) {
     if (isLoading && stockNews == null) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(AppSpacing.xl),
-          child: CircularProgressIndicator(),
-        ),
+      return const AppSkeletonList(
+        itemCount: 3,
+        padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
       );
     }
 
@@ -97,32 +90,32 @@ class StockNewsSection extends StatelessWidget {
         ),
 
         // 더보기 버튼
-        if (stockNews!.length > 4)
-          GestureDetector(
-            onTap: () {
-              // TODO: 뉴스 전체 목록 페이지로 이동
-            },
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.xs,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.gray100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Center(
-                child: Text(
-                  '더보기',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: AppTypography.semiBold,
-                    color: AppColors.gray400,
-                  ),
-                ),
-              ),
-            ),
-          ),
+        // if (stockNews!.length > 4)
+        //   GestureDetector(
+        //     onTap: () {
+        //       // TODO: 뉴스 전체 목록 페이지로 이동
+        //     },
+        //     child: Container(
+        //       width: double.infinity,
+        //       padding: const EdgeInsets.symmetric(
+        //         horizontal: AppSpacing.md,
+        //         vertical: AppSpacing.xs,
+        //       ),
+        //       decoration: BoxDecoration(
+        //         color: AppColors.gray100,
+        //         borderRadius: BorderRadius.circular(8),
+        //       ),
+        //       child: Center(
+        //         child: Text(
+        //           '더보기',
+        //           style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        //             fontWeight: AppTypography.semiBold,
+        //             color: AppColors.gray400,
+        //           ),
+        //         ),
+        //       ),
+        //     ),
+        //   ),
       ],
     );
   }

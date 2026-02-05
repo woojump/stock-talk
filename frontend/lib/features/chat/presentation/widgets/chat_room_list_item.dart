@@ -3,7 +3,7 @@ import 'package:stock_talk/core/design_system/design_system.dart';
 import 'package:stock_talk/features/chat/domain/entities/chat_entities.dart';
 
 /// 채팅방 목록 아이템 (스와이프 삭제 지원)
-class ChatRoomListItem extends StatelessWidget {
+class ChatRoomListItem extends StatefulWidget {
   const ChatRoomListItem({
     super.key,
     required this.room,
@@ -18,23 +18,51 @@ class ChatRoomListItem extends StatelessWidget {
   final bool isSelected;
 
   @override
+  State<ChatRoomListItem> createState() => _ChatRoomListItemState();
+}
+
+class _ChatRoomListItemState extends State<ChatRoomListItem> {
+  double _progress = 0.0;
+
+  @override
   Widget build(BuildContext context) {
     return Dismissible(
-      key: Key('chat_room_${room.roomId}'),
+      key: Key('chat_room_${widget.room.roomId}'),
       direction: DismissDirection.endToStart,
+      onUpdate: (details) {
+        setState(() {
+          _progress = details.progress;
+        });
+      },
       confirmDismiss: (_) async {
         return await _showDeleteConfirmDialog(context);
       },
-      onDismissed: (_) => onDelete(),
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: AppSpacing.xl),
-        color: AppColors.red,
-        child: const Icon(
-          Icons.delete_outline,
-          color: AppColors.white,
-          size: 24,
-        ),
+      onDismissed: (_) => widget.onDelete(),
+      background: Container(),
+      secondaryBackground: LayoutBuilder(
+        builder: (context, constraints) {
+          final revealedWidth = constraints.maxWidth * _progress;
+          return Align(
+            alignment: Alignment.centerRight,
+            child: Container(
+              width: (revealedWidth - AppSpacing.sm).clamp(
+                0.0,
+                constraints.maxWidth,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.red,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Center(
+                child: AppIcon.action(
+                  'trash',
+                  color: AppColors.white,
+                  size: 24,
+                ),
+              ),
+            ),
+          );
+        },
       ),
       child: _buildContent(context),
     );
@@ -64,26 +92,21 @@ class ChatRoomListItem extends StatelessWidget {
 
   Widget _buildContent(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.xl,
-          vertical: AppSpacing.lg,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.gray100 : AppColors.white,
-          border: const Border(
-            bottom: BorderSide(color: AppColors.gray200, width: 1),
-          ),
+          color: widget.isSelected ? AppColors.gray200 : AppColors.white,
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
-          room.title,
+          widget.room.title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            fontWeight: AppTypography.medium,
-            color: AppColors.gray800,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            fontWeight: AppTypography.semiBold,
+            color: AppColors.black,
           ),
         ),
       ),

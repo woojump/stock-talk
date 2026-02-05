@@ -15,7 +15,7 @@ class ChartSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('실시간 차트', style: Theme.of(context).textTheme.titleLarge),
+          Text('실시간 차트', style: Theme.of(context).textTheme.headlineLarge),
           SizedBox(height: AppSpacing.lg),
           _buildTabBar(),
           SizedBox(height: AppSpacing.lg),
@@ -73,11 +73,9 @@ class ChartSection extends StatelessWidget {
       builder: (context, provider, _) {
         // Show loading state
         if (provider.topMoversLoading && provider.topMovers == null) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(32.0),
-              child: CircularProgressIndicator(),
-            ),
+          return const AppSkeletonList(
+            itemCount: 5,
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
           );
         }
 
@@ -127,13 +125,13 @@ class ChartSection extends StatelessWidget {
                     ),
                   ),
                 ),
-            SizedBox(height: AppSpacing.sm),
-            Center(
-              child: SecondaryButton(
-                onPressed: null, // TODO: 더보기 기능 구현
-                child: const Text('더보기'),
-              ),
-            ),
+            // SizedBox(height: AppSpacing.sm),
+            // Center(
+            //   child: SecondaryButton(
+            //     onPressed: null, // TODO: 더보기 기능 구현
+            //     child: const Text('더보기'),
+            //   ),
+            // ),
           ],
         );
       },

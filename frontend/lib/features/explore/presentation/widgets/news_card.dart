@@ -26,7 +26,7 @@ class NewsCard extends StatelessWidget {
           children: [
             Text(
               news.title,
-              style: Theme.of(context).textTheme.titleMedium,
+              style: Theme.of(context).textTheme.headlineMedium,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -35,7 +35,7 @@ class NewsCard extends StatelessWidget {
               news.description ?? '본문 미리보기 내용',
               style: Theme.of(
                 context,
-              ).textTheme.labelSmall?.copyWith(color: AppColors.gray500),
+              ).textTheme.bodySmall?.copyWith(color: AppColors.gray500),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

@@ -30,11 +30,11 @@ class _ChatHistoryDrawerState extends State<ChatHistoryDrawer> {
     return Drawer(
       width: drawerWidth,
       backgroundColor: AppColors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       child: SafeArea(
         child: Column(
           children: [
             _buildHeader(context),
-            const Divider(height: 1, color: AppColors.gray200),
             Expanded(child: _buildRoomList()),
           ],
         ),
@@ -44,22 +44,23 @@ class _ChatHistoryDrawerState extends State<ChatHistoryDrawer> {
 
   Widget _buildHeader(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.lg,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.gray800),
-            onPressed: () => Navigator.of(context).pop(),
+          GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: const SizedBox(
+              width: 24,
+              height: 24,
+              child: AppIcon.action('back'),
+            ),
           ),
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: 16),
           Text(
             '대화 내역',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               fontWeight: AppTypography.semiBold,
-              color: AppColors.gray800,
+              color: AppColors.black,
             ),
           ),
         ],
@@ -71,7 +72,10 @@ class _ChatHistoryDrawerState extends State<ChatHistoryDrawer> {
     return Consumer<ChatProvider>(
       builder: (context, provider, _) {
         if (provider.isLoadingRooms) {
-          return const Center(child: CircularProgressIndicator());
+          return const AppSkeletonList(
+            itemCount: 6,
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          );
         }
 
         if (provider.chatRooms.isEmpty) {
@@ -97,9 +101,10 @@ class _ChatHistoryDrawerState extends State<ChatHistoryDrawer> {
           );
         }
 
-        return ListView.builder(
-          padding: EdgeInsets.zero,
+        return ListView.separated(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           itemCount: provider.chatRooms.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final room = provider.chatRooms[index];
             return ChatRoomListItem(

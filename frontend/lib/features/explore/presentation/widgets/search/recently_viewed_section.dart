@@ -20,7 +20,10 @@ class RecentlyViewedSection extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-          child: Text('최근 본 종목', style: Theme.of(context).textTheme.titleLarge),
+          child: Text(
+            '최근 본 종목',
+            style: Theme.of(context).textTheme.headlineLarge,
+          ),
         ),
         const SizedBox(height: AppSpacing.lg),
         SingleChildScrollView(
