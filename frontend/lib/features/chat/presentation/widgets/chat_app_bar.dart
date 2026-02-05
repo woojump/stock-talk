@@ -35,10 +35,10 @@ class ChatAppBar extends StatelessWidget {
           // 새 대화 버튼
           GestureDetector(
             onTap: onNewChatTap,
-            child: const Icon(
-              Icons.edit_square,
-              size: 24,
-              color: AppColors.black,
+              child: const SizedBox(
+                width: 24,
+                height: 24,
+                child: AppIcon.action('create'),
             ),
           ),
         ],
