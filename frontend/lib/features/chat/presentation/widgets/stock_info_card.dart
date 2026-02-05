@@ -42,21 +42,17 @@ class StockInfoCard extends StatelessWidget {
                       child: Text(
                         summary.stockName,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontFamily: AppTypography.fontFamily,
-                          fontSize: AppTypography.titleMedium,
-                          fontWeight: AppTypography.semiBold,
-                          color: AppColors.black,
-                        ),
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
+                              fontWeight: AppTypography.semiBold,
+                              color: AppColors.black,
+                            ),
                       ),
                     ),
                     const SizedBox(width: AppSpacing.xs),
                     Text(
                       summary.ticker,
-                      style: const TextStyle(
-                        fontFamily: AppTypography.fontFamily,
-                        fontSize: 13,
-                        fontWeight: AppTypography.regular,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         color: AppColors.gray500,
                       ),
                     ),
@@ -73,18 +69,14 @@ class StockInfoCard extends StatelessWidget {
             children: [
               Text(
                 priceFormat.format(summary.currentPrice),
-                style: const TextStyle(
-                  fontFamily: AppTypography.fontFamily,
-                  fontSize: AppTypography.titleMedium,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: AppTypography.semiBold,
                   color: AppColors.black,
                 ),
               ),
-              const Text(
+              Text(
                 '원',
-                style: TextStyle(
-                  fontFamily: AppTypography.fontFamily,
-                  fontSize: AppTypography.titleMedium,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: AppTypography.medium,
                   color: AppColors.black,
                 ),
@@ -92,12 +84,9 @@ class StockInfoCard extends StatelessWidget {
               const SizedBox(width: AppSpacing.xs),
               Text(
                 '$changeSign${priceFormat.format(summary.priceChange)}원 ($changeSign${summary.priceChangePercent.toStringAsFixed(1)}%)',
-                style: TextStyle(
-                  fontFamily: AppTypography.fontFamily,
-                  fontSize: 13,
-                  fontWeight: AppTypography.regular,
-                  color: changeColor,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.labelMedium?.copyWith(color: changeColor),
               ),
             ],
           ),

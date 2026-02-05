@@ -128,11 +128,9 @@ class _ErrorBanner extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
-                fontFamily: AppTypography.fontFamily,
-                fontSize: AppTypography.bodyMedium,
-                color: AppColors.red,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.red),
             ),
           ),
           GestureDetector(

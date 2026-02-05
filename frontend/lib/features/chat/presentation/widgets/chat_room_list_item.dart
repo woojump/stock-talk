@@ -81,9 +81,7 @@ class ChatRoomListItem extends StatelessWidget {
           room.title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontFamily: AppTypography.fontFamily,
-            fontSize: AppTypography.bodyLarge,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
             fontWeight: AppTypography.medium,
             color: AppColors.gray800,
           ),

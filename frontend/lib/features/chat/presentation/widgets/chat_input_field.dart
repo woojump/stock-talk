@@ -39,21 +39,19 @@ class _ChatInputFieldState extends State<ChatInputField> {
         final isActive = provider.inputText.isNotEmpty;
 
         return Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.xl,
-            vertical: AppSpacing.md,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           decoration: BoxDecoration(
             color: AppColors.white,
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [AppColors.white.withOpacity(0), AppColors.white],
-              stops: const [0.0, 0.2],
-            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                offset: const Offset(0, -1),
+                blurRadius: 10,
+              ),
+            ],
           ),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // 입력 필드
               Expanded(
@@ -62,31 +60,28 @@ class _ChatInputFieldState extends State<ChatInputField> {
                   decoration: BoxDecoration(
                     color: AppColors.white,
                     border: Border.all(
-                      color: isActive ? AppColors.gray300 : AppColors.gray200,
+                      color: isActive ? AppColors.gray400 : AppColors.gray300,
                     ),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(24),
                   ),
                   child: TextField(
                     controller: _controller,
                     maxLines: 4,
                     minLines: 1,
-                    style: const TextStyle(
-                      fontFamily: AppTypography.fontFamily,
-                      fontSize: AppTypography.bodyMedium,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: AppColors.black,
                       fontWeight: AppTypography.medium,
-                      color: AppColors.gray800,
                     ),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: '궁금한 내용을 입력하세요',
-                      hintStyle: TextStyle(
-                        fontFamily: AppTypography.fontFamily,
-                        fontSize: AppTypography.titleMedium,
-                        fontWeight: AppTypography.medium,
-                        color: AppColors.gray500,
-                      ),
+                      hintStyle: Theme.of(context).textTheme.labelLarge
+                          ?.copyWith(
+                            color: AppColors.gray400,
+                            fontWeight: AppTypography.medium,
+                          ),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 14,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
                         vertical: 10,
                       ),
                     ),
@@ -97,7 +92,7 @@ class _ChatInputFieldState extends State<ChatInputField> {
                   ),
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: AppSpacing.md),
               // 전송 버튼
               _SendButton(
                 isActive: provider.canSend,
@@ -131,11 +126,9 @@ class _SendButton extends StatelessWidget {
       child: Container(
         width: 42,
         height: 42,
-        decoration: BoxDecoration(
-          color: isActive
-              ? AppColors.gray700
-              : AppColors.gray500.withOpacity(0.4),
-          borderRadius: BorderRadius.circular(80),
+        decoration: const BoxDecoration(
+          color: AppColors.black,
+          shape: BoxShape.circle,
         ),
         child: Center(
           child: isSending
@@ -147,7 +140,11 @@ class _SendButton extends StatelessWidget {
                     valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
                   ),
                 )
-              : const AppIcon.action('send', color: AppColors.white),
+              : const Icon(
+                  Icons.arrow_upward,
+                  color: AppColors.white,
+                  size: 24,
+                ),
         ),
       ),
     );
