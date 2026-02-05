@@ -31,25 +31,7 @@ class _ExplorePageView extends StatelessWidget {
       appBar: _buildAppBar(context),
       body: Consumer<ExploreProvider>(
         builder: (context, provider, _) {
-          // Show loading only if both are loading and neither has data yet
-          if (provider.isLoading &&
-              provider.topMovers == null &&
-              provider.newsResponse == null) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          // Show full error only if both failed on initial load
-          if (provider.topMoversError != null &&
-              provider.newsError != null &&
-              provider.topMovers == null &&
-              provider.newsResponse == null) {
-            return ErrorState(
-              message: '데이터를 불러오지 못했어요.',
-              onRetry: provider.load,
-            );
-          }
-
-          // Otherwise, show content (sections handle their own loading/error states)
+          // 각 섹션 내부에서 자체적으로 스켈레톤 로딩 처리
           return RefreshIndicator(
             onRefresh: provider.refresh,
             child: ListView(

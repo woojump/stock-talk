@@ -73,11 +73,9 @@ class ChartSection extends StatelessWidget {
       builder: (context, provider, _) {
         // Show loading state
         if (provider.topMoversLoading && provider.topMovers == null) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(32.0),
-              child: CircularProgressIndicator(),
-            ),
+          return const AppSkeletonList(
+            itemCount: 5,
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
           );
         }
 

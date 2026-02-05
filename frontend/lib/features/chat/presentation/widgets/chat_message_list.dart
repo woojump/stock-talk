@@ -47,7 +47,13 @@ class _ChatMessageListState extends State<ChatMessageList> {
         });
 
         if (provider.isLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return const AppSkeletonList(
+            itemCount: 4,
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.xl,
+              vertical: AppSpacing.lg,
+            ),
+          );
         }
 
         return ListView.builder(

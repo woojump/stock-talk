@@ -27,3 +27,6 @@ export 'widgets/states/empty_state.dart';
 
 // Widgets - Text
 export 'widgets/text/app_markdown.dart';
+
+// Widgets - Loading
+export 'widgets/loading/shimmer_loader.dart';

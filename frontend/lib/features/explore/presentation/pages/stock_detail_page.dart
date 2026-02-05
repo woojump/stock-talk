@@ -66,7 +66,35 @@ class _StockDetailView extends StatelessWidget {
 
   Widget _buildBody(BuildContext context, StockDetailProvider provider) {
     if (provider.isLoading && provider.stockDetail == null) {
-      return const Center(child: CircularProgressIndicator());
+      return Container(
+        color: AppColors.white,
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const AppShimmer.rect(width: 120, height: 28),
+            const SizedBox(height: 12),
+            const AppShimmer.rect(width: 180, height: 40),
+            const SizedBox(height: 8),
+            const AppShimmer.rect(width: 100, height: 20),
+            const SizedBox(height: AppSpacing.xxxl),
+            AppShimmer.rect(
+              width: MediaQuery.of(context).size.width - (AppSpacing.xl * 2),
+              height: 250,
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                AppShimmer.rect(width: 60, height: 32),
+                AppShimmer.rect(width: 60, height: 32),
+                AppShimmer.rect(width: 60, height: 32),
+                AppShimmer.rect(width: 60, height: 32),
+              ],
+            ),
+          ],
+        ),
+      );
     }
 
     if (provider.detailError != null && provider.stockDetail == null) {

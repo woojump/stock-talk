@@ -79,7 +79,13 @@ class _SearchPageViewState extends State<_SearchPageView> {
       case SearchState.initial:
         return _buildLandingContent(context, provider);
       case SearchState.searching:
-        return const Center(child: CircularProgressIndicator());
+        return const AppSkeletonList(
+          itemCount: 6,
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: AppSpacing.lg,
+          ),
+        );
       case SearchState.results:
         return _buildSearchResults(context, provider);
       case SearchState.noResults:

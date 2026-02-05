@@ -39,12 +39,7 @@ class PopularStocksSection extends StatelessWidget {
 
   Widget _buildContent(BuildContext context) {
     if (isLoading && stocks.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(AppSpacing.xxxl),
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const AppSkeletonList(itemCount: 5, padding: EdgeInsets.zero);
     }
 
     if (error != null && stocks.isEmpty) {

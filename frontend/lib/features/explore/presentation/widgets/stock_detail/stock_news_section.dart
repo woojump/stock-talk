@@ -34,11 +34,9 @@ class StockNewsSection extends StatelessWidget {
 
   Widget _buildContent(BuildContext context) {
     if (isLoading && stockNews == null) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(AppSpacing.xl),
-          child: CircularProgressIndicator(),
-        ),
+      return const AppSkeletonList(
+        itemCount: 3,
+        padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
       );
     }
 

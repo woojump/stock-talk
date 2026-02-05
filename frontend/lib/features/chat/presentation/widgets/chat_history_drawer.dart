@@ -72,7 +72,10 @@ class _ChatHistoryDrawerState extends State<ChatHistoryDrawer> {
     return Consumer<ChatProvider>(
       builder: (context, provider, _) {
         if (provider.isLoadingRooms) {
-          return const Center(child: CircularProgressIndicator());
+          return const AppSkeletonList(
+            itemCount: 6,
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          );
         }
 
         if (provider.chatRooms.isEmpty) {

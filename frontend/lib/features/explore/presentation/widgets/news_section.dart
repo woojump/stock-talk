@@ -27,11 +27,9 @@ class NewsSection extends StatelessWidget {
       builder: (context, provider, _) {
         // Show loading state
         if (provider.newsLoading && provider.newsResponse == null) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(32.0),
-              child: CircularProgressIndicator(),
-            ),
+          return const AppSkeletonList(
+            itemCount: 3,
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
           );
         }
 
