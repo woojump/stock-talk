@@ -42,6 +42,11 @@ class _StockDetailView extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.gray100,
       appBar: AppBar(
+        title: Text(
+          stockName,
+          style: Theme.of(context).textTheme.headlineMedium,
+        ),
+        centerTitle: true,
         backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(

@@ -36,7 +36,7 @@ class ChatAppBar extends StatelessWidget {
             '채팅하기',
             style: Theme.of(
               context,
-            ).textTheme.headlineSmall?.copyWith(color: AppColors.black),
+            ).textTheme.headlineMedium?.copyWith(color: AppColors.black),
           ),
           // 새 대화 버튼
           if (showNewChatButton)

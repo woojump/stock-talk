@@ -21,7 +21,13 @@ class PortfolioDetailPage extends StatelessWidget {
     final profitRate = holding.profitLossRate;
 
     return Scaffold(
-      appBar: AppBar(title: Text(holding.name), centerTitle: true),
+      appBar: AppBar(
+        title: Text(
+          holding.name,
+          style: Theme.of(context).textTheme.headlineMedium,
+        ),
+        centerTitle: true,
+      ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.symmetric(
