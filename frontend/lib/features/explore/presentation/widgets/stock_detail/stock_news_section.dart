@@ -92,32 +92,32 @@ class StockNewsSection extends StatelessWidget {
         ),
 
         // 더보기 버튼
-        if (stockNews!.length > 4)
-          GestureDetector(
-            onTap: () {
-              // TODO: 뉴스 전체 목록 페이지로 이동
-            },
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.xs,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.gray100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Center(
-                child: Text(
-                  '더보기',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: AppTypography.semiBold,
-                    color: AppColors.gray400,
-                  ),
-                ),
-              ),
-            ),
-          ),
+        // if (stockNews!.length > 4)
+        //   GestureDetector(
+        //     onTap: () {
+        //       // TODO: 뉴스 전체 목록 페이지로 이동
+        //     },
+        //     child: Container(
+        //       width: double.infinity,
+        //       padding: const EdgeInsets.symmetric(
+        //         horizontal: AppSpacing.md,
+        //         vertical: AppSpacing.xs,
+        //       ),
+        //       decoration: BoxDecoration(
+        //         color: AppColors.gray100,
+        //         borderRadius: BorderRadius.circular(8),
+        //       ),
+        //       child: Center(
+        //         child: Text(
+        //           '더보기',
+        //           style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        //             fontWeight: AppTypography.semiBold,
+        //             color: AppColors.gray400,
+        //           ),
+        //         ),
+        //       ),
+        //     ),
+        //   ),
       ],
     );
   }

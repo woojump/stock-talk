@@ -127,13 +127,13 @@ class ChartSection extends StatelessWidget {
                     ),
                   ),
                 ),
-            SizedBox(height: AppSpacing.sm),
-            Center(
-              child: SecondaryButton(
-                onPressed: null, // TODO: 더보기 기능 구현
-                child: const Text('더보기'),
-              ),
-            ),
+            // SizedBox(height: AppSpacing.sm),
+            // Center(
+            //   child: SecondaryButton(
+            //     onPressed: null, // TODO: 더보기 기능 구현
+            //     child: const Text('더보기'),
+            //   ),
+            // ),
           ],
         );
       },

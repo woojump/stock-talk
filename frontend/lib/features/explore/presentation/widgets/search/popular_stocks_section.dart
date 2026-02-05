@@ -87,29 +87,29 @@ class PopularStocksSection extends StatelessWidget {
             onTap: () => onStockTap(stock),
           );
         }),
-        const SizedBox(height: AppSpacing.md),
-        Center(
-          child: GestureDetector(
-            onTap: onSeeMore,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.xs,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.gray100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                '더보기',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: AppTypography.semiBold,
-                  color: AppColors.gray400,
-                ),
-              ),
-            ),
-          ),
-        ),
+        // const SizedBox(height: AppSpacing.md),
+        // Center(
+        //   child: GestureDetector(
+        //     onTap: onSeeMore,
+        //     child: Container(
+        //       padding: const EdgeInsets.symmetric(
+        //         horizontal: AppSpacing.md,
+        //         vertical: AppSpacing.xs,
+        //       ),
+        //       decoration: BoxDecoration(
+        //         color: AppColors.gray100,
+        //         borderRadius: BorderRadius.circular(8),
+        //       ),
+        //       child: Text(
+        //         '더보기',
+        //         style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        //           fontWeight: AppTypography.semiBold,
+        //           color: AppColors.gray400,
+        //         ),
+        //       ),
+        //     ),
+        //   ),
+        // ),
       ],
     );
   }
