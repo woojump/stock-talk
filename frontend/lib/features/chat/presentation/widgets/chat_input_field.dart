@@ -38,69 +38,84 @@ class _ChatInputFieldState extends State<ChatInputField> {
       builder: (context, provider, _) {
         final isActive = provider.inputText.isNotEmpty;
 
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                offset: const Offset(0, -1),
-                blurRadius: 10,
-              ),
-            ],
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // 입력 필드
-              Expanded(
-                child: Container(
-                  constraints: const BoxConstraints(maxHeight: 120),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    border: Border.all(
-                      color: isActive ? AppColors.gray400 : AppColors.gray300,
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: TextField(
-                    controller: _controller,
-                    maxLines: 4,
-                    minLines: 1,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: AppColors.black,
-                      fontWeight: AppTypography.medium,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: '궁금한 내용을 입력하세요',
-                      hintStyle: Theme.of(context).textTheme.labelLarge
-                          ?.copyWith(
-                            color: AppColors.gray400,
-                            fontWeight: AppTypography.medium,
-                          ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
-                    ),
-                    onChanged: provider.updateInputText,
-                    onSubmitted: provider.canSend
-                        ? (_) => _onSend(provider)
-                        : null,
-                  ),
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 상단 블러 그라데이션
+            Container(
+              height: 20,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppColors.white.withValues(alpha: 0),
+                    AppColors.white,
+                  ],
                 ),
               ),
-              const SizedBox(width: AppSpacing.md),
-              // 전송 버튼
-              _SendButton(
-                isActive: provider.canSend,
-                isSending: provider.isSending,
-                onTap: () => _onSend(provider),
+            ),
+            // 입력창 컨테이너
+            Container(
+              color: AppColors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // 입력 필드
+                  Expanded(
+                    child: Container(
+                      constraints: const BoxConstraints(maxHeight: 120),
+                      decoration: BoxDecoration(
+                        color: AppColors.gray100,
+                        border: Border.all(
+                          color: isActive
+                              ? AppColors.gray300
+                              : AppColors.gray200,
+                        ),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: TextField(
+                        controller: _controller,
+                        maxLines: 4,
+                        minLines: 1,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.black,
+                          height: 1.3,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: '궁금한 내용을 입력하세요',
+                          hintStyle: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.gray500, height: 1.3),
+                          filled: false,
+                          border: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          disabledBorder: InputBorder.none,
+                          errorBorder: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                        ),
+                        onChanged: provider.updateInputText,
+                        onSubmitted: provider.canSend
+                            ? (_) => _onSend(provider)
+                            : null,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  // 전송 버튼
+                  _SendButton(
+                    isActive: provider.canSend,
+                    isSending: provider.isSending,
+                    onTap: () => _onSend(provider),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         );
       },
     );
@@ -126,8 +141,8 @@ class _SendButton extends StatelessWidget {
       child: Container(
         width: 42,
         height: 42,
-        decoration: const BoxDecoration(
-          color: AppColors.black,
+        decoration: BoxDecoration(
+          color: isActive ? AppColors.black : AppColors.gray200,
           shape: BoxShape.circle,
         ),
         child: Center(
@@ -140,9 +155,9 @@ class _SendButton extends StatelessWidget {
                     valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
                   ),
                 )
-              : const Icon(
-                  Icons.arrow_upward,
-                  color: AppColors.white,
+              : AppIcon.action(
+                  'send',
+                  color: isActive ? AppColors.white : AppColors.gray400,
                   size: 24,
                 ),
         ),
