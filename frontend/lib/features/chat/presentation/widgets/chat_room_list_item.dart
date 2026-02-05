@@ -97,7 +97,7 @@ class _ChatRoomListItemState extends State<ChatRoomListItem> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: widget.isSelected ? AppColors.gray100 : AppColors.white,
+          color: widget.isSelected ? AppColors.gray200 : AppColors.white,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
