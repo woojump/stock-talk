@@ -39,7 +39,7 @@ class StockListItem extends StatelessWidget {
                 '$rank',
                 style: Theme.of(
                   context,
-                ).textTheme.labelSmall?.copyWith(color: AppColors.gray500),
+                ).textTheme.bodySmall?.copyWith(color: AppColors.gray500),
                 textAlign: TextAlign.center,
               ),
             ),

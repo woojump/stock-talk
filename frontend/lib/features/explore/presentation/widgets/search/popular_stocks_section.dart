@@ -148,10 +148,9 @@ class _PopularStockItem extends StatelessWidget {
               width: 20,
               child: Text(
                 '$rank',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontWeight: AppTypography.semiBold,
-                  color: AppColors.black,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.gray500),
                 textAlign: TextAlign.center,
               ),
             ),
