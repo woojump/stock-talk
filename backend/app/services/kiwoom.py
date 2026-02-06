@@ -432,26 +432,6 @@ class KiwoomService:
         return None
 
 
-        '''
-        if not isinstance(data, dict):
-            return "UPSTREAM_RESPONSE_NOT_DICT"
-
-        # 케이스 1) 우리 시스템이 표준화한 fail
-        if data.get("status") == "fail":
-            return f"{data.get('error') or 'UPSTREAM_FAIL'}: {data.get('message') or ''}".strip()
-
-        # 케이스 2) 키움/증권 API에서 자주 나오는 코드들
-        # (프로젝트에서 실제 키가 다르면 여기는 너희 응답 규격에 맞춰 조정)
-        if str(data.get("rt_cd")) not in (None, "", "0"):
-            return f"UPSTREAM_RT_CD_{data.get('rt_cd')}: {data.get('msg1') or data.get('message') or ''}".strip()
-
-        if str(data.get("return_code")) not in (None, "", "0"):
-            return f"UPSTREAM_RETURN_CODE_{data.get('return_code')}: {data.get('return_msg') or data.get('message') or ''}".strip()
-
-        return None
-        '''
-
-
     async def get_market_data(
         self,
         api_id: str,
