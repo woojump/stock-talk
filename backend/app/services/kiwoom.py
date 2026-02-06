@@ -406,24 +406,25 @@ class KiwoomService:
         
       
     def _is_upstream_fail(self, data: Dict[str, Any]) -> Optional[str]:
-        """
-        업스트림 응답이 '실패'임을 나타내는 흔한 패턴을 감지.
-        실패면 에러 메시지(문자열) 반환, 정상이면 None 반환.
-        """
         if not isinstance(data, dict):
             return "UPSTREAM_RESPONSE_NOT_DICT"
 
-        # 케이스 1) 우리 시스템이 표준화한 fail
+        # 1. 우리 시스템 표준 (status: fail)
         if data.get("status") == "fail":
             return f"{data.get('error') or 'UPSTREAM_FAIL'}: {data.get('message') or ''}".strip()
 
-        # 케이스 2) 키움/증권 API에서 자주 나오는 코드들
-        # (프로젝트에서 실제 키가 다르면 여기는 너희 응답 규격에 맞춰 조정)
-        if str(data.get("rt_cd")) not in (None, "", "0"):
-            return f"UPSTREAM_RT_CD_{data.get('rt_cd')}: {data.get('msg1') or data.get('message') or ''}".strip()
+        # 2. 우선순위에 따른 코드 추출 (return_code를 먼저 보고 없으면 rt_cd를 봄)
+        # 0이나 "0"을 제외한 값이 있으면 에러로 간주하되, 키 자체가 없는 경우는 통과시켜야 함.
+        
+        # 2-1) return_code 체크 (키움 API 방식)
+        ret_code = data.get("return_code")
+        if ret_code is not None and str(ret_code) not in ("", "0"):
+            return f"UPSTREAM_RETURN_CODE_{ret_code}: {data.get('return_msg') or ''}".strip()
 
-        if str(data.get("return_code")) not in (None, "", "0"):
-            return f"UPSTREAM_RETURN_CODE_{data.get('return_code')}: {data.get('return_msg') or data.get('message') or ''}".strip()
+        # 2-2) rt_cd 체크 (기타 증권 API 방식)
+        rt_code = data.get("rt_cd")
+        if rt_code is not None and str(rt_code) not in ("", "0"):
+            return f"UPSTREAM_RT_CD_{rt_code}: {data.get('msg1') or ''}".strip()
 
         return None
 
