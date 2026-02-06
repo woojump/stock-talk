@@ -6,37 +6,41 @@
 <img src="https://github.com/user-attachments/assets/96ed5d66-e2b8-47b0-ac08-a8ad6753b383" width="400">
 
 ## 👥 프로젝트 소개
-* **개발 기간**
-* 2025.09 ~ 2026.02
-* **팀원**:    
-* **관련 프로젝트**: [이전 키움 API 기반 트레이딩 시스템](링크)의 연장선상
+**개발 기간** 
+2025.09 ~ 2026.02
 
-## 📝 프로젝트 개요 (Overview)
-기존의 복잡한 주식 HTS/MTS 시스템에서 벗어나, 사용자가 일상 언어로 질문하면 **실시간 시장 데이터와 뉴스를 종합하여 즉각적인 분석과 시각화 차트를 제공**하는 지능형 에이전트입니다. MCP(Model Context Protocol)를 활용하여 도구(Tool) 확장성을 극대화했습니다.
+**팀원**
+권우주 (Lead & Frontend)
+유동균 (Backend & AI)
+이주혁 (Backend & AI)
+한지민 (Backend & AI)
+홍예나 (Design)
 
-## 🎯 프로젝트 목표 (Goals)
-1. **정밀한 종목 분석**: LLM의 Hallucination을 최소화하고 실시간 데이터 기반의 신뢰도 높은 분석 제공
-2. **동적 시각화**: 텍스트 답변에 그치지 않고 JSON 구조를 활용한 인터랙티브 차트 렌더링
-3. **사용자 경험(UX) 혁신**: "나 삼성전자 10주 있는데 어때?"와 같은 개인화된 질문 이해 및 대응
-4. **확장성 확보**: FastMCP 프레임워크를 통한 새로운 금융 데이터 API의 손쉬운 통합
+## 프로젝트 개요 (Overview)
+기존의 복잡한 주식 시스템에서 벗어나, 사용자가 일상 언어로 질문하면 **실시간 주식 정보(시세 차트 등) 조회와 거래가 가능하도록**하는 지능형 에이전트입니다. MCP와 LLM를 활용하여 사용자에게 친숙한 새로운 접근 방식을 제시합니다.
 
+## 프로젝트 기능
+1. **MCP를 활용해 LLM모델에 프롬프트 엔지니어링을 적용해 주식이 어려운 초보자들에게 친숙한 AI비서**
+* 자연어로 주식 관련 질문 및 응답 제공
+* 자연어 대화로 주식 매도 매수 뉴스 등 모든 기능들을 LLM에게 명령어로 처리 가능
+
+2. **시세, 차트, 뉴스(AI요약 포함) 등 금융 정보 제공**
+* 키움 모의투자 api를 활용해 주식투자를 진행하고 포트폴리오로 보유한 종목 확인 가능
+* 실시간 인기, 상승, 하락 등 화두에 오른 주식들 top5를 받아와 주식시장을 한눈에 확인 가능
+* 주식관련 뉴스를 api로 받아오고 AI요약을 진행해 한눈에 뉴스 토픽 확인 가능
 ---
 
 ## 🛠 기술 스택 (Tech Stack)
 
-### 🧠 AI & Backend
-| Category | Tech Stack |
-| :--- | :--- |
-| **Language** | ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white) |
-| **LLM Framework** | ![LangChain](https://img.shields.io/badge/LangChain-123456?style=flat-square&logo=langchain&logoColor=white) |
-| **Models** | ![GPT-4o](https://img.shields.io/badge/GPT--4o-41ADFF?style=flat-square&logo=openai) ![Gemini](https://img.shields.io/badge/Google_Gemini-8E75B2?style=flat-square&logo=googlegemini&logoColor=white) |
-| **Server** | ![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=flat-square&logo=fastapi) ![MCP](https://img.shields.io/badge/FastMCP-orange?style=flat-square) |
-| **Package Manager** | ![uv](https://img.shields.io/badge/uv-F43F5E?style=flat-square&logo=python) |
+### Languages & Frameworks
+<img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white"> <img src="https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white"> <img src="https://img.shields.io/badge/Swift-F05138?style=for-the-badge&logo=swift&logoColor=white"> <img src="https://img.shields.io/badge/Ruby-CC342D?style=for-the-badge&logo=ruby&logoColor=white"> <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white">
+<img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white">
 
-### 🗄️ Database & Tools
-* **Vector DB**: Milvus / ChromaDB (RAG 기반 뉴스 검색용)
-* **API 연동**: 키움 Open API (Koapy), Google Finance, News API
-* **Deployment**: Docker, AWS EC2, Ubuntu via WSL
+### Infrastructure & Databases
+<img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white"> <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white"> <img src="https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white">
+
+### Tools
+<img src="https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=notion&logoColor=white">
 
 ---
 
