@@ -7,6 +7,7 @@ import json
 import os
 import re
 import logging
+import asyncio
 
 from fastapi import HTTPException
 from datetime import datetime, timedelta  # 시간 계산을 위해 추가
@@ -406,28 +407,29 @@ class KiwoomService:
         
       
     def _is_upstream_fail(self, data: Dict[str, Any]) -> Optional[str]:
+        """
+        업스트림 응답이 '실패'임을 나타내는 흔한 패턴을 감지.
+        실패면 에러 메시지(문자열) 반환, 정상이면 None 반환.
+        """
+
         if not isinstance(data, dict):
             return "UPSTREAM_RESPONSE_NOT_DICT"
 
-        # 1. 우리 시스템 표준 (status: fail)
+        # 케이스 1) 표준 fail 체크
         if data.get("status") == "fail":
             return f"{data.get('error') or 'UPSTREAM_FAIL'}: {data.get('message') or ''}".strip()
 
-        # 2. 우선순위에 따른 코드 추출 (return_code를 먼저 보고 없으면 rt_cd를 봄)
-        # 0이나 "0"을 제외한 값이 있으면 에러로 간주하되, 키 자체가 없는 경우는 통과시켜야 함.
-        
-        # 2-1) return_code 체크 (키움 API 방식)
+        # ✅ 케이스 2) rt_cd 체크 (안전한 방식)
+        rt_cd = data.get("rt_cd")
+        if rt_cd is not None and str(rt_cd) not in ("", "0"):
+            return f"UPSTREAM_RT_CD_{rt_cd}: {data.get('msg1') or data.get('message') or ''}".strip()
+
+        # ✅ 케이스 3) return_code 체크 (안전한 방식)
         ret_code = data.get("return_code")
         if ret_code is not None and str(ret_code) not in ("", "0"):
-            return f"UPSTREAM_RETURN_CODE_{ret_code}: {data.get('return_msg') or ''}".strip()
-
-        # 2-2) rt_cd 체크 (기타 증권 API 방식)
-        rt_code = data.get("rt_cd")
-        if rt_code is not None and str(rt_code) not in ("", "0"):
-            return f"UPSTREAM_RT_CD_{rt_code}: {data.get('msg1') or ''}".strip()
+            return f"UPSTREAM_RETURN_CODE_{ret_code}: {data.get('return_msg') or data.get('message') or ''}".strip()
 
         return None
-
 
 
     async def get_market_data(
@@ -480,10 +482,8 @@ class KiwoomService:
 
             fail_reason = self._is_upstream_fail(res_json)
             if fail_reason:
-                logger.error(
-                    "Upstream fail: api_id=%s endpoint=%s data=%s res=%s reason=%s",
-                    api_id, endpoint, data, res_json, fail_reason
-                )
+                # 상세 로그 (비즈니스 실패용)
+                logger.error(f"⚠️ [UPSTREAM_BUSINESS_FAIL] api_id={api_id} | reason={fail_reason} | res={res_json}")
                 return {
                     "status": "fail",
                     "error": "UPSTREAM_ERROR",
@@ -494,16 +494,16 @@ class KiwoomService:
             return res_json
 
         except Exception as e:
-            logger.exception(
-                "Upstream exception: api_id=%s endpoint=%s data=%s",
-                api_id, endpoint, data
-            )
+            # 강력한 예외 처리
+            # 통신 끊김, 429 에러, 서버 다운 시에도 백엔드가 죽지 않고 증거를 남깁니다.
+            logger.error(f"🚨 [BACKEND_CRASH_PREVENTED] API:{api_id} | Path:{endpoint} | Error:{str(e)} | Data:{data}")
             return {
                 "status": "fail",
-                "error": "UPSTREAM_EXCEPTION",
-                "message": str(e),
+                "error": "CONNECTION_ERROR",
+                "message": f"시스템 연결 오류: {str(e)}",
                 "api_id": api_id,
             }
+
 
     async def post_trade(self, ticker: str, qty: int, price: int = 0, is_buy: bool = True) -> Dict[str, Any]:
         """키움 API를 통한 매수/매도 주문 전송"""
@@ -645,7 +645,7 @@ class KiwoomService:
 
             # ✅ 업스트림(키움/mock)에서 fail 내려온 경우 즉시 실패로 반환
             if summary_res.get("status") == "fail":
-                logger.error("ACCOUNT_SUMMARY_FAIL: %s", summary_res)
+                logger.error("❌ 잔고 요약 조회 실패: %s", summary_res)
                 return {
                     "status": "fail",
                     "error": "ACCOUNT_SUMMARY_FAIL",
@@ -744,110 +744,106 @@ class KiwoomService:
 
     async def get_order_history(
         self, 
-        qry_tp: str = "3",        # 1:주문순, 2:역순, 3:미체결, 4:체결내역만
+        qry_tp: str = "0",        # 1:주문순, 2:역순, 3:미체결, 4:체결내역만
         stk_cd: str = "",         # 공백 시 전체
-        sell_tp: str = "0"        # 0:전체, 1:매도, 2:매수
-    ) -> List[Dict[str, Any]]:
+        sell_tp: str = "0",       # 0:전체, 1:매도, 2:매수
+        days_back: int = 3        # 최근 며칠을 볼 것인지
+        ) -> List[Dict[str, Any]]:
         """
         [주문/체결 내역] 공식 규격 kt00007을 활용한 상세 조회
         """
         # 1. 토큰 유효성 확인 (기존 함수들과 동일한 패턴)
         await self.ensure_token()
 
-        # 2. 엔드포인트 및 헤더 설정 (계좌 관련은 /acnt 사용)
-        endpoint = "/api/dostk/acnt"
-        headers = {
-            "Content-Type": "application/json; charset=UTF-8",
-            "authorization": f"Bearer {self.access_token}",
-            "api-id": "kt00007",  # 규격서에 명시된 TR 코드
-        }
+        all_results = []
 
-        # 3. 규격서에 명시된 Body 데이터 구성
-        payload = {
-            "ord_dt": datetime.now().strftime("%Y%m%d"), # 주문일자
-            "qry_tp": qry_tp,                             # 조회구분
-            "stk_bond_tp": "0",                           # 0:전체
-            "sell_tp": sell_tp,                           # 매도수구분
-            "stk_cd": stk_cd,                             # 종목코드
-            "fr_ord_no": "",                              # 시작번호
-            "dmst_stex_tp": "%"                           # %:전체거래소
-        }
 
-        # 4. 비동기 POST 요청 실행 (self.client 직접 사용)
-        try:
-            response = await self.client.post(endpoint, headers=headers, json=payload)
-            response.raise_for_status()
-            res_json = response.json()
-        except Exception as e:
-            logger.exception("ORDER_HISTORY_HTTP_ERROR")
-            raise HTTPException(status_code=502, detail={
-                "status": "fail",
-                "error": "ORDER_HISTORY_HTTP_ERROR",
-                "message": str(e),
-            })
-        
-        fail_reason = self._is_upstream_fail(res_json)
-        if fail_reason:
-            logger.error("ORDER_HISTORY_UPSTREAM_FAIL: %s", res_json)
-            raise HTTPException(status_code=502, detail={
-                "status": "fail",
-                "error": "ORDER_HISTORY_UPSTREAM_FAIL",
-                "message": fail_reason,
-            })
-
-        # 5. 응답 Body의 리스트 파싱 (acnt_ord_cntr_prps_dtl)
-        order_list = res_json.get("acnt_ord_cntr_prps_dtl")
-        if order_list is None:
-            logger.error("ORDER_HISTORY_SCHEMA_MISMATCH: %s", res_json)
-            raise HTTPException(status_code=502, detail={
-                "status": "fail",
-                "error": "ORDER_HISTORY_SCHEMA_MISMATCH",
-                "message": "주문내역 응답에 'acnt_ord_cntr_prps_dtl' 키가 없습니다.",
-            })
-
-        if not isinstance(order_list, list):
-            logger.error("ORDER_HISTORY_SCHEMA_INVALID: type=%s value=%s", type(order_list).__name__, order_list)
-            raise HTTPException(status_code=502, detail={
-                "status": "fail",
-                "error": "ORDER_HISTORY_SCHEMA_INVALID",
-                "message": "주문내역 데이터 형식이 올바르지 않습니다.",
-            })
-        
-        # 6. 데이터 가공 및 반환
-        results = []
-        for item in order_list:
-            ord_qty = self._parse_num(item.get("ord_qty"))
-            cntr_qty = self._parse_num(item.get("cntr_qty"))
-            remnq_qty = self._parse_num(item.get("ord_remnq"))
+        for i in range(days_back):
+            if i > 0:
+                await asyncio.sleep(0.5)
             
-            # --- 상태 판별 로직 추가 ---
-            if remnq_qty > 0:
-                status_text = "미체결"
-            elif cntr_qty == 0:
-                # 잔량이 0인데 체결도 0이면 취소된 주문입니다.
-                status_text = "취소완료"
-            elif cntr_qty < ord_qty:
-                # 일부만 체결되고 나머지는 취소되거나 마감된 경우입니다.
-                status_text = f"부분체결({cntr_qty}주)"
-            else:
-                # 잔량이 0이고 체결 수량이 주문 수량과 같으면 완전히 사거나 판 것입니다.
-                status_text = "체결완료"
-            # --------------------------
+            target_date = (datetime.now() - timedelta(days=i)).strftime("%Y%m%d")
 
-            results.append({
-                "ord_no": item.get("ord_no"),
-                "ticker": item.get("stk_cd").replace("A", ""), # 'A' 제거 로직 유지
-                "name": item.get("stk_nm"),
-                "ord_qty": ord_qty,
-                "ord_price": self._parse_num(item.get("ord_uv")),
-                "cntr_qty": cntr_qty,
-                "remnq_qty": remnq_qty,
-                "side": item.get("io_tp_nm"),
-                "ord_tm": item.get("ord_tm"),
-                "status": status_text  # 상세화된 상태값 반환
-            })
-            
-        return results
+            # 2. 엔드포인트 및 헤더 설정 (계좌 관련은 /acnt 사용)
+            endpoint = "/api/dostk/acnt"
+            headers = {
+                "Content-Type": "application/json; charset=UTF-8",
+                "authorization": f"Bearer {self.access_token}",
+                "api-id": "kt00007",  # 규격서에 명시된 TR 코드
+            }
+
+            # 3. 규격서에 명시된 Body 데이터 구성
+            payload = {
+                "ord_dt": target_date, # 주문일자
+                "qry_tp": qry_tp,                             # 조회구분
+                "stk_bond_tp": "0",                           # 0:전체
+                "sell_tp": sell_tp,                           # 매도수구분
+                "stk_cd": stk_cd,                             # 종목코드
+                "fr_ord_no": "",                              # 시작번호
+                "dmst_stex_tp": "%"                           # %:전체거래소
+            }
+
+            # 4. 비동기 POST 요청 실행 (self.client 직접 사용)
+            try:
+                response = await self.client.post(endpoint, headers=headers, json=payload)
+                response.raise_for_status()
+                res_json = response.json()
+            except Exception as e:
+                if "429" in str(e):
+                    logger.error(f"⚠️ [RATE_LIMIT] {target_date} 조회 중 차단됨. 잠시 후 재시도 필요.")
+                else:
+                    logger.error(f"❌ [HISTORY_FAIL] {target_date} 에러: {str(e)}")
+                continue # 특정 날짜 실패 시 다음 날짜로 넘어감 (전체 중단 방지)
+
+            # 4. 업스트림 에러 체크
+            fail_reason = self._is_upstream_fail(res_json)
+            if fail_reason:
+                logger.warning(f"Skip {target_date}: {fail_reason}")
+                continue # 휴장일 등 데이터 없는 날은 건너뜀
+
+            # 5. 리스트 파싱
+            order_list = res_json.get("acnt_ord_cntr_prps_dtl")
+            if not order_list or not isinstance(order_list, list):
+                continue # 데이터가 없는 날은 건너뜀
+
+            # 6. 해당 일자 데이터 가공 및 합치기
+            for item in order_list:
+                ord_qty = self._parse_num(item.get("ord_qty"))
+                cntr_qty = self._parse_num(item.get("cntr_qty"))
+                remnq_qty = self._parse_num(item.get("ord_remnq"))
+                
+                # --- 상태 판별 로직 ---
+                if remnq_qty > 0:
+                    status_text = "미체결"
+                elif cntr_qty == 0:
+                    status_text = "취소완료"
+                elif cntr_qty < ord_qty:
+                    status_text = f"부분체결({cntr_qty}주)"
+                else:
+                    status_text = "체결완료"
+
+                all_results.append({
+                    "ord_dt": target_date, # ✅ 어느 날짜 주문인지 알 수 있게 추가
+                    "ord_no": item.get("ord_no"),
+                    "ticker": item.get("stk_cd").replace("A", ""),
+                    "name": item.get("stk_nm"),
+                    "ord_qty": ord_qty,
+                    "ord_price": self._parse_num(item.get("ord_uv")),
+                    "cntr_qty": cntr_qty,
+                    "remnq_qty": remnq_qty,
+                    "side": item.get("io_tp_nm"),
+                    "ord_tm": item.get("ord_tm"),
+                    "status": status_text
+                })
+                
+        # 1순위: 날짜와 시간순으로 역순 정렬 (가장 최신 주문이 위로)
+        all_results.sort(key=lambda x: (x['ord_dt'], x['ord_tm']), reverse=True)
+        
+        # 2순위: '미체결' 상태인 주문을 리스트의 가장 앞으로 끌어올림
+        # (취소/정정 대상은 보통 미체결 주문이므로 비서가 찾기 훨씬 쉬워집니다)
+        all_results.sort(key=lambda x: x['status'] != "미체결")
+        
+        return all_results
         
 
         
