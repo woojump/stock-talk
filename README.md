@@ -1,6 +1,6 @@
 # 2025-2 프메 8팀 프로젝트
-# 📈 StockTalk-Mini-Agent
-> **LLM 기반 실시간 주식 분석 및 대화형 시차 시각화 에이전트**
+# 📈 StockTalk
+> **LLM + MCP기반 대화형 주식 앱**
 
 ---
 
