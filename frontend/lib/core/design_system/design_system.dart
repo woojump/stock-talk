@@ -24,3 +24,9 @@ export 'widgets/feedback/inline_error_banner.dart';
 // Widgets - States
 export 'widgets/states/error_state.dart';
 export 'widgets/states/empty_state.dart';
+
+// Widgets - Text
+export 'widgets/text/app_markdown.dart';
+
+// Widgets - Loading
+export 'widgets/loading/shimmer_loader.dart';

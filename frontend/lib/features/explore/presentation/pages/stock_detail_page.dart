@@ -4,9 +4,9 @@ import 'package:provider/provider.dart';
 import 'package:stock_talk/core/design_system/design_system.dart';
 import 'package:stock_talk/core/di/injection.dart';
 import 'package:stock_talk/features/explore/presentation/providers/stock_detail_provider.dart';
-import 'package:stock_talk/features/explore/presentation/widgets/stock_detail/stock_header_section.dart';
 import 'package:stock_talk/features/explore/presentation/widgets/stock_detail/candlestick_chart_section.dart';
 import 'package:stock_talk/features/explore/presentation/widgets/stock_detail/price_info_section.dart';
+import 'package:stock_talk/features/explore/presentation/widgets/stock_detail/stock_header_section.dart';
 import 'package:stock_talk/features/explore/presentation/widgets/stock_detail/stock_news_section.dart';
 
 @RoutePage()
@@ -42,6 +42,11 @@ class _StockDetailView extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.gray100,
       appBar: AppBar(
+        title: Text(
+          stockName,
+          style: Theme.of(context).textTheme.headlineMedium,
+        ),
+        centerTitle: true,
         backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
@@ -66,7 +71,35 @@ class _StockDetailView extends StatelessWidget {
 
   Widget _buildBody(BuildContext context, StockDetailProvider provider) {
     if (provider.isLoading && provider.stockDetail == null) {
-      return const Center(child: CircularProgressIndicator());
+      return Container(
+        color: AppColors.white,
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const AppShimmer.rect(width: 120, height: 28),
+            const SizedBox(height: 12),
+            const AppShimmer.rect(width: 180, height: 40),
+            const SizedBox(height: 8),
+            const AppShimmer.rect(width: 100, height: 20),
+            const SizedBox(height: AppSpacing.xxxl),
+            AppShimmer.rect(
+              width: MediaQuery.of(context).size.width - (AppSpacing.xl * 2),
+              height: 250,
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                AppShimmer.rect(width: 60, height: 32),
+                AppShimmer.rect(width: 60, height: 32),
+                AppShimmer.rect(width: 60, height: 32),
+                AppShimmer.rect(width: 60, height: 32),
+              ],
+            ),
+          ],
+        ),
+      );
     }
 
     if (provider.detailError != null && provider.stockDetail == null) {
@@ -78,11 +111,9 @@ class _StockDetailView extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Text(
               provider.detailError!,
-              style: const TextStyle(
-                fontFamily: AppTypography.fontFamily,
-                fontSize: AppTypography.bodyMedium,
-                color: AppColors.gray500,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.gray500),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.lg),

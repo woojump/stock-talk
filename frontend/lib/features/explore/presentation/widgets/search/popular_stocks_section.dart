@@ -29,30 +29,17 @@ class PopularStocksSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '인기 종목',
-            style: TextStyle(
-              fontFamily: AppTypography.fontFamily,
-              fontSize: 15,
-              fontWeight: AppTypography.medium,
-              color: AppColors.gray600,
-            ),
-          ),
+          Text('인기 종목', style: Theme.of(context).textTheme.headlineLarge),
           const SizedBox(height: AppSpacing.lg),
-          _buildContent(),
+          _buildContent(context),
         ],
       ),
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(BuildContext context) {
     if (isLoading && stocks.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(AppSpacing.xxxl),
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const AppSkeletonList(itemCount: 5, padding: EdgeInsets.zero);
     }
 
     if (error != null && stocks.isEmpty) {
@@ -61,22 +48,18 @@ class PopularStocksSection extends StatelessWidget {
           children: [
             Text(
               error!,
-              style: const TextStyle(
-                fontFamily: AppTypography.fontFamily,
-                fontSize: AppTypography.bodyMedium,
-                color: AppColors.gray500,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.gray500),
             ),
             const SizedBox(height: AppSpacing.md),
             TextButton(
               onPressed: onRetry,
-              child: const Text(
+              child: Text(
                 '다시 시도',
-                style: TextStyle(
-                  fontFamily: AppTypography.fontFamily,
-                  fontSize: AppTypography.bodyMedium,
-                  color: AppColors.blue400,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: AppColors.blue400),
               ),
             ),
           ],
@@ -99,31 +82,29 @@ class PopularStocksSection extends StatelessWidget {
             onTap: () => onStockTap(stock),
           );
         }),
-        const SizedBox(height: AppSpacing.md),
-        Center(
-          child: GestureDetector(
-            onTap: onSeeMore,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.xs,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.gray100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Text(
-                '더보기',
-                style: TextStyle(
-                  fontFamily: AppTypography.fontFamily,
-                  fontSize: AppTypography.titleMedium,
-                  fontWeight: AppTypography.semiBold,
-                  color: AppColors.gray400,
-                ),
-              ),
-            ),
-          ),
-        ),
+        // const SizedBox(height: AppSpacing.md),
+        // Center(
+        //   child: GestureDetector(
+        //     onTap: onSeeMore,
+        //     child: Container(
+        //       padding: const EdgeInsets.symmetric(
+        //         horizontal: AppSpacing.md,
+        //         vertical: AppSpacing.xs,
+        //       ),
+        //       decoration: BoxDecoration(
+        //         color: AppColors.gray100,
+        //         borderRadius: BorderRadius.circular(8),
+        //       ),
+        //       child: Text(
+        //         '더보기',
+        //         style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        //           fontWeight: AppTypography.semiBold,
+        //           color: AppColors.gray400,
+        //         ),
+        //       ),
+        //     ),
+        //   ),
+        // ),
       ],
     );
   }
@@ -162,12 +143,9 @@ class _PopularStockItem extends StatelessWidget {
               width: 20,
               child: Text(
                 '$rank',
-                style: const TextStyle(
-                  fontFamily: AppTypography.fontFamily,
-                  fontSize: AppTypography.labelSmall,
-                  fontWeight: AppTypography.regular,
-                  color: AppColors.gray500,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.gray500),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -181,36 +159,11 @@ class _PopularStockItem extends StatelessWidget {
                     children: [
                       Text(
                         stock.name,
-                        style: const TextStyle(
-                          fontFamily: AppTypography.fontFamily,
-                          fontSize: AppTypography.titleMedium,
-                          fontWeight: AppTypography.semiBold,
-                          color: AppColors.black,
-                        ),
+                        style: Theme.of(context).textTheme.headlineMedium,
                       ),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          Text(
-                            numberFormat.format(stock.price.toInt()),
-                            style: const TextStyle(
-                              fontFamily: AppTypography.fontFamily,
-                              fontSize: AppTypography.titleLarge,
-                              fontWeight: AppTypography.medium,
-                              color: AppColors.black,
-                            ),
-                          ),
-                          const Text(
-                            '원',
-                            style: TextStyle(
-                              fontFamily: AppTypography.fontFamily,
-                              fontSize: AppTypography.titleMedium,
-                              fontWeight: AppTypography.medium,
-                              color: AppColors.black,
-                            ),
-                          ),
-                        ],
+                      Text(
+                        '${numberFormat.format(stock.price.toInt())}원',
+                        style: Theme.of(context).textTheme.headlineMedium,
                       ),
                     ],
                   ),
@@ -220,19 +173,17 @@ class _PopularStockItem extends StatelessWidget {
                     children: [
                       Text(
                         stock.ticker,
-                        style: const TextStyle(
-                          fontFamily: AppTypography.fontFamily,
-                          fontSize: AppTypography.labelSmall,
-                          fontWeight: AppTypography.regular,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.gray500,
                         ),
                       ),
                       Text(
-                        formatChangeText(stock.change, stock.changeRate, numberFormat),
-                        style: TextStyle(
-                          fontFamily: AppTypography.fontFamily,
-                          fontSize: AppTypography.labelSmall,
-                          fontWeight: AppTypography.regular,
+                        formatChangeText(
+                          stock.change,
+                          stock.changeRate,
+                          numberFormat,
+                        ),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: getProfitColor(stock.change),
                         ),
                       ),

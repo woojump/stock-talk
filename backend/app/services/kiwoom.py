@@ -6,12 +6,15 @@ import httpx
 import json
 import os
 import re
+import logging
 
+from fastapi import HTTPException
 from datetime import datetime, timedelta  # 시간 계산을 위해 추가
 from typing import Dict, Any, Optional, List, Tuple
 from app.core.config import settings
 from app.services.finance_data_reader import FinanceDataService
 
+logger = logging.getLogger(__name__)
 
 class KiwoomService:
     def __init__(self):
@@ -77,7 +80,7 @@ class KiwoomService:
         candidates = [{"srtnCd": r["srtnCd"], "itmsNm": r["itmsNm"]} for r in results]
         return None, candidates, "AMBIGUOUS"
 
-    async def get_stock_detail(self, q: str) -> Dict:
+    async def get_stock_detail(self, q: str) -> Dict[str, Any]:
         """
         1.3 종목 상세 및 차트 데이터 통합 엔드포인트
         - ka10004: 실시간 호가 및 현재가 정보
@@ -108,10 +111,26 @@ class KiwoomService:
 
         # 1. 실시간 호가 정보 가져오기 (ka10004)
         quote_data = await self.get_market_data(api_id="ka10004", stk_cd=ticker)
-
+        if quote_data.get("status") == "fail":
+            return {
+                "status": "fail",
+                "error": "QUOTE_FETCH_FAIL",
+                "message": quote_data.get("message") or "호가/현재가 조회 실패",
+                "query": query,
+                "ticker": ticker,
+            }
+        
         # 2. 차트 데이터 가져오기 (ka10005)
         chart_raw = await self.get_market_data(api_id="ka10005", stk_cd=ticker)
-
+        if chart_raw.get("status") == "fail":
+            return {
+                "status": "fail",
+                "error": "CHART_FETCH_FAIL",
+                "message": chart_raw.get("message") or "차트 조회 실패",
+                "query": query,
+                "ticker": ticker,
+            }
+        
         """
         # 2. 터미널에 원본 데이터 출력 (여기가 핵심!)
         print("\n" + "="*50)
@@ -122,34 +141,54 @@ class KiwoomService:
         """
 
         # 3. 기존 가공 로직
-        # (여기서 에러가 나더라도 위에서 print는 찍힙니다.)
-        try:
-            # 데이터가 담긴 리스트 추출 (안전하게 get 사용)
-            raw_candles = chart_raw.get("stk_ddwkmm", [])
+        raw_candles = chart_raw.get("stk_ddwkmm")
+        if not isinstance(raw_candles, list):
+            logger.error(
+                "Chart schema mismatch: ticker=%s expected list at 'stk_ddwkmm' got=%s raw=%s",
+                ticker, type(raw_candles).__name__, chart_raw
+            )
+            return {
+                "status": "fail",
+                "error": "CHART_SCHEMA_MISMATCH",
+                "message": "차트 응답 포맷이 예상과 다릅니다(stk_ddwkmm 누락/타입 불일치).",
+                "query": query,
+                "ticker": ticker,
+            }
 
-            processed_candles = [
-                {
-                    "time": item.get("date"),
-                    # 부호(+, -)를 제거하고 정수(int)로 변환
-                    "open": int(
-                        item.get("open_pric", "0").replace("+", "").replace("-", "")
-                    ),
-                    "high": int(
-                        item.get("high_pric", "0").replace("+", "").replace("-", "")
-                    ),
-                    "low": int(
-                        item.get("low_pric", "0").replace("+", "").replace("-", "")
-                    ),
-                    "close": int(
-                        item.get("close_pric", "0").replace("+", "").replace("-", "")
-                    ),
-                    "volume": int(item.get("trde_qty", "0")),  # 거래량 추가
-                }
-                for item in raw_candles
-            ]
-        except Exception as e:
-            print(f"❌ 데이터 가공 중 에러 발생: {e}")
+        if len(raw_candles) == 0:
+            logger.error(
+                "Chart empty: ticker=%s raw=%s",
+                ticker, chart_raw
+            )
+            return {
+                "status": "fail",
+                "error": "CHART_EMPTY",
+                "message": "차트 데이터가 비어 있습니다(업스트림 응답 확인 필요).",
+                "query": query,
+                "ticker": ticker,
+            }
+
+        # 가공도 실패하면 fail로
+        try:
             processed_candles = []
+            for item in raw_candles:
+                processed_candles.append({
+                    "time": item.get("date"),
+                    "open": int(str(item.get("open_pric", "0")).replace("+", "").replace("-", "")),
+                    "high": int(str(item.get("high_pric", "0")).replace("+", "").replace("-", "")),
+                    "low": int(str(item.get("low_pric", "0")).replace("+", "").replace("-", "")),
+                    "close": int(str(item.get("close_pric", "0")).replace("+", "").replace("-", "")),
+                    "volume": int(str(item.get("trde_qty", "0")).replace(",", "")),
+                })
+        except Exception as e:
+            logger.exception("Chart processing error: ticker=%s raw=%s", ticker, raw_candles)
+            return {
+                "status": "fail",
+                "error": "CHART_PROCESSING_ERROR",
+                "message": str(e),
+                "query": query,
+                "ticker": ticker,
+            }
 
         # 프론트엔드 담당자가 쓰기 좋게 정리해서 반환
         return {
@@ -157,9 +196,7 @@ class KiwoomService:
             "query": query,
             "ticker": ticker,
             "stock_info": {
-                "current_price": int(
-                    quote_data.get("sel_fpr_bid", "0").replace("+", "").replace("-", "")
-                ),
+                "current_price": int(str(quote_data.get("sel_fpr_bid", "0")).replace("+", "").replace("-", "")),
                 "total_ask_qty": quote_data.get("tot_sel_req"),
                 "total_bid_qty": quote_data.get("tot_buy_req"),
             },
@@ -366,6 +403,31 @@ class KiwoomService:
         except Exception as e:
             print(f"Error in ka10065: {e}")
             return []
+        
+      
+    def _is_upstream_fail(self, data: Dict[str, Any]) -> Optional[str]:
+        """
+        업스트림 응답이 '실패'임을 나타내는 흔한 패턴을 감지.
+        실패면 에러 메시지(문자열) 반환, 정상이면 None 반환.
+        """
+        if not isinstance(data, dict):
+            return "UPSTREAM_RESPONSE_NOT_DICT"
+
+        # 케이스 1) 우리 시스템이 표준화한 fail
+        if data.get("status") == "fail":
+            return f"{data.get('error') or 'UPSTREAM_FAIL'}: {data.get('message') or ''}".strip()
+
+        # 케이스 2) 키움/증권 API에서 자주 나오는 코드들
+        # (프로젝트에서 실제 키가 다르면 여기는 너희 응답 규격에 맞춰 조정)
+        if str(data.get("rt_cd")) not in (None, "", "0"):
+            return f"UPSTREAM_RT_CD_{data.get('rt_cd')}: {data.get('msg1') or data.get('message') or ''}".strip()
+
+        if str(data.get("return_code")) not in (None, "", "0"):
+            return f"UPSTREAM_RETURN_CODE_{data.get('return_code')}: {data.get('return_msg') or data.get('message') or ''}".strip()
+
+        return None
+
+
 
     async def get_market_data(
         self,
@@ -400,20 +462,47 @@ class KiwoomService:
         }
 
         # 2. Body 데이터 결정 로직
-        # params가 명시적 으로 들어오면 그것을 사용하고, 아니면 기존처럼 stk_cd를 사용합니다.
+        # params가 명시적으로 들어오면 그것을 사용하고, 아니면 기존처럼 stk_cd를 사용합니다.
         data = {"stk_cd": stk_cd}
         if params:
             data.update(params) # qry_tp, cano 등이 여기서 추가됨
-
-        response = await self.client.post(endpoint, headers=headers, json=data)
-        # 토큰 만료 시 재시도
-        if response.status_code == 401:
-            await self.refresh_token()
-            headers["authorization"] = f"Bearer {self.access_token}"
+        try:
             response = await self.client.post(endpoint, headers=headers, json=data)
 
-        response.raise_for_status()
-        return response.json()
+            if response.status_code == 401:
+                await self.refresh_token()
+                headers["authorization"] = f"Bearer {self.access_token}"
+                response = await self.client.post(endpoint, headers=headers, json=data)
+
+            response.raise_for_status()
+            res_json = response.json()
+
+            fail_reason = self._is_upstream_fail(res_json)
+            if fail_reason:
+                logger.error(
+                    "Upstream fail: api_id=%s endpoint=%s data=%s res=%s reason=%s",
+                    api_id, endpoint, data, res_json, fail_reason
+                )
+                return {
+                    "status": "fail",
+                    "error": "UPSTREAM_ERROR",
+                    "message": fail_reason,
+                    "api_id": api_id,
+                }
+
+            return res_json
+
+        except Exception as e:
+            logger.exception(
+                "Upstream exception: api_id=%s endpoint=%s data=%s",
+                api_id, endpoint, data
+            )
+            return {
+                "status": "fail",
+                "error": "UPSTREAM_EXCEPTION",
+                "message": str(e),
+                "api_id": api_id,
+            }
 
     async def post_trade(self, ticker: str, qty: int, price: int = 0, is_buy: bool = True) -> Dict[str, Any]:
         """키움 API를 통한 매수/매도 주문 전송"""
@@ -553,8 +642,43 @@ class KiwoomService:
             summary_res = await self.get_market_data(api_id="kt00004", params={**common_params, "qry_tp": "0"})
             detail_res = await self.get_market_data(api_id="kt00018", params={**common_params, "qry_tp": "1"})
 
+            # ✅ 업스트림(키움/mock)에서 fail 내려온 경우 즉시 실패로 반환
+            if summary_res.get("status") == "fail":
+                logger.error("ACCOUNT_SUMMARY_FAIL: %s", summary_res)
+                return {
+                    "status": "fail",
+                    "error": "ACCOUNT_SUMMARY_FAIL",
+                    "message": summary_res.get("message") or "계좌 요약 조회 실패",
+                }
+
+            if detail_res.get("status") == "fail":
+                logger.error("ACCOUNT_DETAIL_FAIL: %s", detail_res)
+                return {
+                    "status": "fail",
+                    "error": "ACCOUNT_DETAIL_FAIL",
+                    "message": detail_res.get("message") or "계좌 상세 조회 실패",
+                }
+
             summary_data = summary_res.get("output") or summary_res
-            holdings_list = detail_res.get("acnt_evlt_remn_indv_tot") or detail_res.get("output1") or []
+            holdings_list = detail_res.get("acnt_evlt_remn_indv_tot") or detail_res.get("output1")
+
+            # ✅ 필수 키가 없으면 스키마/업스트림 문제 → fail
+            if holdings_list is None:
+                logger.error("ACCOUNT_SCHEMA_MISMATCH: %s", detail_res)
+                return {
+                    "status": "fail",
+                    "error": "ACCOUNT_SCHEMA_MISMATCH",
+                    "message": "계좌 상세 응답에 보유종목 리스트 키가 없습니다.",
+                }
+
+            # ✅ 타입이 리스트가 아니면 fail
+            if not isinstance(holdings_list, list):
+                logger.error("ACCOUNT_SCHEMA_INVALID: type=%s value=%s", type(holdings_list).__name__, holdings_list)
+                return {
+                    "status": "fail",
+                    "error": "ACCOUNT_SCHEMA_INVALID",
+                    "message": "보유종목 데이터 형식이 올바르지 않습니다.",
+                }
 
             # --- 직접 합산 변수 초기화 ---
             total_buy_amt = 0   # 총 매수금액 (원금)
@@ -597,6 +721,7 @@ class KiwoomService:
             available_cash = self._parse_num(summary_data.get("d2_entra") or summary_data.get("dnca_tot_amt"))
 
             return {
+                "status": "success",
                 "summary": {
                     "total_asset": total_evl_amt + available_cash, # 총 자산 = 주식평가금 + 현금
                     "stock_evaluation": total_evl_amt,            # 총 주식 평가 금액
@@ -608,8 +733,122 @@ class KiwoomService:
             }
 
         except Exception as e:
-            print(f"🚨 [잔고 합산 계산 에러]: {str(e)}")
-            return {"summary": {"total_asset": 0, "available_cash": 0, "total_profit_loss": 0, "total_return_rate": 0.0}, "holdings": []}    
+            logger.exception("ACCOUNT_CALCULATION_ERROR")
+            return {
+                "status": "fail",
+                "error": "ACCOUNT_CALCULATION_ERROR",
+                "message": str(e),
+            }
+        
+
+    async def get_order_history(
+        self, 
+        qry_tp: str = "3",        # 1:주문순, 2:역순, 3:미체결, 4:체결내역만
+        stk_cd: str = "",         # 공백 시 전체
+        sell_tp: str = "0"        # 0:전체, 1:매도, 2:매수
+    ) -> List[Dict[str, Any]]:
+        """
+        [주문/체결 내역] 공식 규격 kt00007을 활용한 상세 조회
+        """
+        # 1. 토큰 유효성 확인 (기존 함수들과 동일한 패턴)
+        await self.ensure_token()
+
+        # 2. 엔드포인트 및 헤더 설정 (계좌 관련은 /acnt 사용)
+        endpoint = "/api/dostk/acnt"
+        headers = {
+            "Content-Type": "application/json; charset=UTF-8",
+            "authorization": f"Bearer {self.access_token}",
+            "api-id": "kt00007",  # 규격서에 명시된 TR 코드
+        }
+
+        # 3. 규격서에 명시된 Body 데이터 구성
+        payload = {
+            "ord_dt": datetime.now().strftime("%Y%m%d"), # 주문일자
+            "qry_tp": qry_tp,                             # 조회구분
+            "stk_bond_tp": "0",                           # 0:전체
+            "sell_tp": sell_tp,                           # 매도수구분
+            "stk_cd": stk_cd,                             # 종목코드
+            "fr_ord_no": "",                              # 시작번호
+            "dmst_stex_tp": "%"                           # %:전체거래소
+        }
+
+        # 4. 비동기 POST 요청 실행 (self.client 직접 사용)
+        try:
+            response = await self.client.post(endpoint, headers=headers, json=payload)
+            response.raise_for_status()
+            res_json = response.json()
+        except Exception as e:
+            logger.exception("ORDER_HISTORY_HTTP_ERROR")
+            raise HTTPException(status_code=502, detail={
+                "status": "fail",
+                "error": "ORDER_HISTORY_HTTP_ERROR",
+                "message": str(e),
+            })
+        
+        fail_reason = self._is_upstream_fail(res_json)
+        if fail_reason:
+            logger.error("ORDER_HISTORY_UPSTREAM_FAIL: %s", res_json)
+            raise HTTPException(status_code=502, detail={
+                "status": "fail",
+                "error": "ORDER_HISTORY_UPSTREAM_FAIL",
+                "message": fail_reason,
+            })
+
+        # 5. 응답 Body의 리스트 파싱 (acnt_ord_cntr_prps_dtl)
+        order_list = res_json.get("acnt_ord_cntr_prps_dtl")
+        if order_list is None:
+            logger.error("ORDER_HISTORY_SCHEMA_MISMATCH: %s", res_json)
+            raise HTTPException(status_code=502, detail={
+                "status": "fail",
+                "error": "ORDER_HISTORY_SCHEMA_MISMATCH",
+                "message": "주문내역 응답에 'acnt_ord_cntr_prps_dtl' 키가 없습니다.",
+            })
+
+        if not isinstance(order_list, list):
+            logger.error("ORDER_HISTORY_SCHEMA_INVALID: type=%s value=%s", type(order_list).__name__, order_list)
+            raise HTTPException(status_code=502, detail={
+                "status": "fail",
+                "error": "ORDER_HISTORY_SCHEMA_INVALID",
+                "message": "주문내역 데이터 형식이 올바르지 않습니다.",
+            })
+        
+        # 6. 데이터 가공 및 반환
+        results = []
+        for item in order_list:
+            ord_qty = self._parse_num(item.get("ord_qty"))
+            cntr_qty = self._parse_num(item.get("cntr_qty"))
+            remnq_qty = self._parse_num(item.get("ord_remnq"))
+            
+            # --- 상태 판별 로직 추가 ---
+            if remnq_qty > 0:
+                status_text = "미체결"
+            elif cntr_qty == 0:
+                # 잔량이 0인데 체결도 0이면 취소된 주문입니다.
+                status_text = "취소완료"
+            elif cntr_qty < ord_qty:
+                # 일부만 체결되고 나머지는 취소되거나 마감된 경우입니다.
+                status_text = f"부분체결({cntr_qty}주)"
+            else:
+                # 잔량이 0이고 체결 수량이 주문 수량과 같으면 완전히 사거나 판 것입니다.
+                status_text = "체결완료"
+            # --------------------------
+
+            results.append({
+                "ord_no": item.get("ord_no"),
+                "ticker": item.get("stk_cd").replace("A", ""), # 'A' 제거 로직 유지
+                "name": item.get("stk_nm"),
+                "ord_qty": ord_qty,
+                "ord_price": self._parse_num(item.get("ord_uv")),
+                "cntr_qty": cntr_qty,
+                "remnq_qty": remnq_qty,
+                "side": item.get("io_tp_nm"),
+                "ord_tm": item.get("ord_tm"),
+                "status": status_text  # 상세화된 상태값 반환
+            })
+            
+        return results
+        
+
         
     async def close(self):
         """서버 종료 시 연결을 안전하게 닫습니다."""

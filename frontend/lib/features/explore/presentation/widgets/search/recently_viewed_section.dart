@@ -18,16 +18,11 @@ class RecentlyViewedSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
           child: Text(
             '최근 본 종목',
-            style: TextStyle(
-              fontFamily: AppTypography.fontFamily,
-              fontSize: 15,
-              fontWeight: AppTypography.medium,
-              color: AppColors.gray600,
-            ),
+            style: Theme.of(context).textTheme.headlineLarge,
           ),
         ),
         const SizedBox(height: AppSpacing.lg),

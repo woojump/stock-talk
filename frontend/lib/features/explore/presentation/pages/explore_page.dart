@@ -31,25 +31,7 @@ class _ExplorePageView extends StatelessWidget {
       appBar: _buildAppBar(context),
       body: Consumer<ExploreProvider>(
         builder: (context, provider, _) {
-          // Show loading only if both are loading and neither has data yet
-          if (provider.isLoading &&
-              provider.topMovers == null &&
-              provider.newsResponse == null) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          // Show full error only if both failed on initial load
-          if (provider.topMoversError != null &&
-              provider.newsError != null &&
-              provider.topMovers == null &&
-              provider.newsResponse == null) {
-            return ErrorState(
-              message: '데이터를 불러오지 못했어요.',
-              onRetry: provider.load,
-            );
-          }
-
-          // Otherwise, show content (sections handle their own loading/error states)
+          // 각 섹션 내부에서 자체적으로 스켈레톤 로딩 처리
           return RefreshIndicator(
             onRefresh: provider.refresh,
             child: ListView(
@@ -71,27 +53,29 @@ class _ExplorePageView extends StatelessWidget {
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return AppBar(
-      backgroundColor: AppColors.white,
-      elevation: 0,
-      toolbarHeight: 64,
-      title: Text(
-        '탐색',
-        style: TextStyle(
-          fontSize: AppTypography.headlineMedium,
-          fontWeight: AppTypography.semiBold,
-          color: AppColors.black,
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(64),
+      child: AppBar(
+        backgroundColor: AppColors.white,
+        elevation: 0,
+        toolbarHeight: 64,
+        titleSpacing: 20,
+        title: Padding(
+          padding: const EdgeInsets.only(top: 20),
+          child: Text('탐색', style: Theme.of(context).textTheme.displayLarge),
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(top: 20, right: 8),
+            child: IconButton(
+              icon: AppIcon.action('search'),
+              onPressed: () {
+                context.router.push(const SearchRoute());
+              },
+            ),
+          ),
+        ],
       ),
-      actions: [
-        IconButton(
-          icon: AppIcon.action('search'),
-          onPressed: () {
-            context.router.push(const SearchRoute());
-          },
-        ),
-        SizedBox(width: AppSpacing.xs),
-      ],
     );
   }
 }

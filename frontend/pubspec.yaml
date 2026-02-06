@@ -1,7 +1,7 @@
 name: stock_talk
 description: "A new Flutter project."
 publish_to: "none"
-version: 0.3.0+7
+version: 0.4.0+9
 
 environment:
   sdk: ^3.10.4
@@ -22,6 +22,7 @@ dependencies:
   flutter_svg: ^2.2.3
   url_launcher: ^6.3.2
   shared_preferences: ^2.5.4
+  flutter_markdown_plus: ^1.0.7
 
 dev_dependencies:
   flutter_test:

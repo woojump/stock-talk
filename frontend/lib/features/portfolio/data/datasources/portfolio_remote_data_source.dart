@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:stock_talk/core/config/api_config.dart';
+import 'package:stock_talk/features/portfolio/data/dto/order_history_dto.dart';
 import 'package:stock_talk/features/portfolio/data/dto/portfolio_balance_dto.dart';
 
 class PortfolioRemoteDataSource {
@@ -16,5 +17,17 @@ class PortfolioRemoteDataSource {
       throw StateError('Empty response from ${ApiConfig.balancePath}');
     }
     return PortfolioBalanceDto.fromJson(data);
+  }
+
+  Future<OrderHistoryDto> fetchOrderHistory({String qryTp = "1"}) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiConfig.orderHistoryPath,
+      queryParameters: {'qry_tp': qryTp},
+    );
+    final data = response.data;
+    if (data == null) {
+      throw StateError('Empty response from ${ApiConfig.orderHistoryPath}');
+    }
+    return OrderHistoryDto.fromJson(data);
   }
 }

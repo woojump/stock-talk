@@ -23,15 +23,7 @@ class StockNewsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 섹션 제목
-        const Text(
-          '주요 뉴스',
-          style: TextStyle(
-            fontFamily: AppTypography.fontFamily,
-            fontSize: 17,
-            fontWeight: AppTypography.semiBold,
-            color: AppColors.black,
-          ),
-        ),
+        Text('주요 뉴스', style: Theme.of(context).textTheme.headlineLarge),
         const SizedBox(height: AppSpacing.lg),
 
         // 컨텐츠
@@ -42,11 +34,9 @@ class StockNewsSection extends StatelessWidget {
 
   Widget _buildContent(BuildContext context) {
     if (isLoading && stockNews == null) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(AppSpacing.xl),
-          child: CircularProgressIndicator(),
-        ),
+      return const AppSkeletonList(
+        itemCount: 3,
+        padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
       );
     }
 
@@ -58,18 +48,14 @@ class StockNewsSection extends StatelessWidget {
             children: [
               Text(
                 error!,
-                style: const TextStyle(
-                  fontFamily: AppTypography.fontFamily,
-                  fontSize: 13,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  // 13px
                   color: AppColors.gray500,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.md),
-              TextButton(
-                onPressed: onRetry,
-                child: const Text('다시 시도'),
-              ),
+              TextButton(onPressed: onRetry, child: const Text('다시 시도')),
             ],
           ),
         ),
@@ -82,11 +68,9 @@ class StockNewsSection extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.xl),
           child: Text(
             '관련 뉴스가 없습니다',
-            style: TextStyle(
-              fontFamily: AppTypography.fontFamily,
-              fontSize: 13,
-              color: AppColors.gray500,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.gray500),
           ),
         ),
       );
@@ -98,40 +82,40 @@ class StockNewsSection extends StatelessWidget {
     return Column(
       children: [
         // 뉴스 카드 목록 (NewsCard 자체적으로 네비게이션 처리)
-        ...displayNews.map((news) => Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-              child: NewsCard(news: news),
-            )),
+        ...displayNews.map(
+          (news) => Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            child: NewsCard(news: news),
+          ),
+        ),
 
         // 더보기 버튼
-        if (stockNews!.length > 4)
-          GestureDetector(
-            onTap: () {
-              // TODO: 뉴스 전체 목록 페이지로 이동
-            },
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.xs,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.gray100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Center(
-                child: Text(
-                  '더보기',
-                  style: TextStyle(
-                    fontFamily: AppTypography.fontFamily,
-                    fontSize: 16,
-                    fontWeight: AppTypography.semiBold,
-                    color: AppColors.gray400,
-                  ),
-                ),
-              ),
-            ),
-          ),
+        // if (stockNews!.length > 4)
+        //   GestureDetector(
+        //     onTap: () {
+        //       // TODO: 뉴스 전체 목록 페이지로 이동
+        //     },
+        //     child: Container(
+        //       width: double.infinity,
+        //       padding: const EdgeInsets.symmetric(
+        //         horizontal: AppSpacing.md,
+        //         vertical: AppSpacing.xs,
+        //       ),
+        //       decoration: BoxDecoration(
+        //         color: AppColors.gray100,
+        //         borderRadius: BorderRadius.circular(8),
+        //       ),
+        //       child: Center(
+        //         child: Text(
+        //           '더보기',
+        //           style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        //             fontWeight: AppTypography.semiBold,
+        //             color: AppColors.gray400,
+        //           ),
+        //         ),
+        //       ),
+        //     ),
+        //   ),
       ],
     );
   }

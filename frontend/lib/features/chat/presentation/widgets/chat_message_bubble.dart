@@ -38,10 +38,7 @@ class _UserBubble extends StatelessWidget {
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width * 0.65,
             ),
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.md,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: const BoxDecoration(
               color: AppColors.gray200,
               borderRadius: BorderRadius.only(
@@ -53,13 +50,9 @@ class _UserBubble extends StatelessWidget {
             ),
             child: Text(
               message,
-              style: const TextStyle(
-                fontFamily: AppTypography.fontFamily,
-                fontSize: AppTypography.titleMedium,
-                fontWeight: AppTypography.medium,
-                color: AppColors.black,
-                height: 1.3,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.black),
             ),
           ),
         ],
@@ -68,7 +61,7 @@ class _UserBubble extends StatelessWidget {
   }
 }
 
-/// AI 응답 텍스트
+/// AI 응답 텍스트 (마크다운 렌더링)
 class _AssistantText extends StatelessWidget {
   const _AssistantText({required this.message});
 
@@ -78,16 +71,7 @@ class _AssistantText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.xl),
-      child: Text(
-        message,
-        style: const TextStyle(
-          fontFamily: AppTypography.fontFamily,
-          fontSize: AppTypography.titleMedium,
-          fontWeight: AppTypography.medium,
-          color: AppColors.gray800,
-          height: 1.6,
-        ),
-      ),
+      child: AppMarkdown(data: message),
     );
   }
 }

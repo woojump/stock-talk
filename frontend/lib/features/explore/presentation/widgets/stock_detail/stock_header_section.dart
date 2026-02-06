@@ -28,34 +28,28 @@ class StockHeaderSection extends StatelessWidget {
         // 종목명
         Text(
           stockName,
-          style: const TextStyle(
-            fontFamily: AppTypography.fontFamily,
-            fontSize: 17,
+          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
             fontWeight: AppTypography.semiBold,
-            color: AppColors.black,
           ),
         ),
         const SizedBox(height: AppSpacing.md),
 
         // 현재가
         Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
           children: [
             Text(
               priceFormat.format(currentPrice),
-              style: const TextStyle(
-                fontFamily: AppTypography.fontFamily,
-                fontSize: 22,
+              style: Theme.of(context).textTheme.displayLarge?.copyWith(
                 fontWeight: AppTypography.bold,
                 color: AppColors.black,
               ),
             ),
-            const SizedBox(width: 4),
-            const Text(
+            const SizedBox(width: AppSpacing.xs),
+            Text(
               '원',
-              style: TextStyle(
-                fontFamily: AppTypography.fontFamily,
-                fontSize: 17,
+              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                 fontWeight: AppTypography.semiBold,
                 color: AppColors.black,
               ),
@@ -71,12 +65,9 @@ class StockHeaderSection extends StatelessWidget {
             priceFormat,
             includeUnit: false,
           ),
-          style: TextStyle(
-            fontFamily: AppTypography.fontFamily,
-            fontSize: 11,
-            fontWeight: AppTypography.regular,
-            color: getProfitColor(priceChange),
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: getProfitColor(priceChange)),
         ),
       ],
     );

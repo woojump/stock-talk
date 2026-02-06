@@ -46,12 +46,9 @@ class PrimaryButton extends StatelessWidget {
                       ),
                     )
                   : DefaultTextStyle(
-                      style: TextStyle(
-                        fontSize: AppTypography.titleLarge,
-                        fontWeight: AppTypography.medium,
+                      style: Theme.of(context).textTheme.titleLarge!.copyWith(
                         color: AppColors.white,
-                        height: AppTypography.lineHeightBody /
-                            AppTypography.titleLarge,
+                        height: 1.5, // Approx lineHeightBody / titleLarge
                       ),
                       child: child,
                     ),

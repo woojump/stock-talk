@@ -14,14 +14,7 @@ class NewsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '인기 뉴스',
-            style: TextStyle(
-              fontSize: AppTypography.headlineMedium,
-              fontWeight: AppTypography.semiBold,
-              color: AppColors.black,
-            ),
-          ),
+          Text('인기 뉴스', style: Theme.of(context).textTheme.headlineLarge),
           SizedBox(height: AppSpacing.lg),
           _buildNewsList(),
         ],
@@ -34,11 +27,9 @@ class NewsSection extends StatelessWidget {
       builder: (context, provider, _) {
         // Show loading state
         if (provider.newsLoading && provider.newsResponse == null) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(32.0),
-              child: CircularProgressIndicator(),
-            ),
+          return const AppSkeletonList(
+            itemCount: 3,
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
           );
         }
 
@@ -51,10 +42,9 @@ class NewsSection extends StatelessWidget {
                 children: [
                   Text(
                     provider.newsError!,
-                    style: TextStyle(
-                      fontSize: AppTypography.bodyMedium,
-                      color: AppColors.gray500,
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: AppColors.gray500),
                     textAlign: TextAlign.center,
                   ),
                   SizedBox(height: AppSpacing.md),
@@ -62,8 +52,7 @@ class NewsSection extends StatelessWidget {
                     onPressed: provider.retryNews,
                     child: Text(
                       '다시 시도',
-                      style: TextStyle(
-                        fontSize: AppTypography.bodyMedium,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColors.blue400,
                       ),
                     ),
@@ -87,13 +76,13 @@ class NewsSection extends StatelessWidget {
                     child: NewsCard(news: news),
                   ),
                 ),
-            SizedBox(height: AppSpacing.sm),
-            Center(
-              child: SecondaryButton(
-                onPressed: null, // TODO: 더보기 기능 구현
-                child: const Text('더보기'),
-              ),
-            ),
+            // SizedBox(height: AppSpacing.sm),
+            // Center(
+            //   child: SecondaryButton(
+            //     onPressed: null, // TODO: 더보기 기능 구현
+            //     child: const Text('더보기'),
+            //   ),
+            // ),
           ],
         );
       },

@@ -15,14 +15,7 @@ class ChartSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '실시간 차트',
-            style: TextStyle(
-              fontSize: AppTypography.headlineMedium,
-              fontWeight: AppTypography.semiBold,
-              color: AppColors.black,
-            ),
-          ),
+          Text('실시간 차트', style: Theme.of(context).textTheme.headlineLarge),
           SizedBox(height: AppSpacing.lg),
           _buildTabBar(),
           SizedBox(height: AppSpacing.lg),
@@ -80,11 +73,9 @@ class ChartSection extends StatelessWidget {
       builder: (context, provider, _) {
         // Show loading state
         if (provider.topMoversLoading && provider.topMovers == null) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(32.0),
-              child: CircularProgressIndicator(),
-            ),
+          return const AppSkeletonList(
+            itemCount: 5,
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
           );
         }
 
@@ -97,10 +88,9 @@ class ChartSection extends StatelessWidget {
                 children: [
                   Text(
                     provider.topMoversError!,
-                    style: TextStyle(
-                      fontSize: AppTypography.bodyMedium,
-                      color: AppColors.gray500,
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: AppColors.gray500),
                     textAlign: TextAlign.center,
                   ),
                   SizedBox(height: AppSpacing.md),
@@ -108,8 +98,7 @@ class ChartSection extends StatelessWidget {
                     onPressed: provider.retryTopMovers,
                     child: Text(
                       '다시 시도',
-                      style: TextStyle(
-                        fontSize: AppTypography.bodyMedium,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColors.blue400,
                       ),
                     ),
@@ -136,13 +125,13 @@ class ChartSection extends StatelessWidget {
                     ),
                   ),
                 ),
-            SizedBox(height: AppSpacing.sm),
-            Center(
-              child: SecondaryButton(
-                onPressed: null, // TODO: 더보기 기능 구현
-                child: const Text('더보기'),
-              ),
-            ),
+            // SizedBox(height: AppSpacing.sm),
+            // Center(
+            //   child: SecondaryButton(
+            //     onPressed: null, // TODO: 더보기 기능 구현
+            //     child: const Text('더보기'),
+            //   ),
+            // ),
           ],
         );
       },

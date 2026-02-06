@@ -22,9 +22,7 @@ class StockChip extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: const TextStyle(
-            fontFamily: AppTypography.fontFamily,
-            fontSize: AppTypography.titleMedium,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontWeight: AppTypography.medium,
             color: AppColors.gray500,
           ),

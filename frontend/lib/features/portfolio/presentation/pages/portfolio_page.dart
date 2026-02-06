@@ -10,6 +10,7 @@ import 'package:stock_talk/features/portfolio/presentation/utils/portfolio_utils
 import 'package:stock_talk/features/portfolio/presentation/widgets/asset_section.dart';
 import 'package:stock_talk/features/portfolio/presentation/widgets/balance_summary_card.dart';
 import 'package:stock_talk/features/portfolio/presentation/widgets/holdings_header.dart';
+import 'package:stock_talk/features/portfolio/presentation/widgets/order_history_section.dart';
 import 'package:stock_talk/features/portfolio/presentation/widgets/stock_card.dart';
 
 @RoutePage()
@@ -45,14 +46,7 @@ class _PortfolioView extends StatelessWidget {
             padding: const EdgeInsets.only(top: 20),
             child: Text(
               '포트폴리오',
-              style: TextStyle(
-                fontSize: AppTypography.headlineMedium,
-                fontWeight: AppTypography.semiBold,
-                color: AppColors.black,
-                height:
-                    AppTypography.lineHeightHeadline /
-                    AppTypography.headlineMedium,
-              ),
+              style: Theme.of(context).textTheme.displayLarge,
             ),
           ),
         ),
@@ -63,7 +57,27 @@ class _PortfolioView extends StatelessWidget {
           builder: (context, provider, _) {
             final balance = provider.balance;
             if (provider.isLoading && balance == null) {
-              return const Center(child: CircularProgressIndicator());
+              return Padding(
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const AppShimmer.rect(width: 150, height: 24),
+                    const SizedBox(height: 12),
+                    const AppShimmer.rect(width: 200, height: 40),
+                    const SizedBox(height: 24),
+                    AppShimmer.rect(
+                      width: MediaQuery.of(context).size.width,
+                      height: 160,
+                    ),
+                    const SizedBox(height: 48),
+                    const AppSkeletonList(
+                      itemCount: 3,
+                      padding: EdgeInsets.zero,
+                    ),
+                  ],
+                ),
+              );
             }
 
             if (provider.errorMessage != null && balance == null) {
@@ -156,6 +170,8 @@ class _PortfolioView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 32),
+                  // 주문 내역 섹션
+                  const OrderHistorySection(),
                 ],
               ),
             );

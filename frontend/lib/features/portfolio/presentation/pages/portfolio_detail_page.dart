@@ -21,7 +21,13 @@ class PortfolioDetailPage extends StatelessWidget {
     final profitRate = holding.profitLossRate;
 
     return Scaffold(
-      appBar: AppBar(title: Text(holding.name), centerTitle: true),
+      appBar: AppBar(
+        title: Text(
+          holding.name,
+          style: Theme.of(context).textTheme.headlineMedium,
+        ),
+        centerTitle: true,
+      ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.symmetric(
@@ -35,36 +41,22 @@ class PortfolioDetailPage extends StatelessWidget {
               children: [
                 Text(
                   '평가금액',
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: AppTypography.semiBold,
-                    color: AppColors.black,
-                    height: 1.43,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: AppColors.gray600),
                 ),
-                const SizedBox(height: AppSpacing.sm),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,
                   children: [
                     Text(
                       numberFormat.format(totalEvaluation),
-                      style: const TextStyle(
-                        fontSize: 22,
+                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
                         fontWeight: AppTypography.bold,
-                        color: AppColors.black,
-                        height: 1.64,
                       ),
                     ),
-                    Text(
-                      '원',
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: AppTypography.semiBold,
-                        color: AppColors.black,
-                        height: 1.43,
-                      ),
-                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text('원', style: Theme.of(context).textTheme.headlineLarge),
                   ],
                 ),
               ],
@@ -99,11 +91,7 @@ class PortfolioDetailPage extends StatelessWidget {
                 const SizedBox(height: AppSpacing.lg),
 
                 // Divider
-                const Divider(
-                  color: AppColors.gray300,
-                  thickness: 1,
-                  height: 1,
-                ),
+                const Divider(),
 
                 const SizedBox(height: AppSpacing.lg),
 
@@ -118,7 +106,7 @@ class PortfolioDetailPage extends StatelessWidget {
                   value: '${numberFormat.format(holding.currentPrice)}원',
                 ),
 
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: AppSpacing.xxxxxl),
 
                 // Action Button
                 Center(
@@ -157,20 +145,14 @@ class _MetricRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: AppTypography.bodyMedium,
-            fontWeight: AppTypography.medium,
-            color: AppColors.gray500,
-            height: 1.6,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppColors.gray500),
         ),
         Text(
           value,
-          style: TextStyle(
-            fontSize: AppTypography.bodyMedium,
-            fontWeight: AppTypography.medium,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: valueColor ?? AppColors.black,
-            height: 1.6,
           ),
         ),
       ],

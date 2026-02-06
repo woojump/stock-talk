@@ -28,24 +28,13 @@ class AssetSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '내 자산',
-          style: TextStyle(
-            fontSize: AppTypography.titleLarge,
-            fontWeight: AppTypography.semiBold,
-            color: AppColors.black,
-            height: AppTypography.lineHeightBody / AppTypography.titleLarge,
-          ),
-        ),
+        Text('내 자산', style: Theme.of(context).textTheme.headlineLarge),
         const SizedBox(height: 20),
         Text(
           '주식 평가 금액',
-          style: TextStyle(
-            fontSize: AppTypography.bodyMedium,
-            fontWeight: AppTypography.medium,
-            color: AppColors.gray600,
-            height: AppTypography.lineHeightBody / AppTypography.bodyMedium,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppColors.gray600),
         ),
         Row(
           crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -53,34 +42,19 @@ class AssetSection extends StatelessWidget {
           children: [
             Text(
               numberFormat.format(stockEvaluationAmount),
-              style: TextStyle(
-                fontSize: AppTypography.headlineLarge,
+              style: Theme.of(context).textTheme.displayLarge?.copyWith(
                 fontWeight: AppTypography.bold,
-                color: AppColors.black,
-                height:
-                    AppTypography.lineHeightHeadline /
-                    AppTypography.headlineLarge,
               ),
             ),
-            Text(
-              '원',
-              style: TextStyle(
-                fontSize: AppTypography.titleLarge,
-                fontWeight: AppTypography.semiBold,
-                color: AppColors.black,
-                height: AppTypography.lineHeightBody / AppTypography.titleLarge,
-              ),
-            ),
+            SizedBox(width: AppSpacing.xs),
+            Text('원', style: Theme.of(context).textTheme.headlineLarge),
           ],
         ),
         Text(
           '$profitSign${numberFormat.format(profit.abs())}원 (${profitRate >= 0 ? '+' : ''}${profitRate.toStringAsFixed(1)}%)',
-          style: TextStyle(
-            fontSize: AppTypography.bodyMedium,
-            fontWeight: AppTypography.medium,
-            color: profitColor,
-            height: AppTypography.lineHeightBody / AppTypography.bodyMedium,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: profitColor),
         ),
       ],
     );

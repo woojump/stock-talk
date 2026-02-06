@@ -27,16 +27,13 @@ class SearchResultItem extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHighlightedText(result.name, query),
+            _buildHighlightedText(context, result.name, query),
             const SizedBox(height: AppSpacing.xs),
             Text(
               result.ticker,
-              style: const TextStyle(
-                fontFamily: AppTypography.fontFamily,
-                fontSize: AppTypography.bodySmall,
-                fontWeight: AppTypography.regular,
-                color: AppColors.gray500,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.gray500),
             ),
           ],
         ),
@@ -44,13 +41,15 @@ class SearchResultItem extends StatelessWidget {
     );
   }
 
-  Widget _buildHighlightedText(String text, String query) {
+  Widget _buildHighlightedText(
+    BuildContext context,
+    String text,
+    String query,
+  ) {
     if (query.isEmpty) {
       return Text(
         text,
-        style: const TextStyle(
-          fontFamily: AppTypography.fontFamily,
-          fontSize: AppTypography.titleMedium,
+        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
           fontWeight: AppTypography.semiBold,
           color: AppColors.black,
         ),
@@ -64,9 +63,7 @@ class SearchResultItem extends StatelessWidget {
     if (matchIndex == -1) {
       return Text(
         text,
-        style: const TextStyle(
-          fontFamily: AppTypography.fontFamily,
-          fontSize: AppTypography.titleMedium,
+        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
           fontWeight: AppTypography.semiBold,
           color: AppColors.black,
         ),
@@ -79,10 +76,9 @@ class SearchResultItem extends StatelessWidget {
 
     return RichText(
       text: TextSpan(
-        style: const TextStyle(
-          fontFamily: AppTypography.fontFamily,
-          fontSize: AppTypography.titleMedium,
+        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
           fontWeight: AppTypography.semiBold,
+          color: AppColors.black,
         ),
         children: [
           TextSpan(

@@ -35,9 +35,7 @@ class PeriodTabBar extends StatelessWidget {
               ),
               child: Text(
                 period.label,
-                style: TextStyle(
-                  fontFamily: AppTypography.fontFamily,
-                  fontSize: 15,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: AppTypography.medium,
                   color: isEnabled
                       ? (isSelected ? AppColors.gray700 : AppColors.gray500)

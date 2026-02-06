@@ -22,7 +22,7 @@ class CandlestickChartSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 차트 영역
-        SizedBox(height: 320, child: _buildChart()),
+        SizedBox(height: 320, child: _buildChart(context)),
         const SizedBox(height: AppSpacing.xl),
 
         // 기간 탭 바
@@ -35,16 +35,14 @@ class CandlestickChartSection extends StatelessWidget {
     );
   }
 
-  Widget _buildChart() {
+  Widget _buildChart(BuildContext context) {
     if (stockDetail == null || stockDetail!.candles.isEmpty) {
       return Center(
         child: Text(
           '차트 데이터가 없습니다',
-          style: TextStyle(
-            fontFamily: AppTypography.fontFamily,
-            fontSize: 13,
-            color: AppColors.gray500,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppColors.gray500),
         ),
       );
     }

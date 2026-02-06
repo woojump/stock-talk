@@ -218,6 +218,8 @@ async def amend_order(orig_ord_no: str, ticker: str, quantity: int, price: int) 
     quantity: 정정할 수량
     price: 정정할 가격
     """
+    print(f"🚫 [도구 호출 확인] amend_order 실행됨 (번호: {orig_ord_no})")
+
     try:
         # KiwoomService의 amend_order 호출
         result = await kiwoom_service.amend_order(
@@ -244,6 +246,8 @@ async def cancel_order(orig_ord_no: str, ticker: str, quantity: int = 0) -> str:
     ticker: 종목코드 6자리 (예: '005930')
     quantity: 취소할 수량 (0으로 입력하면 미체결 잔량 전부를 취소합니다)
     """
+    print(f"🚫 [도구 호출 확인] cancel_order 실행됨 (번호: {orig_ord_no})") # 디버그용
+
     try:
         # KiwoomService의 cancel_order 호출
         result = await kiwoom_service.cancel_order(
@@ -300,6 +304,53 @@ async def get_account_balance() -> str:
     except Exception as e:
         return f"🚨 잔고 조회 중 에러 발생: {str(e)}"
 
+# 9. 주문 내역 조회
+@tool
+async def get_order_history(qry_tp: str = "3", ticker: str = "") -> str:
+    """
+    현재 계좌의 실시간 주문 및 체결 내역을 조회합니다.
+    주식 주문을 정정(amend_order)하거나 취소(cancel_order)해야 할 때, 
+    가장 먼저 이 도구를 호출하여 유효한 'ord_no'(주문번호)를 확인해야 합니다.
+    
+    - qry_tp: '1'(주문순), '2'(역순), '3'(미체결 내역-권장), '4'(체결 내역만)
+    - ticker: 특정 종목만 보고 싶을 때 6자리 코드 (예: '005930')
+    
+    응답 중 'remnq_qty'(주문잔량)가 0보다 큰 항목이 현재 취소/정정 가능한 주문입니다.
+    """
+    print(f"🔍 [도구 호출 확인] get_order_history 실행됨 (ticker: {ticker})") # 디버그용
+
+    try:
+        # KiwoomService의 get_order_history 호출
+        orders = await kiwoom_service.get_order_history(
+            qry_tp=qry_tp, 
+            stk_cd=ticker
+        )
+        
+        if not orders:
+
+            return "현재 대기 중이거나 처리된 주문 내역이 없습니다."
+
+        lines = ["[최근 주문 현황 목록]"]
+        for o in orders:
+            # 잔량이 0보다 큰 것만 '현재 살아있는 주문'으로 강조
+            if o['remnq_qty'] > 0:
+                status_tag = "🔥 [현재 취소/정정 가능 - 미체결]"
+            else:
+                status_tag = "❌ [종료된 주문 - 처리 불가]"
+                
+            lines.append(
+                f"{status_tag} {o['name']}({o['ticker']}): {o['side']} "
+                f"요청수량: {o['ord_qty']}주 (현재 남은 수량: {o['remnq_qty']}주) | "
+                f"가격: {o['ord_price']:,}원 | 주문번호: {o['ord_no']}"
+            )
+            
+        return "\n".join(lines)
+
+    except Exception as e:
+        return f"🚨 주문 내역 조회 중 오류 발생: {str(e)}"
+
+
+
 # 2. 서버 실행 시 MCP 도구로 등록해주는 함수
 def register_tools(mcp):
     # 위에서 정의한 함수를 MCP 도구로 등록합니다.
@@ -311,3 +362,4 @@ def register_tools(mcp):
     mcp.tool()(amend_order)       # 주문 정정
     mcp.tool()(cancel_order)      # 주문 취소
     mcp.tool()(get_account_balance) # 계좌 조회
+    mcp.tool()(get_order_history) # 주문 내역 조회 
