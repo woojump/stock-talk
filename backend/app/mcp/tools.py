@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from langchain_core.tools import tool  # 랭체인용 도구 도장
 from app.services.kiwoom import kiwoom_service
+from app.services.news_service import news_service
 
 # 1. 함수를 register_tools 밖으로 꺼냅니다. (그래야 import가 가능함)
 @tool
@@ -350,6 +351,87 @@ async def get_order_history(qry_tp: str = "3", ticker: str = "") -> str:
         return f"🚨 주문 내역 조회 중 오류 발생: {str(e)}"
 
 
+# 10. 뉴스 목록 조회
+@tool
+async def get_stock_news_items(stock_name: str, limit: int = 8) -> str:
+    """
+    특정 종목(또는 키워드) 관련 뉴스 목록(제목/요약/날짜)을 조회합니다.
+    stock_name: 종목명 또는 검색 키워드
+    """
+    items = await news_service.get_stock_news_items_for_chat(stock_name=stock_name, limit=limit)
+    if not items:
+        return f"'{stock_name}' 관련 뉴스를 찾지 못했습니다."
+
+    lines = [f"📰 {stock_name} 최근 뉴스 (Top {min(limit, len(items))})"]
+    for i, it in enumerate(items[:limit], start=1):
+        lines.append(f"{i}. [{it.get('publisher','-')}] {it.get('title','-')} ({it.get('published_at','-')})")
+    return "\n".join(lines)
+
+# 11. 뉴스 기반 Q&A
+@tool
+async def answer_with_news(stock_name: str, question: str, limit: int = 8) -> str:
+    """
+    종목 관련 뉴스 기사 내용을 근거로 사용자의 질문에 답변합니다.
+    기사에서 확인되지 않는 내용은 '기사에서 확인 불가'로 명시합니다.
+    """
+    items = await news_service.get_stock_news_items_for_chat(stock_name=stock_name, limit=limit)
+    if not items:
+        return f"'{stock_name}' 관련 뉴스를 찾지 못했습니다."
+
+    picked = news_service.pick_candidates_for_chat(items, question=question, max_pick=2)
+    bundles = []
+
+    for it in picked:
+        url = it.get("url")
+        if not url:
+            continue
+
+        article = news_service.get_article_content(url)
+        if article.get("status") != "success":
+            continue
+
+        facts = news_service.extract_facts_from_article_text(
+            article.get("content", ""),
+            question=question,
+            max_facts=3
+        )
+        if not facts:
+            continue
+
+        bundles.append(
+            {
+                "title": it.get("title"),
+                "publisher": it.get("publisher"),
+                "published_at": it.get("published_at"),
+                "url": url,
+                "facts": facts,
+            }
+        )
+
+    if not bundles:
+        # 질문이 원인/하락 사유 성격이면 톤을 다르게
+        if any(k in (question or "") for k in ["왜", "원인", "이유", "하락", "떨어"]):
+            return (
+                f"'{stock_name}' 관련 기사는 찾았지만, 기사 본문에서 **하락 원인**을 뒷받침할 근거 문장을 찾지 못했습니다.\n"
+                "기사에 없는 내용을 추측해서 단정할 수는 없습니다."
+            )
+        return (
+            f"'{stock_name}' 관련 기사는 찾았지만, 기사 본문에서 질문에 답할 근거를 충분히 추출하지 못했습니다.\n"
+            "- 사유: 본문 추출 실패/유료벽/근거 문장 부족 가능"
+        )
+
+    out = [f"🧾 '{stock_name}' 뉴스 기반 답변", f"Q. {question}\n"]
+    for b in bundles:
+        out.append(
+            f"근거 기사: [{b.get('publisher','-')}] "
+            f"{b.get('title','-')} ({b.get('published_at','-')})\n"
+            f"URL: {b.get('url','')}"
+        )
+        for f in b["facts"]:
+            out.append(f"- {f.get('fact','')}")
+        out.append("")
+    return "\n".join(out).strip()
+
 
 # 2. 서버 실행 시 MCP 도구로 등록해주는 함수
 def register_tools(mcp):
@@ -362,4 +444,6 @@ def register_tools(mcp):
     mcp.tool()(amend_order)       # 주문 정정
     mcp.tool()(cancel_order)      # 주문 취소
     mcp.tool()(get_account_balance) # 계좌 조회
-    mcp.tool()(get_order_history) # 주문 내역 조회 
+    mcp.tool()(get_order_history) # 주문 내역 조회
+    mcp.tool()(get_stock_news_items)
+    mcp.tool()(answer_with_news)

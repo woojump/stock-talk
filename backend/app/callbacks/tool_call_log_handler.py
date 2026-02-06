@@ -1,10 +1,12 @@
 import json
+import re
 import time
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 from langchain_core.callbacks import BaseCallbackHandler
 
+TICKER_RE = re.compile(r"\((\d{6})\)")
 
 def _tool_type_from_name(tool_name: str) -> str:
     trade_tools = {"post_trade", "amend_order", "cancel_order"}
@@ -37,6 +39,15 @@ class ToolCallLogHandler(BaseCallbackHandler):
         self.message_id = message_id
         self.parent_id = parent_id
         self._runs: Dict[str, Dict[str, Any]] = {}  # run_id -> {"id": tool_call_id, "ts": perf_counter}
+        self.tickers: List[str] = []
+
+    def _collect_tickers(self, tool_output: str) -> None:
+        if not tool_output:
+            return
+        found = TICKER_RE.findall(str(tool_output))
+        for t in found:
+            if t not in self.tickers:
+                self.tickers.append(t)
 
     def on_tool_start(self, serialized: Dict[str, Any], input_str: str, **kwargs: Any) -> None:
         tool_name = (serialized or {}).get("name") or "unknown_tool"
@@ -70,6 +81,7 @@ class ToolCallLogHandler(BaseCallbackHandler):
         self._runs[run_id] = {"id": tool_call_id, "ts": time.perf_counter()}
 
     def on_tool_end(self, output: Any, **kwargs: Any) -> None:
+        self._collect_tickers(output)
         run_id = kwargs.get("run_id")
         if run_id is None:
             return
