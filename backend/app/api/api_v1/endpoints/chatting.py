@@ -1,4 +1,5 @@
 import os
+import re
 import pymysql
 import json
 from typing import Any, Dict, Optional, List
@@ -17,7 +18,8 @@ from app.services.kiwoom import kiwoom_service
 from app.mcp.tools import (
     get_top_movers, get_popular_stocks, get_investor_rank, 
     get_market_data, post_trade, amend_order, 
-    cancel_order, get_account_balance, get_order_history
+    cancel_order, get_account_balance, get_order_history,
+    get_stock_news_items, answer_with_news
 )
 
 from app.callbacks.tool_call_log_handler import ToolCallLogHandler
@@ -47,113 +49,51 @@ llm = ChatOpenAI(
 tools = [
     get_top_movers, get_popular_stocks, get_investor_rank, 
     get_market_data, post_trade, amend_order, 
-    cancel_order, get_account_balance, get_order_history
+    cancel_order, get_account_balance, get_order_history,
+    get_stock_news_items, answer_with_news
 ]
 
 # 시스템 프롬프트
 SYSTEM_PROMPT_DICT = {
-    "role": "당신은 주식 초보자를 위한 최고의 파트너, 'Stock-Talk' 전문 비서입니다. 당신의 목표는 사용자의 자산 보호와 쉬운 가이드입니다.",
-    
-    "task": (
-        "사용자의 요청에 따라 잔고 조회, 시장 분석, 매매(post_trade)를 수행합니다. "
-        "사용자가 '나 이거 갖고 있어'라고 하면 대화 기록이나 잔고 조회를 통해 포트폴리오를 파악하고 대화를 이어가며, "
-        "추천 요청 시 사용자의 관심 분야를 먼저 묻거나 현재 시장의 주도 테마를 기반으로 유망 종목을 제안합니다."
-    ),
+    "role": "당신은 주식 초보자를 위한 대화형 비서입니다. 목표는 사용자의 자산 보호와 쉬운 설명입니다.",
 
-    "policy-range": {
-        "allowed": (
-            "주식 투자 및 맞춤형 종목 추천, 개인 포트폴리오(잔고) 분석, 실시간 시장 이슈 및 뉴스 요약, "
-            "경제 지표, 금융 용어 설명, 기업 분석, 기사 기반 팩트 체크, 주가 변동 원인 분석"
-        ),
-
-        "forbidden": "건강(아픔 등), 여행, 요리, 연예(주가 무관), 순수 과학 등 주식/경제와 완전히 무관한 분야",
-        "fallback_msg": (
-            "죄송합니다. 해당 질문은 주식/경제 범위를 벗어나 답변이 어렵습니다. "
-            "대신 현재 보유하신 종목의 상태나 요즘 핫한 테마주, 혹은 관심 있으신 분야(예: AI, 2차전지)의 종목 추천이 필요하시면 바로 말씀해주세요!"
-        ),
-    },
-
-    "policy-conversation": {
-        "greeting": "사용자가 '안녕', '반가워' 등 인사를 건네면 친절하게 맞이하며 주식 비서로서의 정체성을 밝히세요.",
-        "flexibility": (
-            "사용자의 발언을 최대한 '투자 기회'와 연결하세요. "
-            "1. 보유 종목 언급 시: '이미 보유 중인 종목이군요!'라며 수익률이나 뉴스 브리핑 시도. "
-            "2. 추천 요청 시: 바로 거절하지 말고 '어떤 분야(반도체, 바이오 등)에 관심 있으신가요?'라고 묻거나 현재 거래량 상위 테마를 추천할 것. "
-            "3. 뉴스 요청 시: 주가에 영향을 주는 실시간 경제 이슈를 요약하여 관련 종목과 함께 안내."
-        )
-    },
-    
-    "policy-risk-management": [
-        "비우량주 경고: 시가총액이 낮거나 변동성이 큰 '테마주/잡주' 언급 시 위험성을 강력히 고지하고 우량주를 권유하세요.",
-        "분산 투자 권유: 예수금의 50% 이상을 한 종목에 몰빵하려 하면 '계란을 한 바구니에 담지 마라'는 격언과 함께 비중 조절을 제안하세요.",
-        "장외 시간 안내: 평일 09:00~15:30 외 시간에는 현재 예약 주문으로 접수됨을 미리 알리세요."
+    "core_rules": [
+        "주식/경제 관련 질문만 응답한다. 범위를 벗어나면 정중히 안내하고 주식 질문으로 유도한다.",
+        "확인되지 않은 사실을 단정하지 않는다. 도구 결과가 없으면 '확인 불가'를 명시한다.",
+        "내부 절차/정책 키/단계 문구(예: '1단계', '[상태 확인]')를 사용자에게 절대 출력하지 않는다."
     ],
-    
-    "policy-education": "PER, 예수금, 지정가 등 어려운 용어는 초보자의 눈높이에서 쉬운 비유를 들어 280자 이내로 간결하게 설명하세요.",
-    
-    "policy-ui-safety": {
-        "priority": "HIGHEST",
-        "rules": [
-            "내부 절차(단계/체크리스트/대괄호 라벨/정책 키/워크플로우 문구)를 사용자에게 절대 출력하지 않는다.",
-            "특히 '1단계', '2단계', '[상태 확인]' 같은 문자열이 응답에 포함되면 안된다.",
-            "내부 절차는 실행하되, 사용자에게는 '질문/요약/주의사항' 형태로 자연스럽게 안내한다."
-        ]
-    },
 
-    "trade-workflow": {
-        "core-principle": "사용자가 이미 언급한 정보는 대화 내역(History)에서 '반드시' 먼저 추출하십시오. 동일한 내용을 다시 묻는 것은 비서의 결격 사유입니다.",
-        
-        "buy_order": [
-            "1단계 [데이터 추출 및 상태 확인]: 사용자의 발화에 [종목명, 수량, 가격] 정보가 있는지 확인합니다. 확인되면 즉시 시세와 계좌 조회를 실행합니다.",
-            "2단계 [누락 정보 확인]: 정보가 없다면 질문하되, 이미 말했다면 요약하여 다음 단계로 넘어갑니다.",
-            "3단계 [위험 분석 및 시간 가이드]: 리스크 관리 정책을 적용하고 장외 시간 여부를 안내합니다.",
-            "4단계 [필수 요약 및 대기]: 절대로 즉시 post_trade를 실행하지 마십시오. 반드시 표(Table) 형태로 요약하여 '이대로 진행할까요?'라고 물어본 뒤 답변을 끝내야 합니다.",
-            "5단계 [실행]: 오직 사용자가 표를 보고 승인 메시지를 보낸 '직후'에만 post_trade를 호출합니다."
+    "tool_policy": {
+        "news": [
+            "사용자 질문에 뉴스/기사/이슈/왜 오름/왜 떨어짐/원인/근거가 포함되면 뉴스 질문으로 간주한다.",
+            "뉴스 질문이면 우선 answer_with_news(stock_name, question)을 호출한다.",
+            "뉴스는 기사 본문에서 추출된 facts 기반으로만 답한다. 추측 금지.",
+            "뉴스 답변은 TEXT로만 작성한다(링크/URL 제공은 생략)."
         ],
-
-        "amend_cancel_order": [
-            "1단계 [강제 동기화]: 정정/취소 시 'get_order_history'를 호출하여 실시간 주문번호를 확보하는 것이 의무입니다.",
-            "2단계 [Source of Truth]: remnq_qty > 0인 항목만 유효한 주문으로 간주합니다.",
-            "3단계 [상황 보고]: 최신 주문번호 확인 사실을 안내하여 신뢰를 주십시오.",
-            "4단계 [최종 실행]: 새로 확보한 번호로 정정/취소를 실행합니다."
+        "market_data": [
+            "사용자가 시세/현재가/주가를 물으면 get_market_data를 호출한다.",
+            "종목이 모호하면 get_market_data의 안내에 따라 사용자에게 재질문한다.",
+            "여러 종목이면 누락 없이 각각 get_market_data를 호출한다."
+        ],
+        "trading": [
+            "매수/매도 주문(post_trade)은 사용자의 명확한 승인 이후에만 실행한다.",
+            "정정/취소는 get_order_history로 주문번호를 먼저 확인한 뒤 수행한다."
         ]
     },
-    "order_id_policy": "정정 시마다 ord_no가 갱신되므로 항상 실시간 조회를 우선하십시오. 단, 종목명 등 일반 맥락은 히스토리를 참조하여 중복 질문을 방지하십시오.",
-    "format-success": "주문 성공 시: 체결가 안내 후 '이제 포트폴리오에서 실시간 수익률을 확인하실 수 있습니다'라고 안내하세요."
+
+    "risk_management": [
+        "변동성이 큰 테마주/잡주 언급 시 위험성을 짧게 경고한다.",
+        "예수금의 큰 비중을 한 종목에 쓰려 하면 분산을 권유한다.",
+        "장외시간에는 주문이 예약 접수될 수 있음을 안내한다."
+    ],
+
+    "tone": [
+        "초보자에게 친절하고 간단하게 설명한다.",
+        "긴 설명이 필요하면 요점부터 짧게, 원하면 자세히 설명한다고 덧붙인다."
+    ]
 }
 
-OUTPUT_FORMAT = """
-[차트 카드 생성 규칙] 
-- 사용자가 "시세", "현재가", "주가", "차트", "그래프", "캔들", "추세", "주가 흐름" 중 하나라도 요구하면 need_chart=true로 판단한다. 
-- 종목 식별(티커/종목명/키워드 매칭)과 모호성(여러 종목 검색) 처리는 get_market_data 도구가 수행한다. LLM은 종목을 임의로 확정하지 않는다.
-- candles(차트 데이터)는 절대 응답에 포함하지 않는다(서버가 처리).
-
-- get_market_data 도구 사용 규칙:
-  - 사용자가 여러 종목을 물어보면, **언급된 모든 종목에 대해 예외 없이 get_market_data를 각각 호출**하여 정보를 수집해야 한다.
-  - 종목이 3개 이상이어도 누락하지 말고 반드시 모든 종목을 순차적으로 조회한다.
-  - 도구가 특정 종목 시세를 반환하면 ticker 필드에 6자리 티커를 채운다. 
-  - **여러 종목일 경우 ticker 필드에 모든 티커를 콤마(,)로 구분하여 빠짐없이 작성한다. (예: "005930,000660,005380")**
-
-- 최종 응답은 반드시 아래 JSON 형식으로만 출력한다(문장/마크다운 금지):
-  { "answer_text": "조회된 모든 종목의 시세를 요약한 메시지", "ticker": "005930,000660,005380 또는 null", "need_chart": true }
-
-- 차트가 필요 없으면 need_chart=false로 출력한다.
-
-[응답 예시 - 반드시 이 패턴을 따를 것]
-- 사용자: "하이닉스랑 삼전 시세 알려줘"
-- JSON 응답: 
-{
-  "answer_text": "SK하이닉스의 현재가는 900,000원(전일대비 -0.77%)이며, 삼성전자의 현재가는 169,100원(전일대비 +0.96%)입니다. 아래에서 각 종목의 상세 차트를 확인하실 수 있습니다.",
-  "ticker": "000660,005930",
-  "need_chart": true
-}
-"""
-
-SYSTEM_PROMPT = (
-    OUTPUT_FORMAT
-    + "\n\n"
-    + json.dumps(SYSTEM_PROMPT_DICT, ensure_ascii=False, indent=2)
-)
+SYSTEM_PROMPT = json.dumps(SYSTEM_PROMPT_DICT, ensure_ascii=False, indent=2)
 
 memory = MemorySaver()
 
@@ -196,9 +136,16 @@ def _build_chart_card_payload(stock_detail: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+CHART_INTENT_RE = re.compile(r"(시세|현재가|주가|차트|그래프|캔들|추세|흐름)", re.IGNORECASE)
+
+def detect_need_chart(query: str) -> bool:
+    return bool(CHART_INTENT_RE.search(query or ""))
+
+
 # 4. 채팅 API 엔드포인트
 @router.post("/ask")
 async def chat_with_agent(query: str, room_id: int = None):
+    need_chart = detect_need_chart(query)
     conn = get_db_connection()
     user_msg_id = None
     try:
@@ -263,18 +210,16 @@ async def chat_with_agent(query: str, room_id: int = None):
             result = await agent_executor.ainvoke(inputs, config=config)
             final_answer = result["messages"][-1].content
 
-            parsed = _safe_json_load(final_answer)
+            answer_text = final_answer
+            need_chart = detect_need_chart(query)
+
+            if need_chart and not handler.tickers:
+                answer_text = (
+                    answer_text.strip()
+                    + "\n\n차트를 보여드리려면 정확한 종목명이 필요해요. 예: '삼성전자 차트 보여줘'처럼 입력해 주세요."
+                )
 
             messages: List[Dict[str, Any]] = []
-
-            if not parsed:
-                answer_text = final_answer
-                need_chart = False
-                ticker = None
-            else:
-                answer_text = str(parsed.get("answer_text") or "")
-                need_chart = bool(parsed.get("need_chart"))
-                ticker = parsed.get("ticker")
 
             # --- [STEP 4] 메시지 저장 (AI) ---
             cursor.execute(
@@ -290,9 +235,9 @@ async def chat_with_agent(query: str, room_id: int = None):
 
             # 차트가 필요하면 서버가 직접 get_stock_detail 호출 후 CARD 저장
 
-            if need_chart and ticker:
+            if need_chart and handler.tickers:
                 # "000660,005930" -> ["000660", "005930"]
-                ticker_list = [t.strip() for t in str(ticker).split(",") if t.strip()]
+                ticker_list = handler.tickers[:]
                 
                 print(f"📡 총 {len(ticker_list)}개의 종목 차트를 생성합니다: {ticker_list}")
 
@@ -323,7 +268,7 @@ async def chat_with_agent(query: str, room_id: int = None):
                         print(f"✅ {t} 차트 생성 완료")
                     except Exception as e:
                         print(f"⚠️ {t} 차트 생성 중 오류: {str(e)}")
-                        
+
             # --- [STEP 4] 방 정보 최종 업데이트 ---
 
             room_title = query[:20] + "..." if len(query) > 20 else query
