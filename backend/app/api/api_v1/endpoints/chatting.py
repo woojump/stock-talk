@@ -11,7 +11,7 @@ from langchain_core.messages import HumanMessage
 from langgraph.prebuilt import create_react_agent
 from dotenv import load_dotenv
 from langgraph.checkpoint.memory import MemorySaver
-from datetime import datetime
+from datetime import datetime, time as dtime
 
 from app.core.config import settings
 from app.services.kiwoom import kiwoom_service
@@ -81,10 +81,17 @@ SYSTEM_PROMPT_DICT = {
         ]
     },
 
+    "education": [
+        "예약 주문과 미체결 주문을 혼동하지 않는다.",
+        "예약 주문은 아직 거래소에 접수되지 않은 주문이다.",
+        "미체결 주문은 거래소에 접수되어 체결 대기 중인 주문이다.",
+        "예약 주문은 아직 거래소에 전달되지 않았으므로 미체결 목록에 포함되지 않는다."
+    ],
+
     "risk_management": [
         "변동성이 큰 테마주/잡주 언급 시 위험성을 짧게 경고한다.",
         "예수금의 큰 비중을 한 종목에 쓰려 하면 분산을 권유한다.",
-        "장외시간에는 주문이 예약 접수될 수 있음을 안내한다."
+        "장외시간에는 주문이 예약 접수될 수 있지만, 현재 서비스에서는 예약 주문이 지원되지 않음을 안내한다."
     ],
 
     "tone": [
@@ -141,11 +148,23 @@ CHART_INTENT_RE = re.compile(r"(시세|현재가|주가|차트|그래프|캔들|
 def detect_need_chart(query: str) -> bool:
     return bool(CHART_INTENT_RE.search(query or ""))
 
+NEWS_INTENT_RE = re.compile(r"(뉴스|기사|이슈|왜\s*오름|왜\s*떨어|원인|이유|근거|하락)", re.IGNORECASE)
+
+def detect_news_intent(query: str) -> bool:
+    return bool(NEWS_INTENT_RE.search(query or ""))
+
+# 장중 여부 확인
+def is_market_open(now: datetime) -> bool:
+    return (
+        now.weekday() < 5 and
+        dtime(9, 0) <= now.time() <= dtime(15, 30)
+    )
 
 # 4. 채팅 API 엔드포인트
 @router.post("/ask")
 async def chat_with_agent(query: str, room_id: int = None):
-    need_chart = detect_need_chart(query)
+    is_news = detect_news_intent(query)
+    need_chart = detect_need_chart(query) and not is_news
     conn = get_db_connection()
     user_msg_id = None
     try:
@@ -170,12 +189,6 @@ async def chat_with_agent(query: str, room_id: int = None):
             # --- [STEP 2] 에이전트 실행 (이 부분이 에러 해결의 핵심) ---
             # 💡 반드시 thread_id를 문자열로 변환하여 전달해야 합니다.
             config = {"configurable": {"thread_id": str(room_id)}}
-
-            # 현재 시간을 구해서 질문 앞에 붙여줌.
-            current_now = datetime.now().strftime("%Y-%m-%d %H:&M:%S")
-            rich_query = f"[현재 시간: {current_now}]\n{query}"
-
-            inputs = {"messages": [HumanMessage(content=rich_query)]}
             
             # --- [STEP 2] 메시지 저장 (사용자) ---
             cursor.execute(
@@ -202,18 +215,23 @@ async def chat_with_agent(query: str, room_id: int = None):
                 "configurable": {"thread_id": str(room_id)},
                 "callbacks": [handler],
             }
-            
-            inputs = {"messages": [HumanMessage(content=query)]}
-
+        
             print(f"🤖 에이전트 호출 시작 (thread_id: {room_id})")
+               
+            now = datetime.now()
+            market_open = is_market_open(now)
+            market_status_line = "[시장 상태: 장중]" if market_open else "[시장 상태: 장외(예약 접수/대기)]"
+            time_line = f"[현재 시간: {now.strftime('%Y-%m-%d %H:%M:%S')}]"
+
+            inputs = {"messages": [HumanMessage(content=f"{market_status_line}\n{time_line}\n{query}")]}
+
             # 🚀 두 번째 인자로 config를 반드시 넘깁니다.
             result = await agent_executor.ainvoke(inputs, config=config)
             final_answer = result["messages"][-1].content
 
             answer_text = final_answer
-            need_chart = detect_need_chart(query)
 
-            if need_chart and not handler.tickers:
+            if need_chart and not is_news and not handler.tickers:
                 answer_text = (
                     answer_text.strip()
                     + "\n\n차트를 보여드리려면 정확한 종목명이 필요해요. 예: '삼성전자 차트 보여줘'처럼 입력해 주세요."
