@@ -1,8 +1,8 @@
 # 2025-2 프메 8팀 프로젝트
 # 📈 StockTalk
 > **LLM + MCP기반 대화형 주식 앱**
-
 ---
+![Image](https://github.com/user-attachments/assets/96ed5d66-e2b8-47b0-ac08-a8ad6753b383)
 
 ## 👥 프로젝트 정보
 * **개발 기간**: 2026.01 ~ 2026.02 (진행 중)
