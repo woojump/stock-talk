@@ -15,7 +15,7 @@ async def ask_stock_ai(question: str) -> str:
     
     # 가성비 끝판왕 gpt-4o-mini 모델 사용
     llm = ChatOpenAI(
-        model="o1-mini", 
+        model="gpt-4o-mini", 
         api_key=settings.openai_api_key,
         temperature=0
     )
