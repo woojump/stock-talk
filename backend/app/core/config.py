@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     PROJECT_NAME: str = "LLM-MCP Stock Platform"
     OPENAI_API_KEY: str  # 서버에서 사용할 AI 키
-    MODEL_NAME: str = "gpt-4o-mini"
+    MODEL_NAME: str = "gpt-4o-2024-08-06"
 
     KIWOOM_APP_KEY: str
     KIWOOM_APP_SECRET: str
