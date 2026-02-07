@@ -1,6 +1,8 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:stock_talk/app/router/app_router.dart';
 import 'package:stock_talk/core/design_system/design_system.dart';
 import 'package:stock_talk/features/chat/domain/entities/chat_entities.dart';
 
@@ -107,6 +109,38 @@ class StockInfoCard extends StatelessWidget {
             )
           else
             _ChartPlaceholder(),
+
+          const SizedBox(height: AppSpacing.md),
+
+          // 자세히 보기 버튼
+          SizedBox(
+            width: double.infinity,
+            child: TextButton(
+              onPressed: () {
+                context.router.push(
+                  StockDetailRoute(
+                    ticker: displayTicker,
+                    stockName: displayStockName,
+                  ),
+                );
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: AppColors.white,
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                  side: const BorderSide(color: AppColors.gray300),
+                ),
+              ),
+              child: Text(
+                '자세히 보기',
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: AppColors.gray700,
+                  fontWeight: AppTypography.medium,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
