@@ -190,7 +190,56 @@ class KiwoomService:
                 "query": query,
                 "ticker": ticker,
             }
+        
+        latest_candle = processed_candles[0] if processed_candles else {}
 
+        # 4. ✅ StockSummaryDto 매핑 (프론트엔드 @JsonKey와 100% 일치)
+        stock_summary = {
+            "stock_name": quote_data.get("stk_nm") or query,
+            "ticker": ticker,
+            # 현재가는 호가 우선, 없을 시 차트 종가 사용 (절댓값 처리)
+            "current_price": float(abs(self._parse_num(quote_data.get("sel_fpr_bid") or latest_candle.get("close") or "0"))),
+            "price_change": float(self._parse_num(quote_data.get("prdy_vrss") or "0")),
+            "price_change_percent": float(self._parse_num(quote_data.get("prdy_ctrt") or "0", is_float=True)),
+            
+            # ka10004에 없는 필드들을 차트(latest_candle)에서 보완
+            "open_price": float(latest_candle.get("open") or 0),
+            "high_price": float(latest_candle.get("high") or 0),
+            "low_price": float(latest_candle.get("low") or 0),
+            "volume": int(latest_candle.get("volume") or 0),
+        }
+
+        # 💡 [보정 로직] 주말이나 휴장일 등 API가 변동액을 0으로 줄 때 직접 계산
+        if len(processed_candles) >= 2:
+            today_close = processed_candles[0]['close']
+            prev_close = processed_candles[1]['close']
+
+            # API 값이 0인 경우에만 캔들 데이터를 기반으로 계산기로 두드려줍니다.
+            if stock_summary["price_change"] == 0:
+                stock_summary["price_change"] = float(today_close - prev_close)
+
+            if stock_summary["price_change_percent"] == 0 and prev_close != 0:
+                # 등락률 공식: ((현재가 - 전일종가) / 전일종가) * 100
+                change_pct = ((today_close - prev_close) / prev_close) * 100
+                stock_summary["price_change_percent"] = round(float(change_pct), 2)
+
+        # 5. 최종 반환 (신규 DTO + 기존 캔들 + 하위 호환성 유지)
+        return {
+            "status": "success",
+            "query": query,
+            "ticker": ticker,
+            "stock_summary": stock_summary,  # ✅ 채팅 차트 위젯이 사용하는 핵심 데이터
+            "candles": processed_candles,
+            "stock_info": {                  # 기존 UI 호환용
+                "current_price": int(stock_summary["current_price"]),
+                "total_ask_qty": quote_data.get("tot_sel_req"),
+                "total_bid_qty": quote_data.get("tot_buy_req"),
+            }
+        }
+        
+
+        # 기존 버전
+        """
         # 프론트엔드 담당자가 쓰기 좋게 정리해서 반환
         return {
             "status": "success",
@@ -203,7 +252,7 @@ class KiwoomService:
             },
             "candles": processed_candles,
         }
-
+        """
     async def refresh_token(self) -> str:
         """공용 키로 새 토큰을 받아옵니다."""
         endpoint = "/oauth2/token"
@@ -744,7 +793,7 @@ class KiwoomService:
 
     async def get_order_history(
         self, 
-        qry_tp: str = "0",        # 1:주문순, 2:역순, 3:미체결, 4:체결내역만
+        qry_tp: str = "2",        # 1:주문순, 2:역순, 3:미체결, 4:체결내역만
         stk_cd: str = "",         # 공백 시 전체
         sell_tp: str = "0",       # 0:전체, 1:매도, 2:매수
         days_back: int = 3        # 최근 며칠을 볼 것인지
