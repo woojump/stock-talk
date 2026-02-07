@@ -22,6 +22,9 @@ class StockItem {
   final double price;
   final double change;
   final double changeRate;
+  final double? netAmount;
+  final int? buyQty;
+  final int? selQty;
 
   const StockItem({
     required this.name,
@@ -29,5 +32,8 @@ class StockItem {
     required this.price,
     required this.change,
     required this.changeRate,
+    this.netAmount,
+    this.buyQty,
+    this.selQty,
   });
 }

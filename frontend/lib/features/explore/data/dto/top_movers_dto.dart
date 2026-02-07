@@ -38,8 +38,6 @@ abstract class StockItemDto with _$StockItemDto {
     // 카테고리별로 제공되는 필드가 달라서 일단 모두 optional 처리
     // 상승/하락/인기 카테고리에서는 등락률(rate)과 가격(price) 제공
     // 기관 순매수/순매도 카테고리에서는 가격 아닌 거래량 관련 필드 제공
-    // 일단 현재 도메인 엔티티 변환 시에는 등락률과 가격만 사용하고, 나머지 필드는 무시
-    // TODO: 도메인 엔티티에 거래량 관련 필드 추가
     required String name,
     String? rate,
     String? price,
@@ -66,12 +64,28 @@ abstract class StockItemDto with _$StockItemDto {
 
     final changeValue = priceValue * (rateValue / 100);
 
+    // 기관/외국인 순매수 관련 필드 파싱
+    final netAmountValue = netAmount != null
+        ? (double.tryParse(netAmount!.replaceAll(',', '')) ?? 0.0)
+        : null;
+
+    final buyQtyValue = buyQty != null
+        ? (int.tryParse(buyQty!.replaceAll(',', '')) ?? 0)
+        : null;
+
+    final selQtyValue = selQty != null
+        ? (int.tryParse(selQty!.replaceAll(',', '')) ?? 0)
+        : null;
+
     return StockItem(
       name: name,
       ticker: code ?? '', // 티커 정보 못 받으면 일단 빈 문자열로 처리
       price: priceValue,
       change: changeValue,
       changeRate: rateValue,
+      netAmount: netAmountValue,
+      buyQty: buyQtyValue,
+      selQty: selQtyValue,
     );
   }
 }

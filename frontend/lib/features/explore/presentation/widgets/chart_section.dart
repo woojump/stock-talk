@@ -122,6 +122,7 @@ class ChartSection extends StatelessWidget {
                     child: StockListItem(
                       stock: stock,
                       rank: stocks.indexOf(stock) + 1,
+                      tab: provider.selectedTab, // 탭 정보 전달
                     ),
                   ),
                 ),
