@@ -42,8 +42,8 @@ class ChatProvider extends ChangeNotifier {
   static const List<String> suggestions = [
     '삼성전자 시세 알려줘',
     '내 잔고 확인해줘',
-    '나에게 맞는 종목 추천해줘',
-    '지금 많이 클릭된 뉴스를 알려줘',
+    '현대차 1주 매수해줘',
+    '내 주문 내역 보여줘',
   ];
 
   /// 입력 텍스트 업데이트
