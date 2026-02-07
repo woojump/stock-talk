@@ -290,7 +290,7 @@ as List<OrderHistoryItemDto>,
 /// @nodoc
 mixin _$OrderHistoryItemDto {
 
-@JsonKey(name: 'ord_no') String get ordNo; String get ticker; String get name;@JsonKey(name: 'ord_qty') int get ordQty;@JsonKey(name: 'ord_price') int get ordPrice;@JsonKey(name: 'cntr_qty') int get cntrQty;@JsonKey(name: 'remnq_qty') int get remnqQty; String get side;@JsonKey(name: 'ord_tm') String get ordTm; String get status;
+@JsonKey(name: 'ord_no') String get ordNo; String get ticker; String get name;@JsonKey(name: 'ord_qty') int get ordQty;@JsonKey(name: 'ord_price') int get ordPrice;@JsonKey(name: 'cntr_qty') int get cntrQty;@JsonKey(name: 'remnq_qty') int get remnqQty; String get side;@JsonKey(name: 'ord_dt') String get ordDt;@JsonKey(name: 'ord_tm') String get ordTm; String get status;
 /// Create a copy of OrderHistoryItemDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -303,16 +303,16 @@ $OrderHistoryItemDtoCopyWith<OrderHistoryItemDto> get copyWith => _$OrderHistory
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is OrderHistoryItemDto&&(identical(other.ordNo, ordNo) || other.ordNo == ordNo)&&(identical(other.ticker, ticker) || other.ticker == ticker)&&(identical(other.name, name) || other.name == name)&&(identical(other.ordQty, ordQty) || other.ordQty == ordQty)&&(identical(other.ordPrice, ordPrice) || other.ordPrice == ordPrice)&&(identical(other.cntrQty, cntrQty) || other.cntrQty == cntrQty)&&(identical(other.remnqQty, remnqQty) || other.remnqQty == remnqQty)&&(identical(other.side, side) || other.side == side)&&(identical(other.ordTm, ordTm) || other.ordTm == ordTm)&&(identical(other.status, status) || other.status == status));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OrderHistoryItemDto&&(identical(other.ordNo, ordNo) || other.ordNo == ordNo)&&(identical(other.ticker, ticker) || other.ticker == ticker)&&(identical(other.name, name) || other.name == name)&&(identical(other.ordQty, ordQty) || other.ordQty == ordQty)&&(identical(other.ordPrice, ordPrice) || other.ordPrice == ordPrice)&&(identical(other.cntrQty, cntrQty) || other.cntrQty == cntrQty)&&(identical(other.remnqQty, remnqQty) || other.remnqQty == remnqQty)&&(identical(other.side, side) || other.side == side)&&(identical(other.ordDt, ordDt) || other.ordDt == ordDt)&&(identical(other.ordTm, ordTm) || other.ordTm == ordTm)&&(identical(other.status, status) || other.status == status));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,ordNo,ticker,name,ordQty,ordPrice,cntrQty,remnqQty,side,ordTm,status);
+int get hashCode => Object.hash(runtimeType,ordNo,ticker,name,ordQty,ordPrice,cntrQty,remnqQty,side,ordDt,ordTm,status);
 
 @override
 String toString() {
-  return 'OrderHistoryItemDto(ordNo: $ordNo, ticker: $ticker, name: $name, ordQty: $ordQty, ordPrice: $ordPrice, cntrQty: $cntrQty, remnqQty: $remnqQty, side: $side, ordTm: $ordTm, status: $status)';
+  return 'OrderHistoryItemDto(ordNo: $ordNo, ticker: $ticker, name: $name, ordQty: $ordQty, ordPrice: $ordPrice, cntrQty: $cntrQty, remnqQty: $remnqQty, side: $side, ordDt: $ordDt, ordTm: $ordTm, status: $status)';
 }
 
 
@@ -323,7 +323,7 @@ abstract mixin class $OrderHistoryItemDtoCopyWith<$Res>  {
   factory $OrderHistoryItemDtoCopyWith(OrderHistoryItemDto value, $Res Function(OrderHistoryItemDto) _then) = _$OrderHistoryItemDtoCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'ord_no') String ordNo, String ticker, String name,@JsonKey(name: 'ord_qty') int ordQty,@JsonKey(name: 'ord_price') int ordPrice,@JsonKey(name: 'cntr_qty') int cntrQty,@JsonKey(name: 'remnq_qty') int remnqQty, String side,@JsonKey(name: 'ord_tm') String ordTm, String status
+@JsonKey(name: 'ord_no') String ordNo, String ticker, String name,@JsonKey(name: 'ord_qty') int ordQty,@JsonKey(name: 'ord_price') int ordPrice,@JsonKey(name: 'cntr_qty') int cntrQty,@JsonKey(name: 'remnq_qty') int remnqQty, String side,@JsonKey(name: 'ord_dt') String ordDt,@JsonKey(name: 'ord_tm') String ordTm, String status
 });
 
 
@@ -340,7 +340,7 @@ class _$OrderHistoryItemDtoCopyWithImpl<$Res>
 
 /// Create a copy of OrderHistoryItemDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? ordNo = null,Object? ticker = null,Object? name = null,Object? ordQty = null,Object? ordPrice = null,Object? cntrQty = null,Object? remnqQty = null,Object? side = null,Object? ordTm = null,Object? status = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? ordNo = null,Object? ticker = null,Object? name = null,Object? ordQty = null,Object? ordPrice = null,Object? cntrQty = null,Object? remnqQty = null,Object? side = null,Object? ordDt = null,Object? ordTm = null,Object? status = null,}) {
   return _then(_self.copyWith(
 ordNo: null == ordNo ? _self.ordNo : ordNo // ignore: cast_nullable_to_non_nullable
 as String,ticker: null == ticker ? _self.ticker : ticker // ignore: cast_nullable_to_non_nullable
@@ -350,6 +350,7 @@ as int,ordPrice: null == ordPrice ? _self.ordPrice : ordPrice // ignore: cast_nu
 as int,cntrQty: null == cntrQty ? _self.cntrQty : cntrQty // ignore: cast_nullable_to_non_nullable
 as int,remnqQty: null == remnqQty ? _self.remnqQty : remnqQty // ignore: cast_nullable_to_non_nullable
 as int,side: null == side ? _self.side : side // ignore: cast_nullable_to_non_nullable
+as String,ordDt: null == ordDt ? _self.ordDt : ordDt // ignore: cast_nullable_to_non_nullable
 as String,ordTm: null == ordTm ? _self.ordTm : ordTm // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,
@@ -437,10 +438,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'ord_no')  String ordNo,  String ticker,  String name, @JsonKey(name: 'ord_qty')  int ordQty, @JsonKey(name: 'ord_price')  int ordPrice, @JsonKey(name: 'cntr_qty')  int cntrQty, @JsonKey(name: 'remnq_qty')  int remnqQty,  String side, @JsonKey(name: 'ord_tm')  String ordTm,  String status)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'ord_no')  String ordNo,  String ticker,  String name, @JsonKey(name: 'ord_qty')  int ordQty, @JsonKey(name: 'ord_price')  int ordPrice, @JsonKey(name: 'cntr_qty')  int cntrQty, @JsonKey(name: 'remnq_qty')  int remnqQty,  String side, @JsonKey(name: 'ord_dt')  String ordDt, @JsonKey(name: 'ord_tm')  String ordTm,  String status)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _OrderHistoryItemDto() when $default != null:
-return $default(_that.ordNo,_that.ticker,_that.name,_that.ordQty,_that.ordPrice,_that.cntrQty,_that.remnqQty,_that.side,_that.ordTm,_that.status);case _:
+return $default(_that.ordNo,_that.ticker,_that.name,_that.ordQty,_that.ordPrice,_that.cntrQty,_that.remnqQty,_that.side,_that.ordDt,_that.ordTm,_that.status);case _:
   return orElse();
 
 }
@@ -458,10 +459,10 @@ return $default(_that.ordNo,_that.ticker,_that.name,_that.ordQty,_that.ordPrice,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'ord_no')  String ordNo,  String ticker,  String name, @JsonKey(name: 'ord_qty')  int ordQty, @JsonKey(name: 'ord_price')  int ordPrice, @JsonKey(name: 'cntr_qty')  int cntrQty, @JsonKey(name: 'remnq_qty')  int remnqQty,  String side, @JsonKey(name: 'ord_tm')  String ordTm,  String status)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'ord_no')  String ordNo,  String ticker,  String name, @JsonKey(name: 'ord_qty')  int ordQty, @JsonKey(name: 'ord_price')  int ordPrice, @JsonKey(name: 'cntr_qty')  int cntrQty, @JsonKey(name: 'remnq_qty')  int remnqQty,  String side, @JsonKey(name: 'ord_dt')  String ordDt, @JsonKey(name: 'ord_tm')  String ordTm,  String status)  $default,) {final _that = this;
 switch (_that) {
 case _OrderHistoryItemDto():
-return $default(_that.ordNo,_that.ticker,_that.name,_that.ordQty,_that.ordPrice,_that.cntrQty,_that.remnqQty,_that.side,_that.ordTm,_that.status);case _:
+return $default(_that.ordNo,_that.ticker,_that.name,_that.ordQty,_that.ordPrice,_that.cntrQty,_that.remnqQty,_that.side,_that.ordDt,_that.ordTm,_that.status);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -478,10 +479,10 @@ return $default(_that.ordNo,_that.ticker,_that.name,_that.ordQty,_that.ordPrice,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'ord_no')  String ordNo,  String ticker,  String name, @JsonKey(name: 'ord_qty')  int ordQty, @JsonKey(name: 'ord_price')  int ordPrice, @JsonKey(name: 'cntr_qty')  int cntrQty, @JsonKey(name: 'remnq_qty')  int remnqQty,  String side, @JsonKey(name: 'ord_tm')  String ordTm,  String status)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'ord_no')  String ordNo,  String ticker,  String name, @JsonKey(name: 'ord_qty')  int ordQty, @JsonKey(name: 'ord_price')  int ordPrice, @JsonKey(name: 'cntr_qty')  int cntrQty, @JsonKey(name: 'remnq_qty')  int remnqQty,  String side, @JsonKey(name: 'ord_dt')  String ordDt, @JsonKey(name: 'ord_tm')  String ordTm,  String status)?  $default,) {final _that = this;
 switch (_that) {
 case _OrderHistoryItemDto() when $default != null:
-return $default(_that.ordNo,_that.ticker,_that.name,_that.ordQty,_that.ordPrice,_that.cntrQty,_that.remnqQty,_that.side,_that.ordTm,_that.status);case _:
+return $default(_that.ordNo,_that.ticker,_that.name,_that.ordQty,_that.ordPrice,_that.cntrQty,_that.remnqQty,_that.side,_that.ordDt,_that.ordTm,_that.status);case _:
   return null;
 
 }
@@ -493,7 +494,7 @@ return $default(_that.ordNo,_that.ticker,_that.name,_that.ordQty,_that.ordPrice,
 @JsonSerializable()
 
 class _OrderHistoryItemDto extends OrderHistoryItemDto {
-  const _OrderHistoryItemDto({@JsonKey(name: 'ord_no') required this.ordNo, required this.ticker, required this.name, @JsonKey(name: 'ord_qty') required this.ordQty, @JsonKey(name: 'ord_price') required this.ordPrice, @JsonKey(name: 'cntr_qty') required this.cntrQty, @JsonKey(name: 'remnq_qty') required this.remnqQty, required this.side, @JsonKey(name: 'ord_tm') required this.ordTm, required this.status}): super._();
+  const _OrderHistoryItemDto({@JsonKey(name: 'ord_no') required this.ordNo, required this.ticker, required this.name, @JsonKey(name: 'ord_qty') required this.ordQty, @JsonKey(name: 'ord_price') required this.ordPrice, @JsonKey(name: 'cntr_qty') required this.cntrQty, @JsonKey(name: 'remnq_qty') required this.remnqQty, required this.side, @JsonKey(name: 'ord_dt') required this.ordDt, @JsonKey(name: 'ord_tm') required this.ordTm, required this.status}): super._();
   factory _OrderHistoryItemDto.fromJson(Map<String, dynamic> json) => _$OrderHistoryItemDtoFromJson(json);
 
 @override@JsonKey(name: 'ord_no') final  String ordNo;
@@ -504,6 +505,7 @@ class _OrderHistoryItemDto extends OrderHistoryItemDto {
 @override@JsonKey(name: 'cntr_qty') final  int cntrQty;
 @override@JsonKey(name: 'remnq_qty') final  int remnqQty;
 @override final  String side;
+@override@JsonKey(name: 'ord_dt') final  String ordDt;
 @override@JsonKey(name: 'ord_tm') final  String ordTm;
 @override final  String status;
 
@@ -520,16 +522,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OrderHistoryItemDto&&(identical(other.ordNo, ordNo) || other.ordNo == ordNo)&&(identical(other.ticker, ticker) || other.ticker == ticker)&&(identical(other.name, name) || other.name == name)&&(identical(other.ordQty, ordQty) || other.ordQty == ordQty)&&(identical(other.ordPrice, ordPrice) || other.ordPrice == ordPrice)&&(identical(other.cntrQty, cntrQty) || other.cntrQty == cntrQty)&&(identical(other.remnqQty, remnqQty) || other.remnqQty == remnqQty)&&(identical(other.side, side) || other.side == side)&&(identical(other.ordTm, ordTm) || other.ordTm == ordTm)&&(identical(other.status, status) || other.status == status));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OrderHistoryItemDto&&(identical(other.ordNo, ordNo) || other.ordNo == ordNo)&&(identical(other.ticker, ticker) || other.ticker == ticker)&&(identical(other.name, name) || other.name == name)&&(identical(other.ordQty, ordQty) || other.ordQty == ordQty)&&(identical(other.ordPrice, ordPrice) || other.ordPrice == ordPrice)&&(identical(other.cntrQty, cntrQty) || other.cntrQty == cntrQty)&&(identical(other.remnqQty, remnqQty) || other.remnqQty == remnqQty)&&(identical(other.side, side) || other.side == side)&&(identical(other.ordDt, ordDt) || other.ordDt == ordDt)&&(identical(other.ordTm, ordTm) || other.ordTm == ordTm)&&(identical(other.status, status) || other.status == status));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,ordNo,ticker,name,ordQty,ordPrice,cntrQty,remnqQty,side,ordTm,status);
+int get hashCode => Object.hash(runtimeType,ordNo,ticker,name,ordQty,ordPrice,cntrQty,remnqQty,side,ordDt,ordTm,status);
 
 @override
 String toString() {
-  return 'OrderHistoryItemDto(ordNo: $ordNo, ticker: $ticker, name: $name, ordQty: $ordQty, ordPrice: $ordPrice, cntrQty: $cntrQty, remnqQty: $remnqQty, side: $side, ordTm: $ordTm, status: $status)';
+  return 'OrderHistoryItemDto(ordNo: $ordNo, ticker: $ticker, name: $name, ordQty: $ordQty, ordPrice: $ordPrice, cntrQty: $cntrQty, remnqQty: $remnqQty, side: $side, ordDt: $ordDt, ordTm: $ordTm, status: $status)';
 }
 
 
@@ -540,7 +542,7 @@ abstract mixin class _$OrderHistoryItemDtoCopyWith<$Res> implements $OrderHistor
   factory _$OrderHistoryItemDtoCopyWith(_OrderHistoryItemDto value, $Res Function(_OrderHistoryItemDto) _then) = __$OrderHistoryItemDtoCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'ord_no') String ordNo, String ticker, String name,@JsonKey(name: 'ord_qty') int ordQty,@JsonKey(name: 'ord_price') int ordPrice,@JsonKey(name: 'cntr_qty') int cntrQty,@JsonKey(name: 'remnq_qty') int remnqQty, String side,@JsonKey(name: 'ord_tm') String ordTm, String status
+@JsonKey(name: 'ord_no') String ordNo, String ticker, String name,@JsonKey(name: 'ord_qty') int ordQty,@JsonKey(name: 'ord_price') int ordPrice,@JsonKey(name: 'cntr_qty') int cntrQty,@JsonKey(name: 'remnq_qty') int remnqQty, String side,@JsonKey(name: 'ord_dt') String ordDt,@JsonKey(name: 'ord_tm') String ordTm, String status
 });
 
 
@@ -557,7 +559,7 @@ class __$OrderHistoryItemDtoCopyWithImpl<$Res>
 
 /// Create a copy of OrderHistoryItemDto
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? ordNo = null,Object? ticker = null,Object? name = null,Object? ordQty = null,Object? ordPrice = null,Object? cntrQty = null,Object? remnqQty = null,Object? side = null,Object? ordTm = null,Object? status = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? ordNo = null,Object? ticker = null,Object? name = null,Object? ordQty = null,Object? ordPrice = null,Object? cntrQty = null,Object? remnqQty = null,Object? side = null,Object? ordDt = null,Object? ordTm = null,Object? status = null,}) {
   return _then(_OrderHistoryItemDto(
 ordNo: null == ordNo ? _self.ordNo : ordNo // ignore: cast_nullable_to_non_nullable
 as String,ticker: null == ticker ? _self.ticker : ticker // ignore: cast_nullable_to_non_nullable
@@ -567,6 +569,7 @@ as int,ordPrice: null == ordPrice ? _self.ordPrice : ordPrice // ignore: cast_nu
 as int,cntrQty: null == cntrQty ? _self.cntrQty : cntrQty // ignore: cast_nullable_to_non_nullable
 as int,remnqQty: null == remnqQty ? _self.remnqQty : remnqQty // ignore: cast_nullable_to_non_nullable
 as int,side: null == side ? _self.side : side // ignore: cast_nullable_to_non_nullable
+as String,ordDt: null == ordDt ? _self.ordDt : ordDt // ignore: cast_nullable_to_non_nullable
 as String,ordTm: null == ordTm ? _self.ordTm : ordTm // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,

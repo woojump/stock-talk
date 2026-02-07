@@ -32,6 +32,7 @@ _OrderHistoryItemDto _$OrderHistoryItemDtoFromJson(Map<String, dynamic> json) =>
       cntrQty: (json['cntr_qty'] as num).toInt(),
       remnqQty: (json['remnq_qty'] as num).toInt(),
       side: json['side'] as String,
+      ordDt: json['ord_dt'] as String,
       ordTm: json['ord_tm'] as String,
       status: json['status'] as String,
     );
@@ -47,6 +48,7 @@ Map<String, dynamic> _$OrderHistoryItemDtoToJson(
   'cntr_qty': instance.cntrQty,
   'remnq_qty': instance.remnqQty,
   'side': instance.side,
+  'ord_dt': instance.ordDt,
   'ord_tm': instance.ordTm,
   'status': instance.status,
 };

@@ -55,11 +55,11 @@ class _OrderHistorySectionState extends State<OrderHistorySection> {
                     );
                   }
 
-                  final orderHistory = provider.orderHistory;
+                  final filteredOrders = provider.filteredOrders;
 
-                  // 빈 데이터
-                  if (orderHistory == null || orderHistory.data.isEmpty) {
-                    return const EmptyState(message: '주문 내역이 없습니다.');
+                  // 빈 데이터 (현재 탭 기준)
+                  if (filteredOrders.isEmpty) {
+                    return const EmptyState(message: '내역이 없습니다.');
                   }
 
                   return Column(

@@ -53,15 +53,27 @@ class OrderHistoryRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        // 주문시간
+        // 주문시간 (날짜 포함)
         SizedBox(
           width: 70,
-          child: Text(
-            utils.formatOrderTime(item.ordTm),
-            textAlign: TextAlign.center,
-            style: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(color: AppColors.gray600),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (item.ordDt.length == 8)
+                Text(
+                  '${item.ordDt.substring(4, 6)}.${item.ordDt.substring(6, 8)}',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelSmall?.copyWith(color: AppColors.gray400),
+                ),
+              Text(
+                utils.formatOrderTime(item.ordTm),
+                textAlign: TextAlign.center,
+                style: Theme.of(
+                  context,
+                ).textTheme.labelLarge?.copyWith(color: AppColors.gray600),
+              ),
+            ],
           ),
         ),
         const SizedBox(width: 12),

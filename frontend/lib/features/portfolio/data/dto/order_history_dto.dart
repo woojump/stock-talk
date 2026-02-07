@@ -37,6 +37,7 @@ abstract class OrderHistoryItemDto with _$OrderHistoryItemDto {
     @JsonKey(name: 'cntr_qty') required int cntrQty,
     @JsonKey(name: 'remnq_qty') required int remnqQty,
     required String side,
+    @JsonKey(name: 'ord_dt') required String ordDt,
     @JsonKey(name: 'ord_tm') required String ordTm,
     required String status,
   }) = _OrderHistoryItemDto;
@@ -53,6 +54,7 @@ abstract class OrderHistoryItemDto with _$OrderHistoryItemDto {
     cntrQty: cntrQty,
     remnqQty: remnqQty,
     side: side,
+    ordDt: ordDt,
     ordTm: ordTm,
     status: status,
   );

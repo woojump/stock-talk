@@ -20,6 +20,7 @@ class OrderHistoryItem {
     required this.cntrQty,
     required this.remnqQty,
     required this.side,
+    required this.ordDt,
     required this.ordTm,
     required this.status,
   });
@@ -32,6 +33,7 @@ class OrderHistoryItem {
   final int cntrQty;
   final int remnqQty;
   final String side;
+  final String ordDt;
   final String ordTm;
   final String status;
 }
