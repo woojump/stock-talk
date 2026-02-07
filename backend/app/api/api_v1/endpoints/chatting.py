@@ -122,7 +122,7 @@ def _safe_json_load(s: str) -> Optional[Dict[str, Any]]:
 
 def _build_chart_card_payload(stock_detail: Dict[str, Any]) -> Dict[str, Any]:
     ticker = stock_detail.get("ticker")
-    stock_info = stock_detail.get("stock_info", {})
+    stock_summary = stock_detail.get("stock_summary", {})
     candles = stock_detail.get("candles", [])
 
     # candles가 최신->과거면 차트용으로 과거->최신 정렬(선택)
@@ -138,7 +138,7 @@ def _build_chart_card_payload(stock_detail: Dict[str, Any]) -> Dict[str, Any]:
         "ticker": ticker,
         "range": "1M",
         "interval": "1D",
-        "summary": stock_info,
+        "summary": stock_summary,
         "candles": candles_sorted,
     }
 

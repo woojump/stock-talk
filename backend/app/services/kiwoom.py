@@ -110,6 +110,12 @@ class KiwoomService:
         
         ticker = resolved_ticker  # 확정된 티커 사용
 
+        # 티커로 종목명 조회 (fallback용)
+        stock_name_from_db = None
+        db_results = self.finance_data.search(ticker)
+        if db_results:
+            stock_name_from_db = db_results[0].get("itmsNm")
+
         # 1. 실시간 호가 정보 가져오기 (ka10004)
         quote_data = await self.get_market_data(api_id="ka10004", stk_cd=ticker)
         if quote_data.get("status") == "fail":
@@ -195,7 +201,7 @@ class KiwoomService:
 
         # 4. ✅ StockSummaryDto 매핑 (프론트엔드 @JsonKey와 100% 일치)
         stock_summary = {
-            "stock_name": quote_data.get("stk_nm") or query,
+            "stock_name": quote_data.get("stk_nm") or stock_name_from_db or query,
             "ticker": ticker,
             # 현재가는 호가 우선, 없을 시 차트 종가 사용 (절댓값 처리)
             "current_price": float(abs(self._parse_num(quote_data.get("sel_fpr_bid") or latest_candle.get("close") or "0"))),
